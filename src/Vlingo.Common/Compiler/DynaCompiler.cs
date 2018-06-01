@@ -1,5 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+
 using static Vlingo.Common.Compiler.DynaFile;
 
 namespace Vlingo.Common.Compiler
@@ -13,10 +19,56 @@ namespace Vlingo.Common.Compiler
 
         public Type Compile(Input input)
         {
-            // generate and compile the source
-            byte[] classData = null;
-            // or persisted path
-            return input.ClassLoader.AddDynaClass(input.FullyQualifiedClassName, classData);
+            try
+            {
+                string sourceCode;
+                using (var stream = input.SourceFile.OpenText())
+                {
+                    sourceCode = stream.ReadToEnd();
+                }
+
+                var tree = SyntaxFactory.ParseSyntaxTree(sourceCode);
+
+                var assembliesToLoad = new HashSet<Assembly>
+            {
+                typeof(object).Assembly,
+                input.Protocol.Assembly,
+            };
+
+                input.Protocol.Assembly
+                    .GetReferencedAssemblies()
+                    .Select(x => Assembly.Load(x))
+                    .ToList()
+                    .ForEach(x => assembliesToLoad.Add(x));
+
+                var metadataRefs = assembliesToLoad.Select(x => MetadataReference.CreateFromFile(x.Location));
+
+                var compilation = CSharpCompilation
+                    .Create(input.FullyQualifiedClassName)
+                    .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                    .AddReferences(metadataRefs)
+                    .AddSyntaxTrees(tree);
+
+                byte[] byteCode = null;
+
+                using (var ilStream = new MemoryStream())
+                {
+                    compilation.Emit(ilStream);
+                    ilStream.Seek(0, SeekOrigin.Begin);
+                    byteCode = ilStream.ToArray();
+                }
+
+                Persist(input, byteCode);
+
+                return input.ClassLoader.AddDynaClass(input.FullyQualifiedClassName, byteCode);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Dynamically generated class source for {input.FullyQualifiedClassName} did not compile because: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+            }
+
+            throw new ArgumentException($"Dynamically generated class source did not compile: {input.FullyQualifiedClassName}");
         }
 
         private void Persist(Input input, byte[] byteCode)

@@ -4,10 +4,10 @@ namespace Vlingo.Common.Compiler
 {
     public static class DynaFile
     {
-        public const string GeneratedSources = "target/generated-sources/";
-        public const string GeneratedTestSources = "target/generated-test-sources/";
-        public const string RootOfMainClasses = "target/classes/";
-        public const string RootOfTestClasses = "target/test-classes/";
+        public readonly static string GeneratedSources = $"target{Path.DirectorySeparatorChar}generated-sources{Path.DirectorySeparatorChar}";
+        public readonly static string GeneratedTestSources = $"target{Path.DirectorySeparatorChar}generated-test-sources{Path.DirectorySeparatorChar}";
+        public readonly static string RootOfMainClasses = $"target{Path.DirectorySeparatorChar}classes{Path.DirectorySeparatorChar}";
+        public readonly static string RootOfTestClasses = $"target{Path.DirectorySeparatorChar}test-classes{Path.DirectorySeparatorChar}";
 
         public static FileInfo PersistDynaClass(string pathToClass, byte[] dynaClass)
         {
@@ -40,10 +40,10 @@ namespace Vlingo.Common.Compiler
         private static string ToPath(string fullyQualifiedClassName, bool includeClassName)
         {
             var lastDotIndex = fullyQualifiedClassName.LastIndexOf('.');
-            var directoryPath = $"{fullyQualifiedClassName.Substring(0, lastDotIndex)}";
+            var directoryPath = fullyQualifiedClassName.Substring(0, lastDotIndex).Replace('.', Path.DirectorySeparatorChar);
             if (includeClassName)
             {
-                return $"{directoryPath}/{fullyQualifiedClassName.Substring(lastDotIndex + 1)}";
+                return $"{directoryPath}{Path.DirectorySeparatorChar}{fullyQualifiedClassName.Substring(lastDotIndex + 1)}";
             }
             else
             {

@@ -30,10 +30,11 @@ namespace Vlingo.Common.Compiler
                 var tree = SyntaxFactory.ParseSyntaxTree(sourceCode);
 
                 var assembliesToLoad = new HashSet<Assembly>
-            {
-                typeof(object).Assembly,
-                input.Protocol.Assembly,
-            };
+                {
+                    typeof(object).Assembly,
+                    input.Protocol.Assembly,
+                    Assembly.Load("mscorlib"),
+                };
 
                 input.Protocol.Assembly
                     .GetReferencedAssemblies()
@@ -53,7 +54,7 @@ namespace Vlingo.Common.Compiler
 
                 using (var ilStream = new MemoryStream())
                 {
-                    compilation.Emit(ilStream);
+                    var compilationResult = compilation.Emit(ilStream);
                     ilStream.Seek(0, SeekOrigin.Begin);
                     byteCode = ilStream.ToArray();
                 }
@@ -90,5 +91,5 @@ namespace Vlingo.Common.Compiler
 
             PersistDynaClass(pathToClass, byteCode);
         }
-}
+    }
 }

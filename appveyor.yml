@@ -1,0 +1,11 @@
+version: 0.0.{build}
+image: Visual Studio 2017
+configuration: Release
+before_build:
+- cmd: dotnet restore src/Vlingo.Common.sln
+build:
+  project: src/Vlingo.Common.sln
+  verbosity: minimal
+test_script:
+- cmd: dotnet test src/Vlingo.Common.Tests
+deploy: off

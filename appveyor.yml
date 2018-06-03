@@ -6,4 +6,6 @@ before_build:
 build:
   project: src/Vlingo.Common.sln
   verbosity: minimal
+test_script:
+- cmd: xunit.console Vlingo.Common.Tests /appveyor
 deploy: off

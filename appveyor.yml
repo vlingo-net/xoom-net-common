@@ -7,5 +7,5 @@ build:
   project: src/Vlingo.Common.sln
   verbosity: minimal
 test_script:
-- cmd: xunit.console Vlingo.Common.Tests /appveyor
+- cmd: xunit.console src/Vlingo.Common.Tests/bin/Release/netcoreapp2.0/Vlingo.Common.Tests.dll /appveyor
 deploy: off

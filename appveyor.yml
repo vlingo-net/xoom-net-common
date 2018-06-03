@@ -2,10 +2,10 @@ version: 0.0.{build}
 image: Visual Studio 2017
 configuration: Release
 before_build:
-- cmd: nuget restore src/Vlingo.Common.sln
+- cmd: dotnet restore src/Vlingo.Common.sln
 build:
   project: src/Vlingo.Common.sln
   verbosity: minimal
 test_script:
-- cmd: xunit.console src/Vlingo.Common.Tests/bin/Release/netcoreapp2.0/Vlingo.Common.Tests.dll /appveyor
+- cmd: dotnet test src/Vlingo.Common.Tests
 deploy: off

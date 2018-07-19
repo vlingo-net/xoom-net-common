@@ -18,19 +18,20 @@ namespace Vlingo.Common
             value = initialValue;
         }
 
-        public void Set(int newValue)
-        {
-            Interlocked.Exchange(ref value, newValue);
-        }
+        public int Set(int newValue) => Interlocked.Exchange(ref value, newValue);
 
-        public int Get()
-        {
-            return Interlocked.CompareExchange(ref value, 0, 0);
-        }
+        /// <summary>
+        /// Replaces the current value with `update` if the current value is `expect`.
+        /// </summary>
+        /// <param name="expect">Value to compare with.</param>
+        /// <param name="update">New value to replace with.</param>
+        /// <returns>The existing value before update, regardless of whether it is updated or not.</returns>
+        public int CompareAndSet(int expect, int update) => Interlocked.CompareExchange(ref value, update, expect);
 
-        public int GetAndIncrement()
-        {
-            return Interlocked.Increment(ref value) - 1;
-        }
+        public int Get() => Interlocked.CompareExchange(ref value, 0, 0);
+
+        public int GetAndIncrement() => Interlocked.Increment(ref value) - 1;
+
+        public int IncrementAndGet() => Interlocked.Increment(ref value);
     }
 }

@@ -29,6 +29,12 @@ namespace Vlingo.Common
             Interlocked.Exchange(ref value, updateInt);
         }
 
+        /// <summary>
+        /// Replaces the current value with `update` if the current value is `expect`.
+        /// </summary>
+        /// <param name="expect">Value to compare with.</param>
+        /// <param name="update">New value to replace with.</param>
+        /// <returns>Whether the update was successful or not.</returns>
         public bool CompareAndSet(bool expect, bool update)
         {
             var expectedInt = expect ? 1 : 0;

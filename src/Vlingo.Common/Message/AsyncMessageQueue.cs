@@ -15,10 +15,12 @@ namespace Vlingo.Common.Message
     {
         private readonly IMessageQueue deadLettersQueue;
         private AtomicBoolean dispatching;
-        private readonly FixedThreadPoolExecutor executor;
         private IMessageQueueListener listener;
         private AtomicBoolean open;
         private readonly ConcurrentQueue<IMessage> queue;
+
+        private readonly Thread executorThread;
+        private volatile bool shouldExecutorRun = true;
 
         public AsyncMessageQueue()
             : this(null)
@@ -29,9 +31,11 @@ namespace Vlingo.Common.Message
         {
             this.deadLettersQueue = deadLettersQueue;
             dispatching = new AtomicBoolean(false);
-            executor = new FixedThreadPoolExecutor(1);
             open = new AtomicBoolean(false);
             queue = new ConcurrentQueue<IMessage>();
+
+            executorThread = new Thread(ExecutorThreadStart);
+            executorThread.Start();
         }
 
         public void Close() => Close(true);
@@ -47,7 +51,8 @@ namespace Vlingo.Common.Message
                     Flush();
                 }
 
-                executor.ShutdownNow();
+                shouldExecutorRun = false;
+                executorThread.Interrupt();
             }
         }
 
@@ -56,7 +61,7 @@ namespace Vlingo.Common.Message
             if (open.Get())
             {
                 queue.Enqueue(message);
-                executor.Execute(this);
+                executorThread.Interrupt();
             }
         }
 
@@ -125,6 +130,23 @@ namespace Vlingo.Common.Message
             }
 
             return null;
+        }
+
+        private void ExecutorThreadStart()
+        {
+            while (shouldExecutorRun)
+            {
+                try
+                {
+                    Thread.Sleep(Timeout.Infinite);
+                }
+                catch(Exception) { }
+
+                while (!queue.IsEmpty)
+                {
+                    Run();
+                }
+            }
         }
     }
 }

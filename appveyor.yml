@@ -7,7 +7,7 @@ build:
   project: src/Vlingo.Common.sln
   verbosity: minimal
 after_build:
-- cmd: nuget pack Vlingo.Common/Vlingo.Common.csproj
+- cmd: nuget pack src/Vlingo.Common/Vlingo.Common.csproj
 test_script:
 - cmd: dotnet test src/Vlingo.Common.Tests
 artifacts:

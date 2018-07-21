@@ -4,9 +4,8 @@ configuration: Release
 before_build:
 - cmd: dotnet restore src/Vlingo.Common.sln
 build:
-  project: src/Vlingo.Common.sln
+  project: src/Vlingo.Common/Vlingo.Common.csproj
   publish_nuget: true
-  publish_nuget_symbols: false
   verbosity: minimal
 test_script:
 - cmd: dotnet test src/Vlingo.Common.Tests

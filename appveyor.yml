@@ -10,7 +10,7 @@ after_build:
 - cmd: nuget pack Vlingo.Common/Vlingo.Common.csproj
 test_script:
 - cmd: dotnet test src/Vlingo.Common.Tests
-artifact:
+artifacts:
 - path: '**\*.nupkg'
 deploy:
 - provider: NuGet

@@ -1,7 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    
+    <!-- NuGet Metadata -->
+    <IsPackable>true</IsPackable>
+    <PackageVersion>0.1.0-alpha</PackageVersion>
+    <PackageId>Vlingo.Common</PackageId>
+    <Authors>Vlingo</Authors>
+    <Description>
+      This is a very early stage release of the vlingo platform.
+      The vlingo-net-common project consists of some tools that are used across various other vlingo-net projects.
+    </Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://mozilla.org/MPL/2.0/</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/vlingo-net/vlingo-net-common</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/vlingo-net/vlingo-net-common</RepositoryUrl>
+    
   </PropertyGroup>
 
   <ItemGroup>

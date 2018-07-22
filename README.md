@@ -1,6 +1,6 @@
 # vlingo-common
 
-[![Build status](https://ci.appveyor.com/api/projects/status/ujwlomkw8ebfm227/branch/master?svg=true)](https://ci.appveyor.com/project/zpbappi/vlingo-net-common-ft9e2/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/0a5axbkaumkm72a9/branch/master?svg=true)](https://ci.appveyor.com/project/zpbappi/vlingo-net-common/branch/master)
 
 This is a very early stage release of the vlingo platform.
 

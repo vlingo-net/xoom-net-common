@@ -1,6 +1,8 @@
 version: 0.0.{build}
 image: Visual Studio 2017
 configuration: Release
+skip_commits:
+  message: /.*\[ci\-skip\].*/ 
 before_build:
 - cmd: dotnet restore src/Vlingo.Common.sln
 build:

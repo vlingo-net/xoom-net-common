@@ -15,6 +15,7 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseUrl>https://mozilla.org/MPL/2.0/</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/vlingo-net/vlingo-net-common</PackageProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/vlingo-net/vlingo-net-common/master/vlingo-white.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/vlingo-net/vlingo-net-common</RepositoryUrl>
     
   </PropertyGroup>

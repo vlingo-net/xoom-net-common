@@ -28,6 +28,7 @@ namespace Vlingo.Common.Compiler
         {
             try
             {
+                var assemblyLoadContext = AssemblyContextHelper.SystemDefaultContext;
                 string sourceCode;
                 using (var stream = input.SourceFile.OpenText())
                 {
@@ -40,12 +41,12 @@ namespace Vlingo.Common.Compiler
                 {
                     typeof(object).Assembly,
                     input.Protocol.Assembly,
-                    Assembly.Load("mscorlib"),
+                    assemblyLoadContext.LoadFromAssemblyName(new AssemblyName("mscorlib")),
                 };
 
                 input.Protocol.Assembly
                     .GetReferencedAssemblies()
-                    .Select(x => Assembly.Load(x))
+                    .Select(x => assemblyLoadContext.LoadFromAssemblyName(x))
                     .ToList()
                     .ForEach(x => assembliesToLoad.Add(x));
 
@@ -62,6 +63,11 @@ namespace Vlingo.Common.Compiler
                 using (var ilStream = new MemoryStream())
                 {
                     var compilationResult = compilation.Emit(ilStream);
+                    if (!compilationResult.Success)
+                    {
+                        throw new Exception(compilationResult.Diagnostics[0].GetMessage());
+                    }
+
                     ilStream.Seek(0, SeekOrigin.Begin);
                     byteCode = ilStream.ToArray();
                 }

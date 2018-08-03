@@ -5,7 +5,7 @@
     
     <!-- NuGet Metadata -->
     <IsPackable>true</IsPackable>
-    <PackageVersion>1.0.0-beta</PackageVersion>
+    <PackageVersion>1.0.1-beta</PackageVersion>
     <PackageId>Vlingo.Common</PackageId>
     <Authors>Vlingo</Authors>
     <Description>
@@ -15,7 +15,7 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseUrl>https://mozilla.org/MPL/2.0/</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/vlingo-net/vlingo-net-common</PackageProjectUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/vlingo-net/vlingo-net-common/master/vlingo-white.png</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/vlingo-net/vlingo-net-common/master/vlingo-64x64.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/vlingo-net/vlingo-net-common</RepositoryUrl>
     
   </PropertyGroup>

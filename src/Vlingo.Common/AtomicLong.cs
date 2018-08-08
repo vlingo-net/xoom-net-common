@@ -30,8 +30,12 @@ namespace Vlingo.Common
 
         public long Get() => Interlocked.CompareExchange(ref value, 0, 0);
 
+        public long GetAndIncrement() => Interlocked.Increment(ref value) - 1;
+
         public long IncrementAndGet() => Interlocked.Increment(ref value);
 
-        public long GetAndIncrement() => Interlocked.Increment(ref value) - 1;
+        public long GetAndDecrement() => Interlocked.Decrement(ref value) + 1;
+
+        public long DecrementAndGet() => Interlocked.Decrement(ref value);
     }
 }

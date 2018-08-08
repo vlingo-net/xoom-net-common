@@ -33,5 +33,9 @@ namespace Vlingo.Common
         public int GetAndIncrement() => Interlocked.Increment(ref value) - 1;
 
         public int IncrementAndGet() => Interlocked.Increment(ref value);
+
+        public int GetAndDecrement() => Interlocked.Decrement(ref value) + 1;
+
+        public int DecrementAndGet() => Interlocked.Decrement(ref value);
     }
 }

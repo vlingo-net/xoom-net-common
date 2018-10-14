@@ -74,7 +74,9 @@ namespace Vlingo.Common.Compiler
 
                 Persist(input, byteCode);
 
-                return input.ClassLoader.AddDynaClass(input.FullyQualifiedClassName, byteCode);
+                // to prevent exception when trying to generate and load proxy of same interface in parallel from different places/thread
+                return input.ClassLoader.LoadClass(input.FullyQualifiedClassName) ?? 
+                    input.ClassLoader.AddDynaClass(input.FullyQualifiedClassName, byteCode);
             }
             catch (Exception ex)
             {

@@ -21,14 +21,12 @@ namespace Vlingo.Common.Compiler
     {
         public DynaCompiler()
         {
-            // TODO: set and initialize Roslyn compiler
         }
 
         public Type Compile(Input input)
         {
             try
             {
-                var assemblyLoadContext = AssemblyContextHelper.SystemDefaultContext;
                 string sourceCode;
                 using (var stream = input.SourceFile.OpenText())
                 {
@@ -41,12 +39,12 @@ namespace Vlingo.Common.Compiler
                 {
                     typeof(object).Assembly,
                     input.Protocol.Assembly,
-                    assemblyLoadContext.LoadFromAssemblyName(new AssemblyName("mscorlib")),
+                    Assembly.Load(new AssemblyName("mscorlib")),
                 };
 
                 input.Protocol.Assembly
                     .GetReferencedAssemblies()
-                    .Select(x => assemblyLoadContext.LoadFromAssemblyName(x))
+                    .Select(x => Assembly.Load(x))
                     .ToList()
                     .ForEach(x => assembliesToLoad.Add(x));
 

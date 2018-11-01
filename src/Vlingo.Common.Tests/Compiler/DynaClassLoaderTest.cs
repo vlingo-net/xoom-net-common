@@ -22,7 +22,7 @@ namespace Vlingo.Common.Tests.Compiler
         [Fact]
         public void TestDynaClassLoader()
         {
-            var classLoader = new DynaClassLoader(typeof(DynaClassLoader).GetAssemblyLoadContext());
+            var classLoader = new DynaClassLoader();
             var dynaNamingClassType = classLoader.LoadClass("Vlingo.Common.Compiler.DynaNaming");
             Assert.NotNull(dynaNamingClassType);
 

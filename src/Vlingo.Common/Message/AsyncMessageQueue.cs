@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Vlingo.Common.Message
 {
@@ -19,8 +20,9 @@ namespace Vlingo.Common.Message
         private AtomicBoolean open;
         private readonly ConcurrentQueue<IMessage> queue;
 
-        private readonly Thread executorThread;
-        private volatile bool shouldExecutorRun = true;
+        private readonly Task executorTask;
+        private readonly CancellationTokenSource cancellationSource;
+        private readonly AutoResetEvent resetEvent;
 
         public AsyncMessageQueue()
             : this(null)
@@ -34,8 +36,10 @@ namespace Vlingo.Common.Message
             open = new AtomicBoolean(false);
             queue = new ConcurrentQueue<IMessage>();
 
-            executorThread = new Thread(ExecutorThreadStart);
-            executorThread.Start();
+            resetEvent = new AutoResetEvent(false);
+            cancellationSource = new CancellationTokenSource();
+            executorTask = new Task(TaskAction, cancellationSource.Token);
+            executorTask.Start();
         }
 
         public void Close() => Close(true);
@@ -51,8 +55,8 @@ namespace Vlingo.Common.Message
                     Flush();
                 }
 
-                shouldExecutorRun = false;
-                executorThread.Interrupt();
+                cancellationSource.Cancel();
+                resetEvent.Set();
             }
         }
 
@@ -61,7 +65,7 @@ namespace Vlingo.Common.Message
             if (open.Get())
             {
                 queue.Enqueue(message);
-                executorThread.Interrupt();
+                resetEvent.Set();
             }
         }
 
@@ -132,16 +136,11 @@ namespace Vlingo.Common.Message
             return null;
         }
 
-        private void ExecutorThreadStart()
+        private void TaskAction()
         {
-            while (shouldExecutorRun)
+            while (!cancellationSource.IsCancellationRequested)
             {
-                try
-                {
-                    Thread.Sleep(Timeout.Infinite);
-                }
-                catch(Exception) { }
-
+                resetEvent.WaitOne();
                 while (!queue.IsEmpty)
                 {
                     Run();

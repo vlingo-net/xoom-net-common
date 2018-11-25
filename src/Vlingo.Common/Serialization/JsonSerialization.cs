@@ -16,8 +16,6 @@ namespace Vlingo.Common.Serialization
     {
         private static readonly JsonConverter DateTimeConverter = new IsoDateTimeConverter();
 
-        private static string Serialize(object value) => JsonConvert.SerializeObject(value, DateTimeConverter);
-
         public static T Deserialized<T>(string serialization)
             => JsonConvert.DeserializeObject<T>(serialization, DateTimeConverter);
 

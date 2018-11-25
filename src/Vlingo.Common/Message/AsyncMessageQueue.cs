@@ -42,9 +42,9 @@ namespace Vlingo.Common.Message
             executorTask.Start();
         }
 
-        public void Close() => Close(true);
+        public virtual void Close() => Close(true);
 
-        public void Close(bool flush)
+        public virtual void Close(bool flush)
         {
             if (open.Get())
             {
@@ -69,7 +69,7 @@ namespace Vlingo.Common.Message
             }
         }
 
-        public void Flush()
+        public virtual void Flush()
         {
             try
             {
@@ -89,15 +89,15 @@ namespace Vlingo.Common.Message
             }
         }
 
-        public bool IsEmpty => queue.IsEmpty && !dispatching.Get();
+        public virtual bool IsEmpty => queue.IsEmpty && !dispatching.Get();
 
-        public void RegisterListener(IMessageQueueListener listener)
+        public virtual void RegisterListener(IMessageQueueListener listener)
         {
             open.Set(true);
             this.listener = listener;
         }
 
-        public void Run()
+        public virtual void Run()
         {
             IMessage message = null;
 

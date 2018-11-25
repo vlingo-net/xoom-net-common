@@ -18,7 +18,9 @@ namespace Vlingo.Common
             value = initialValue;
         }
 
-        public int Set(int newValue) => Interlocked.Exchange(ref value, newValue);
+        public int AddAndGet(int delta) => Interlocked.Add(ref value, delta);
+
+        public void Set(int newValue) => Interlocked.Exchange(ref value, newValue);
 
         /// <summary>
         /// Replaces the current value with `update` if the current value is `expect`.
@@ -29,6 +31,8 @@ namespace Vlingo.Common
         public int CompareAndSet(int expect, int update) => Interlocked.CompareExchange(ref value, update, expect);
 
         public int Get() => Interlocked.CompareExchange(ref value, 0, 0);
+
+        public int GetAndSet(int newValue) => Interlocked.Exchange(ref value, newValue);
 
         public int GetAndIncrement() => Interlocked.Increment(ref value) - 1;
 

@@ -27,8 +27,8 @@ namespace Vlingo.Common
         /// </summary>
         /// <param name="expect">Value to compare with.</param>
         /// <param name="update">New value to replace with.</param>
-        /// <returns>The existing value before update, regardless of whether it is updated or not.</returns>
-        public int CompareAndSet(int expect, int update) => Interlocked.CompareExchange(ref value, update, expect);
+        /// <returns>Whether the value was successfully updated or not.</returns>
+        public bool CompareAndSet(int expect, int update) => Interlocked.CompareExchange(ref value, update, expect) == expect;
 
         public int Get() => Interlocked.CompareExchange(ref value, 0, 0);
 

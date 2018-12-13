@@ -58,7 +58,7 @@ namespace Vlingo.Common
             }
         }
 
-        public bool IfPresent() => hasValue;
+        public bool IsPresent => hasValue;
 
         public Optional<U> Map<U>(Func<T, U> mapper)
         {

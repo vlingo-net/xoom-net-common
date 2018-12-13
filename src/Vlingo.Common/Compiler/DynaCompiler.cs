@@ -37,9 +37,10 @@ namespace Vlingo.Common.Compiler
 
                 var assembliesToLoad = new HashSet<Assembly>
                 {
-                    typeof(object).Assembly,
-                    input.Protocol.Assembly,
+                    typeof(object).GetTypeInfo().Assembly,
+                    input.Protocol.GetTypeInfo().Assembly,
                     Assembly.Load(new AssemblyName("mscorlib")),
+                    Assembly.Load(new AssemblyName("netstandard")),
                 };
 
                 input.Protocol.Assembly
@@ -73,7 +74,7 @@ namespace Vlingo.Common.Compiler
                 Persist(input, byteCode);
 
                 // to prevent exception when trying to generate and load proxy of same interface in parallel from different places/thread
-                return input.ClassLoader.LoadClass(input.FullyQualifiedClassName) ?? 
+                return input.ClassLoader.LoadClass(input.FullyQualifiedClassName) ??
                     input.ClassLoader.AddDynaClass(input.FullyQualifiedClassName, byteCode);
             }
             catch (Exception ex)

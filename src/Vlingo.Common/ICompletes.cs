@@ -9,7 +9,12 @@ using System;
 
 namespace Vlingo.Common
 {
-    public interface ICompletes<T>
+    public interface ICompletes
+    {
+        ICompletes<O> With<O>(O outcome);
+    }
+
+    public interface ICompletes<T> : ICompletes
     {
         ICompletes<T> AndThen(long timeout, T failedOutcomeValue, Func<T, T> function);
         ICompletes<T> AndThen(T failedOutcomeValue, Func<T, T> function);
@@ -38,7 +43,7 @@ namespace Vlingo.Common
         bool HasOutcome { get; }
         T Outcome { get; }
         ICompletes<T> Repeat();
-        ICompletes<O> With<O>(O outcome);
+        
     }
 
     public static class Completes

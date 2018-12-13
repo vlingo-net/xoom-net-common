@@ -177,7 +177,7 @@ namespace Vlingo.Common.Tests
 
         private class Sender
         {
-            private Action<int> callback;
+            private readonly Action<int> callback;
             public Sender(Action<int> callback)
             {
                 if (callback != null)

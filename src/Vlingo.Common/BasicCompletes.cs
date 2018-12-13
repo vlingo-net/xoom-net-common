@@ -156,7 +156,7 @@ namespace Vlingo.Common
                 {
                     Thread.Sleep(TimeSpan.FromMilliseconds((countDown >= 0 && countDown < 100) ? countDown : 100));
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     // ignore
                 }

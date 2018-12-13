@@ -6,42 +6,35 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using System.IO;
-using System.Runtime.Loader;
+using System.Reflection;
 
 namespace Vlingo.Common.Compiler
 {
     public class DynaClassLoader
     {
-        private readonly AssemblyLoadContext context;
-
-        public DynaClassLoader(AssemblyLoadContext context)
+        public DynaClassLoader()
         {
-            this.context = context;
         }
 
         internal Type AddDynaClass(string fullyQualifiedClassName, byte[] byteCode)
         {
-            using(var stream = new MemoryStream(byteCode, false))
-            {
-                var loadedAssembly = context.LoadFromStream(stream);
-                return loadedAssembly.GetType(fullyQualifiedClassName);
-            }
+            var loadedAssembly = Assembly.Load(byteCode);
+            return loadedAssembly.GetType(fullyQualifiedClassName);
         }
 
         internal Type AddDynaClass(string fullyQualifiedClassName, string dllPath)
         {
-            var loadedAssembly = context.LoadFromAssemblyPath(dllPath);
+            var loadedAssembly = Assembly.LoadFrom(dllPath);
             return loadedAssembly.GetType(fullyQualifiedClassName);
         }
 
         public Type LoadClass(string fullyQualifiedClassName)
         {
             var assemblies = AppDomain.CurrentDomain?.GetAssemblies();
-            foreach(var assembly in assemblies)
+            foreach (var assembly in assemblies)
             {
                 var type = assembly.GetType(fullyQualifiedClassName);
-                if(type != null)
+                if (type != null)
                 {
                     return type;
                 }

@@ -21,14 +21,12 @@ namespace Vlingo.Common.Compiler
     {
         public DynaCompiler()
         {
-            // TODO: set and initialize Roslyn compiler
         }
 
         public Type Compile(Input input)
         {
             try
             {
-                var assemblyLoadContext = AssemblyContextHelper.SystemDefaultContext;
                 string sourceCode;
                 using (var stream = input.SourceFile.OpenText())
                 {
@@ -39,14 +37,15 @@ namespace Vlingo.Common.Compiler
 
                 var assembliesToLoad = new HashSet<Assembly>
                 {
-                    typeof(object).Assembly,
-                    input.Protocol.Assembly,
-                    assemblyLoadContext.LoadFromAssemblyName(new AssemblyName("mscorlib")),
+                    typeof(object).GetTypeInfo().Assembly,
+                    input.Protocol.GetTypeInfo().Assembly,
+                    Assembly.Load(new AssemblyName("mscorlib")),
+                    Assembly.Load(new AssemblyName("netstandard")),
                 };
 
                 input.Protocol.Assembly
                     .GetReferencedAssemblies()
-                    .Select(x => assemblyLoadContext.LoadFromAssemblyName(x))
+                    .Select(x => Assembly.Load(x))
                     .ToList()
                     .ForEach(x => assembliesToLoad.Add(x));
 
@@ -75,7 +74,7 @@ namespace Vlingo.Common.Compiler
                 Persist(input, byteCode);
 
                 // to prevent exception when trying to generate and load proxy of same interface in parallel from different places/thread
-                return input.ClassLoader.LoadClass(input.FullyQualifiedClassName) ?? 
+                return input.ClassLoader.LoadClass(input.FullyQualifiedClassName) ??
                     input.ClassLoader.AddDynaClass(input.FullyQualifiedClassName, byteCode);
             }
             catch (Exception ex)

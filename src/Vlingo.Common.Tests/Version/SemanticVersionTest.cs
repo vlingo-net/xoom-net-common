@@ -51,6 +51,66 @@ namespace Vlingo.Common.Tests.Version
         }
 
         [Fact]
+        public void TestThatStringToValueParses()
+        {
+            var semanticVersion_1_0_0 = SemanticVersion.ToValue(1, 0, 0);
+            var semanticVersion_1_0_0_again = SemanticVersion.ToValue(SemanticVersion.ToString(semanticVersion_1_0_0));
+            Assert.Equal(semanticVersion_1_0_0, semanticVersion_1_0_0_again);
+
+            var semanticVersion_0_1_0 = SemanticVersion.ToValue(0, 1, 0);
+            var semanticVersion_0_1_0_again = SemanticVersion.ToValue(SemanticVersion.ToString(semanticVersion_0_1_0));
+            Assert.Equal(semanticVersion_0_1_0, semanticVersion_0_1_0_again);
+
+            var semanticVersion_0_0_1 = SemanticVersion.ToValue(0, 0, 1);
+            var semanticVersion_0_0_1_again = SemanticVersion.ToValue(SemanticVersion.ToString(semanticVersion_0_0_1));
+            Assert.Equal(semanticVersion_0_0_1, semanticVersion_0_0_1_again);
+
+            var semanticVersion_1_1_0 = SemanticVersion.ToValue(1, 1, 0);
+            var semanticVersion_1_1_0_again = SemanticVersion.ToValue(SemanticVersion.ToString(semanticVersion_1_1_0));
+            Assert.Equal(semanticVersion_1_1_0, semanticVersion_1_1_0_again);
+
+            var semanticVersion_1_1_1 = SemanticVersion.ToValue(1, 1, 1);
+            var semanticVersion_1_1_1_again = SemanticVersion.ToValue(SemanticVersion.ToString(semanticVersion_1_1_1));
+            Assert.Equal(semanticVersion_1_1_1, semanticVersion_1_1_1_again);
+        }
+
+        [Fact]
+        public void TestVersionCompatibility()
+        {
+            var version = SemanticVersion.From(1, 0, 0);
+
+            var majorBump = SemanticVersion.From(2, 0, 0);
+            Assert.True(majorBump.IsCompatibleWith(version));
+
+            var minorBump = SemanticVersion.From(1, 1, 0);
+            Assert.True(minorBump.IsCompatibleWith(version));
+
+            var patchBump = SemanticVersion.From(1, 0, 1);
+            Assert.True(patchBump.IsCompatibleWith(version));
+        }
+
+        [Fact]
+        public void TestVersionIncompatibility()
+        {
+            var version = SemanticVersion.From(1, 0, 0);
+
+            var majorTooHigh = SemanticVersion.From(3, 0, 0);
+            Assert.False(majorTooHigh.IsCompatibleWith(version));
+
+            var majorBumpMinorTooHigh = SemanticVersion.From(2, 1, 0);
+            Assert.False(majorBumpMinorTooHigh.IsCompatibleWith(version));
+
+            var minorTooHigh = SemanticVersion.From(1, 2, 0);
+            Assert.False(minorTooHigh.IsCompatibleWith(version));
+
+            var minorBumpPatchTooHigh = SemanticVersion.From(1, 1, 1);
+            Assert.False(minorBumpPatchTooHigh.IsCompatibleWith(version));
+
+            var patchTooHigh = SemanticVersion.From(1, 0, 2);
+            Assert.False(patchTooHigh.IsCompatibleWith(version));
+        }
+
+        [Fact]
         public void TestThatMajorVersionMinBoundsCheck()
         {
             Assert.Throws<ArgumentException>(() => SemanticVersion.ToValue(-1, 1, 1));
@@ -81,7 +141,7 @@ namespace Vlingo.Common.Tests.Version
         }
 
         [Fact]
-        public void testThatPatchVersionMaxBoundsCheck()
+        public void TestThatPatchVersionMaxBoundsCheck()
         {
             Assert.Throws<ArgumentException>(() => SemanticVersion.ToValue(1, 1, 256));
         }

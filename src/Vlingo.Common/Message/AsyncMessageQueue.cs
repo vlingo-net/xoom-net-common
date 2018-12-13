@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Vlingo.Common.Message
 {
@@ -19,8 +20,8 @@ namespace Vlingo.Common.Message
         private AtomicBoolean open;
         private readonly ConcurrentQueue<IMessage> queue;
 
-        private readonly Thread executorThread;
-        private volatile bool shouldExecutorRun = true;
+        private readonly CancellationTokenSource cancellationSource;
+        private readonly AutoResetEvent resetEvent;
 
         public AsyncMessageQueue()
             : this(null)
@@ -34,13 +35,14 @@ namespace Vlingo.Common.Message
             open = new AtomicBoolean(false);
             queue = new ConcurrentQueue<IMessage>();
 
-            executorThread = new Thread(ExecutorThreadStart);
-            executorThread.Start();
+            resetEvent = new AutoResetEvent(false);
+            cancellationSource = new CancellationTokenSource();
+            Task.Run(() => TaskAction(), cancellationSource.Token);
         }
 
-        public void Close() => Close(true);
+        public virtual void Close() => Close(true);
 
-        public void Close(bool flush)
+        public virtual void Close(bool flush)
         {
             if (open.Get())
             {
@@ -51,8 +53,8 @@ namespace Vlingo.Common.Message
                     Flush();
                 }
 
-                shouldExecutorRun = false;
-                executorThread.Interrupt();
+                cancellationSource.Cancel();
+                resetEvent.Set();
             }
         }
 
@@ -61,11 +63,11 @@ namespace Vlingo.Common.Message
             if (open.Get())
             {
                 queue.Enqueue(message);
-                executorThread.Interrupt();
+                resetEvent.Set();
             }
         }
 
-        public void Flush()
+        public virtual void Flush()
         {
             try
             {
@@ -85,15 +87,15 @@ namespace Vlingo.Common.Message
             }
         }
 
-        public bool IsEmpty => queue.IsEmpty && !dispatching.Get();
+        public virtual bool IsEmpty => queue.IsEmpty && !dispatching.Get();
 
-        public void RegisterListener(IMessageQueueListener listener)
+        public virtual void RegisterListener(IMessageQueueListener listener)
         {
             open.Set(true);
             this.listener = listener;
         }
 
-        public void Run()
+        public virtual void Run()
         {
             IMessage message = null;
 
@@ -132,16 +134,11 @@ namespace Vlingo.Common.Message
             return null;
         }
 
-        private void ExecutorThreadStart()
+        private void TaskAction()
         {
-            while (shouldExecutorRun)
+            while (!cancellationSource.IsCancellationRequested)
             {
-                try
-                {
-                    Thread.Sleep(Timeout.Infinite);
-                }
-                catch(Exception) { }
-
+                resetEvent.WaitOne();
                 while (!queue.IsEmpty)
                 {
                     Run();

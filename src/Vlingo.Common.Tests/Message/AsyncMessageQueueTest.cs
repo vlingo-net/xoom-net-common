@@ -64,7 +64,7 @@ namespace Vlingo.Common.Tests.Message
         [Fact]
         public void TestIsEmptyWithFlush()
         {
-            for (int idx = 0; idx < 100000; ++idx)
+            for (int idx = 0; idx < 1000; ++idx)
             {
                 queue.Enqueue(new Message());
             }
@@ -146,6 +146,7 @@ namespace Vlingo.Common.Tests.Message
                 }
                 else
                 {
+                    Thread.Sleep(System.TimeSpan.FromMilliseconds(1));
                     deliveredMessages.Add(message);
                 }
             }

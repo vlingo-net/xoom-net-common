@@ -18,7 +18,7 @@ namespace Vlingo.Common.Compiler
         {
             var className = type.Name;
 
-            if (type.IsInterface && type.Name.StartsWith('I'))
+            if (type.IsInterface && type.Name.StartsWith("I"))
             {
                 className = className.Substring(1);
             }

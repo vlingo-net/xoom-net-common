@@ -20,7 +20,6 @@ namespace Vlingo.Common.Message
         private AtomicBoolean open;
         private readonly ConcurrentQueue<IMessage> queue;
 
-        private readonly Task executorTask;
         private readonly CancellationTokenSource cancellationSource;
         private readonly AutoResetEvent resetEvent;
 
@@ -38,8 +37,7 @@ namespace Vlingo.Common.Message
 
             resetEvent = new AutoResetEvent(false);
             cancellationSource = new CancellationTokenSource();
-            executorTask = new Task(TaskAction, cancellationSource.Token);
-            executorTask.Start();
+            Task.Run(() => TaskAction(), cancellationSource.Token);
         }
 
         public virtual void Close() => Close(true);

@@ -34,4 +34,4 @@
 
 Thanks for your kind assistance! :smile:
 
-Vaughn Vernon and the Vlingo.NET team
+Vaughn Vernon and the Vlingo .NET team

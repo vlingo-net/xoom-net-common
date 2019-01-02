@@ -46,7 +46,7 @@ namespace Vlingo.Common.Tests
             var successInt = RandomInt();
             var expected = successInt * initialValue;
 
-            var outcome = Success.Of<Exception, int>(initialValue).AndThenInto(val => Success.Of<Exception, int>(val * successInt)).Get();
+            var outcome = Success.Of<Exception, int>(initialValue).AndThenTo(val => Success.Of<Exception, int>(val * successInt)).Get();
 
             Assert.Equal(expected, outcome);
         }
@@ -86,7 +86,7 @@ namespace Vlingo.Common.Tests
             var initialValue = RandomInt();
 
             var success = Success.Of<ApplicationException, int>(initialValue);
-            var otherwise = success.OtherwiseInto(ex =>
+            var otherwise = success.OtherwiseTo(ex =>
             {
                 currentValue.Set(initialValue);
                 return Success.Of<ApplicationException, int>(initialValue);
@@ -119,7 +119,7 @@ namespace Vlingo.Common.Tests
         {
             var currentValue = new AtomicInteger(0);
             Failure.Of<Exception, int>(RandomException())
-                .AndThenInto(val => Success.Of<Exception, int>(currentValue.GetAndSet(val)));
+                .AndThenTo(val => Success.Of<Exception, int>(currentValue.GetAndSet(val)));
 
             Assert.Equal(0, currentValue.Get());
         }
@@ -149,7 +149,7 @@ namespace Vlingo.Common.Tests
         {
             var recordedValue = RandomInt();
             var outcome = Failure.Of<Exception, int>(RandomException())
-                .OtherwiseInto(ex => Success.Of<ApplicationException, int>(recordedValue))
+                .OtherwiseTo(ex => Success.Of<ApplicationException, int>(recordedValue))
                 .Get();
 
             Assert.Equal(recordedValue, outcome);

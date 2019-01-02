@@ -26,10 +26,10 @@ namespace Vlingo.Common
         ICompletes<T> AndThenConsume(long timeout, Action<T> consumer);
         ICompletes<T> AndThenConsume(Action<T> consumer);
 
-        O AndThenInto<F, O>(long timeout, F failedOutcomeValue, Func<T, O> function);
-        O AndThenInto<F,O>(F failedOutcomeValue, Func<T, O> function);
-        O AndThenInto<O>(long timeout, Func<T, O> function);
-        O AndThenInto<O>(Func<T, O> function);
+        O AndThenTo<F, O>(long timeout, F failedOutcomeValue, Func<T, O> function);
+        O AndThenTo<F,O>(F failedOutcomeValue, Func<T, O> function);
+        O AndThenTo<O>(long timeout, Func<T, O> function);
+        O AndThenTo<O>(Func<T, O> function);
 
         ICompletes<T> Otherwise(Func<T, T> function);
         ICompletes<T> OtherwiseConsume(Action<T> consumer);

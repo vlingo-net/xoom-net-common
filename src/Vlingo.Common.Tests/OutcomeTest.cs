@@ -115,7 +115,7 @@ namespace Vlingo.Common.Tests
         }
 
         [Fact]
-        public void TestThatAFailureIsNotComposedWithAndThenInto()
+        public void TestThatAFailureIsNotComposedWithAndThenTo()
         {
             var currentValue = new AtomicInteger(0);
             Failure.Of<Exception, int>(RandomException())

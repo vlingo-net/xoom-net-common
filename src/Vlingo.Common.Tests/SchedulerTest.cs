@@ -15,45 +15,43 @@ namespace Vlingo.Common.Tests
     {
         private readonly IScheduled scheduled;
         private readonly Scheduler scheduler;
-        private CountdownEvent countDown;
 
         public SchedulerTest()
         {
             scheduled = new Scheduled();
             scheduler = new Scheduler();
-            countDown = new CountdownEvent(1);
         }
 
         public void Dispose()
         {
             scheduler.Close();
-            countDown.Dispose();
         }
 
         [Fact]
         public void TestScheduleOnceOneHappyDelivery()
         {
-            var holder = new CounterHolder();
-            countDown.Reset(1);
-            holder.Until = countDown;
+            using (var holder = new CounterHolder(1))
+            {
 
-            scheduler.ScheduleOnce(scheduled, holder, 0, 1);
-            holder.Until.Wait();
+                scheduler.ScheduleOnce(scheduled, holder, 0, 1);
 
-            Assert.Equal(1, holder.Counter);
+                holder.Completes();
+
+                Assert.Equal(1, holder.Counter);
+            }
         }
 
         [Fact]
         public void TestScheduleManyHappyDelivery()
         {
-            var holder = new CounterHolder();
-            countDown.Reset(505);
-            holder.Until = countDown;
+            using (var holder = new CounterHolder(505))
+            {
+                scheduler.Schedule(scheduled, holder, 0, 1);
 
-            scheduler.Schedule(scheduled, holder, 0, 1);
-            holder.Until.Wait();
+                holder.Completes();
 
-            Assert.True(holder.Counter > 500);
+                Assert.True(holder.Counter > 500);
+            }
         }
 
 
@@ -65,16 +63,33 @@ namespace Vlingo.Common.Tests
             }
         }
 
-        private class CounterHolder
+        private class CounterHolder : IDisposable
         {
+            private readonly CountdownEvent until;
+
+            public CounterHolder(int totalExpected)
+            {
+                until = new CountdownEvent(totalExpected);
+            }
+
             public int Counter { get; private set; } = 0;
-            public CountdownEvent Until { get; set; }
 
             public void Increment()
             {
                 ++Counter;
-                Until.Signal();
+                until.Signal();
             }
+
+            public void Completes()
+            {
+                try
+                {
+                    until.Wait();
+                }
+                catch { }
+            }
+
+            public void Dispose() => until.Dispose();
         }
     }
 }

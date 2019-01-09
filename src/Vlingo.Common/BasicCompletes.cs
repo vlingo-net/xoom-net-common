@@ -97,7 +97,7 @@ namespace Vlingo.Common
 
         public virtual ICompletes<T> AndThenConsume(System.Action<T> consumer) => AndThenConsume(-1L, default(T), consumer);
 
-        public virtual O AndThenInto<F, O>(long timeout, F failedOutcomeValue, Func<T, O> function)
+        public virtual O AndThenTo<F, O>(long timeout, F failedOutcomeValue, Func<T, O> function)
         {
             var nestedCompletes = new BasicCompletes<O>(state.Scheduler);
             nestedCompletes.state.FailedValue(failedOutcomeValue);
@@ -114,14 +114,14 @@ namespace Vlingo.Common
             return (O)(object)nestedCompletes;
         }
 
-        public virtual O AndThenInto<F, O>(F failedOutcomeValue, Func<T, O> function)
-            => AndThenInto(-1L, failedOutcomeValue, function);
+        public virtual O AndThenTo<F, O>(F failedOutcomeValue, Func<T, O> function)
+            => AndThenTo(-1L, failedOutcomeValue, function);
 
-        public virtual O AndThenInto<O>(long timeout, Func<T, O> function)
-            => AndThenInto<object,O>(timeout, null, function);
+        public virtual O AndThenTo<O>(long timeout, Func<T, O> function)
+            => AndThenTo<object,O>(timeout, null, function);
 
-        public virtual O AndThenInto<O>(Func<T, O> function)
-            => AndThenInto<object, O>(-1L, null, function);
+        public virtual O AndThenTo<O>(Func<T, O> function)
+            => AndThenTo<object, O>(-1L, null, function);
 
         public virtual ICompletes<T> Otherwise(Func<T, T> function)
         {

@@ -20,7 +20,7 @@ namespace Vlingo.Common
 
         public virtual IOutcome<TCause, Tuple<TValue, TSecondSuccess>> AlongWith<TOtherFailure, TSecondSuccess>(IOutcome<TOtherFailure, TSecondSuccess> outcome) where TOtherFailure : Exception
         {
-            return outcome.AndThenInto(
+            return outcome.AndThenTo(
                 secondOutcome => Success.Of<TCause, Tuple<TValue, TSecondSuccess>>(Tuple.Create(value, secondOutcome)));
         }
 
@@ -29,7 +29,7 @@ namespace Vlingo.Common
             return Success.Of<TCause, TNextSuccess>(action.Invoke(value));
         }
 
-        public virtual IOutcome<TNextFailure, TNextSuccess> AndThenInto<TNextFailure, TNextSuccess>(Func<TValue, IOutcome<TNextFailure, TNextSuccess>> action) where TNextFailure : Exception
+        public virtual IOutcome<TNextFailure, TNextSuccess> AndThenTo<TNextFailure, TNextSuccess>(Func<TValue, IOutcome<TNextFailure, TNextSuccess>> action) where TNextFailure : Exception
         {
             return action.Invoke(value);
         }
@@ -74,7 +74,7 @@ namespace Vlingo.Common
             return this;
         }
 
-        public virtual IOutcome<TNextFailure, TNextSuccess> OtherwiseInto<TNextFailure, TNextSuccess>(Func<TCause, IOutcome<TNextFailure, TNextSuccess>> action) where TNextFailure : Exception
+        public virtual IOutcome<TNextFailure, TNextSuccess> OtherwiseTo<TNextFailure, TNextSuccess>(Func<TCause, IOutcome<TNextFailure, TNextSuccess>> action) where TNextFailure : Exception
         {
             return Success.Of<TNextFailure, TNextSuccess>((TNextSuccess)(object)value);
         }
@@ -98,7 +98,7 @@ namespace Vlingo.Common
 
         public override int GetHashCode()
         {
-            return $"Success[{value}]".GetHashCode();
+            return 31 * value.GetHashCode();
         }
     }
 

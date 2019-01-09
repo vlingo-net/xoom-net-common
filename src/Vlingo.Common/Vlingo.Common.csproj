@@ -5,7 +5,7 @@
     
     <!-- NuGet Metadata -->
     <IsPackable>true</IsPackable>
-    <PackageVersion>0.2.0</PackageVersion>
+    <PackageVersion>0.2.1</PackageVersion>
     <PackageId>Vlingo.Common</PackageId>
     <Authors>Vlingo</Authors>
     <Description>
@@ -23,6 +23,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.9.0" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Vlingo.UUID" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

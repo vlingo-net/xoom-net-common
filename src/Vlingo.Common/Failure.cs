@@ -28,7 +28,7 @@ namespace Vlingo.Common
             return Failure.Of<TCause, TNextSuccess>(cause);
         }
 
-        public virtual IOutcome<TNextFailure, TNextSuccess> AndThenInto<TNextFailure, TNextSuccess>(Func<TValue, IOutcome<TNextFailure, TNextSuccess>> action) where TNextFailure : Exception
+        public virtual IOutcome<TNextFailure, TNextSuccess> AndThenTo<TNextFailure, TNextSuccess>(Func<TValue, IOutcome<TNextFailure, TNextSuccess>> action) where TNextFailure : Exception
         {
             return Failure.Of<TNextFailure, TNextSuccess>((TNextFailure)(Exception)cause);
         }
@@ -67,7 +67,7 @@ namespace Vlingo.Common
             return Success.Of<TCause, TValue>(action.Invoke(cause));
         }
 
-        public virtual IOutcome<TNextFailure, TNextSuccess> OtherwiseInto<TNextFailure, TNextSuccess>(Func<TCause, IOutcome<TNextFailure, TNextSuccess>> action) where TNextFailure : Exception
+        public virtual IOutcome<TNextFailure, TNextSuccess> OtherwiseTo<TNextFailure, TNextSuccess>(Func<TCause, IOutcome<TNextFailure, TNextSuccess>> action) where TNextFailure : Exception
         {
             return action.Invoke(cause);
         }
@@ -91,7 +91,7 @@ namespace Vlingo.Common
 
         public override int GetHashCode()
         {
-            return $"Failure[{cause}]".GetHashCode();
+            return 31 * cause.GetHashCode();
         }
     }
 

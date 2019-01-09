@@ -13,7 +13,7 @@ namespace Vlingo.Common
     {
         IOutcome<TFailure, TNextSuccess> AndThen<TNextSuccess>(Func<TSuccess, TNextSuccess> action);
 
-        IOutcome<TNextFailure, TNextSuccess> AndThenInto<TNextFailure, TNextSuccess>(
+        IOutcome<TNextFailure, TNextSuccess> AndThenTo<TNextFailure, TNextSuccess>(
             Func<TSuccess, IOutcome<TNextFailure, TNextSuccess>> action)
             where TNextFailure : Exception;
 
@@ -21,7 +21,7 @@ namespace Vlingo.Common
 
         IOutcome<TFailure, TSuccess> Otherwise(Func<TFailure, TSuccess> action);
 
-        IOutcome<TNextFailure, TNextSuccess> OtherwiseInto<TNextFailure, TNextSuccess>(
+        IOutcome<TNextFailure, TNextSuccess> OtherwiseTo<TNextFailure, TNextSuccess>(
             Func<TFailure, IOutcome<TNextFailure, TNextSuccess>> action)
             where TNextFailure : Exception;
 

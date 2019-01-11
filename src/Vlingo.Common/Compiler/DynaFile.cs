@@ -11,10 +11,10 @@ namespace Vlingo.Common.Compiler
 {
     public static class DynaFile
     {
-        public readonly static string GeneratedSources = $"target{Path.DirectorySeparatorChar}generated-sources{Path.DirectorySeparatorChar}";
-        public readonly static string GeneratedTestSources = $"target{Path.DirectorySeparatorChar}generated-test-sources{Path.DirectorySeparatorChar}";
-        public readonly static string RootOfMainClasses = $"target{Path.DirectorySeparatorChar}classes{Path.DirectorySeparatorChar}";
-        public readonly static string RootOfTestClasses = $"target{Path.DirectorySeparatorChar}test-classes{Path.DirectorySeparatorChar}";
+        public static readonly string GeneratedSources = $"target{Path.DirectorySeparatorChar}generated-sources{Path.DirectorySeparatorChar}";
+        public static readonly string GeneratedTestSources = $"target{Path.DirectorySeparatorChar}generated-test-sources{Path.DirectorySeparatorChar}";
+        public static readonly string RootOfMainClasses = $"target{Path.DirectorySeparatorChar}classes{Path.DirectorySeparatorChar}";
+        public static readonly string RootOfTestClasses = $"target{Path.DirectorySeparatorChar}test-classes{Path.DirectorySeparatorChar}";
 
         public static FileInfo PersistDynaClass(string pathToClass, byte[] dynaClass)
         {

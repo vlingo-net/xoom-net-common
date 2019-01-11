@@ -15,9 +15,9 @@ namespace Vlingo.Common.Message
     public class AsyncMessageQueue : IMessageQueue, IRunnable
     {
         private readonly IMessageQueue deadLettersQueue;
-        private AtomicBoolean dispatching;
+        private readonly AtomicBoolean dispatching;
         private IMessageQueueListener listener;
-        private AtomicBoolean open;
+        private readonly AtomicBoolean open;
         private readonly ConcurrentQueue<IMessage> queue;
 
         private readonly CancellationTokenSource cancellationSource;
@@ -69,21 +69,14 @@ namespace Vlingo.Common.Message
 
         public virtual void Flush()
         {
-            try
+            while (!queue.IsEmpty)
             {
-                while (!queue.IsEmpty)
-                {
-                    Thread.Sleep(1);
-                }
-
-                while (dispatching.Get())
-                {
-                    Thread.Sleep(1);
-                }
+                resetEvent.WaitOne();
             }
-            catch (Exception)
+
+            while (dispatching.Get())
             {
-                // ignore
+                resetEvent.WaitOne();
             }
         }
 
@@ -120,6 +113,7 @@ namespace Vlingo.Common.Message
             }
             finally
             {
+                resetEvent.Set();
                 dispatching.Set(false);
             }
         }

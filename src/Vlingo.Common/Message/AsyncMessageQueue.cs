@@ -71,12 +71,12 @@ namespace Vlingo.Common.Message
         {
             while (!queue.IsEmpty)
             {
-                resetEvent.WaitOne();
+                resetEvent.WaitOne(1);
             }
 
             while (dispatching.Get())
             {
-                resetEvent.WaitOne();
+                resetEvent.WaitOne(1);
             }
         }
 

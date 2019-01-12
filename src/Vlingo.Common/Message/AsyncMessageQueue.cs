@@ -21,7 +21,8 @@ namespace Vlingo.Common.Message
         private readonly ConcurrentQueue<IMessage> queue;
 
         private readonly CancellationTokenSource cancellationSource;
-        private readonly AutoResetEvent resetEvent;
+        private readonly AutoResetEvent taskProcessedEvent;
+        private readonly AutoResetEvent endDispatchingEvent;
 
         public AsyncMessageQueue()
             : this(null)
@@ -35,7 +36,8 @@ namespace Vlingo.Common.Message
             open = new AtomicBoolean(false);
             queue = new ConcurrentQueue<IMessage>();
 
-            resetEvent = new AutoResetEvent(false);
+            taskProcessedEvent = new AutoResetEvent(false);
+            endDispatchingEvent = new AutoResetEvent(false);
             cancellationSource = new CancellationTokenSource();
             Task.Run(() => TaskAction(), cancellationSource.Token);
         }
@@ -54,7 +56,7 @@ namespace Vlingo.Common.Message
                 }
 
                 cancellationSource.Cancel();
-                resetEvent.Set();
+                taskProcessedEvent.Set();
             }
         }
 
@@ -63,7 +65,7 @@ namespace Vlingo.Common.Message
             if (open.Get())
             {
                 queue.Enqueue(message);
-                resetEvent.Set();
+                taskProcessedEvent.Set();
             }
         }
 
@@ -71,12 +73,12 @@ namespace Vlingo.Common.Message
         {
             while (!queue.IsEmpty)
             {
-                resetEvent.WaitOne(1);
+                endDispatchingEvent.WaitOne();
             }
 
             while (dispatching.Get())
             {
-                resetEvent.WaitOne(1);
+                endDispatchingEvent.WaitOne();
             }
         }
 
@@ -113,8 +115,8 @@ namespace Vlingo.Common.Message
             }
             finally
             {
-                resetEvent.Set();
                 dispatching.Set(false);
+                endDispatchingEvent.Set();
             }
         }
 
@@ -132,7 +134,7 @@ namespace Vlingo.Common.Message
         {
             while (!cancellationSource.IsCancellationRequested)
             {
-                resetEvent.WaitOne();
+                taskProcessedEvent.WaitOne();
                 while (!queue.IsEmpty)
                 {
                     Run();

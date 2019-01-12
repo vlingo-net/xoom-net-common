@@ -203,8 +203,6 @@ namespace Vlingo.Common
             return (ICompletes<O>)this;
         }
 
-
-
         protected internal class Action<TAct>
         {
             protected internal readonly TAct defaultValue;
@@ -299,7 +297,7 @@ namespace Vlingo.Common
 
         protected internal class BasicActiveState<TBActSt> : IActiveState<TBActSt>, IScheduled
         {
-            private ConcurrentQueue<Action<TBActSt>> actions;
+            private readonly ConcurrentQueue<Action<TBActSt>> actions;
             private ICancellable cancellable;
             private readonly AtomicBoolean completed;
             private readonly AtomicBoolean completing;
@@ -307,24 +305,24 @@ namespace Vlingo.Common
             private readonly AtomicBoolean failed;
             private TBActSt failedOutcomeValue;
             private Action<TBActSt> failureAction;
-            private AtomicReference<Exception> exception;
+            private readonly AtomicReference<Exception> exception;
             private Func<Exception, TBActSt> exceptionAction;
             private readonly AtomicReference<object> outcome;
-            private Scheduler scheduler;
+            private readonly Scheduler scheduler;
             private readonly AtomicBoolean timedOut;
 
             protected internal BasicActiveState(Scheduler scheduler)
             {
                 this.scheduler = scheduler;
-                this.actions = new ConcurrentQueue<Action<TBActSt>>();
-                this.completed = new AtomicBoolean(false);
-                this.completing = new AtomicBoolean(false);
-                this.executingActions = new AtomicBoolean(false);
-                this.failed = new AtomicBoolean(false);
-                this.failedOutcomeValue = default(TBActSt);
-                this.exception = new AtomicReference<Exception>(null);
-                this.outcome = new AtomicReference<object>(null);
-                this.timedOut = new AtomicBoolean(false);
+                actions = new ConcurrentQueue<Action<TBActSt>>();
+                completed = new AtomicBoolean(false);
+                completing = new AtomicBoolean(false);
+                executingActions = new AtomicBoolean(false);
+                failed = new AtomicBoolean(false);
+                failedOutcomeValue = default(TBActSt);
+                exception = new AtomicReference<Exception>(null);
+                outcome = new AtomicReference<object>(null);
+                timedOut = new AtomicBoolean(false);
             }
 
             protected internal BasicActiveState() : this(null)
@@ -562,7 +560,7 @@ namespace Vlingo.Common
 
             private static void ClearQueue(ConcurrentQueue<Action<TBActSt>> queue)
             {
-                while (!queue.IsEmpty && queue.TryDequeue(out var _)) ;
+                while (!queue.IsEmpty && queue.TryDequeue(out _)) ;
             }
         }
     }

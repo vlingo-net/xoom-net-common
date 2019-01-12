@@ -14,7 +14,7 @@ namespace Vlingo.Common.Message
 {
     public class AsyncMessageQueue : IMessageQueue, IRunnable, IDisposable
     {
-        private bool disposed = false;
+        private bool disposed;
         private readonly IMessageQueue deadLettersQueue;
         private readonly AtomicBoolean dispatching;
         private IMessageQueueListener listener;

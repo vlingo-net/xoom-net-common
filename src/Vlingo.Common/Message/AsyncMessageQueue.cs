@@ -12,8 +12,9 @@ using System.Threading.Tasks;
 
 namespace Vlingo.Common.Message
 {
-    public class AsyncMessageQueue : IMessageQueue, IRunnable
+    public class AsyncMessageQueue : IMessageQueue, IRunnable, IDisposable
     {
+        private bool disposed = false;
         private readonly IMessageQueue deadLettersQueue;
         private readonly AtomicBoolean dispatching;
         private IMessageQueueListener listener;
@@ -58,6 +59,7 @@ namespace Vlingo.Common.Message
                 cancellationSource.Cancel();
                 taskProcessedEvent.Set();
             }
+            Dispose(true);
         }
 
         public virtual void Enqueue(IMessage message)
@@ -118,6 +120,32 @@ namespace Vlingo.Common.Message
                 dispatching.Set(false);
                 endDispatchingEvent.Set();
             }
+        }
+        
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+                return; 
+      
+            if (disposing) {
+                
+                if (open.Get())
+                {
+                    Close(true);
+                }
+
+                cancellationSource?.Dispose();
+                taskProcessedEvent?.Dispose();
+                endDispatchingEvent?.Dispose();
+            }
+      
+            disposed = true;
         }
 
         private IMessage Dequeue()

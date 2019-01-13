@@ -83,9 +83,8 @@ namespace Vlingo.Common
             return task;
         }
 
-        private class SchedulerTask : ICancellable, IDisposable
+        private class SchedulerTask : ICancellable
         {
-            private bool disposed;
             private readonly IScheduled scheduled;
             private readonly bool repeats;
             private Timer timer;
@@ -114,37 +113,14 @@ namespace Vlingo.Common
             {
                 if (timer != null)
                 {
-                    timer.Change(Timeout.Infinite, Timeout.Infinite);
+                    using (timer)
+                    {
+                        timer.Change(Timeout.Infinite, Timeout.Infinite);
+                    }
                     timer = null;
                 }
-                
-                Dispose(true);
 
                 return repeats || !hasRun;
-            }
-
-            public void Dispose()
-            {
-                Dispose(true);
-                GC.SuppressFinalize(this);
-            }
-        
-            protected virtual void Dispose(bool disposing)
-            {
-                if (disposed)
-                    return; 
-      
-                if (disposing) {
-                
-                    if (timer != null)
-                    {
-                        Cancel();
-                    }
-
-                    timer?.Dispose();
-                }
-      
-                disposed = true;
             }
         }
     }

@@ -131,7 +131,9 @@ namespace Vlingo.Common.Message
         protected virtual void Dispose(bool disposing)
         {
             if (disposed)
-                return; 
+            {
+                return;    
+            }
       
             if (disposing) {
                 

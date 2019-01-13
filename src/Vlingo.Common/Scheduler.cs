@@ -58,7 +58,9 @@ namespace Vlingo.Common
         protected virtual void Dispose(bool disposing)
         {
             if (disposed)
-                return; 
+            {
+                return;    
+            }
       
             if (disposing) {
                 

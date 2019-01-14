@@ -11,9 +11,10 @@ using System.Threading;
 
 namespace Vlingo.Common
 {
-    public class Scheduler
+    public class Scheduler: IDisposable
     {
-        private readonly ConcurrentBag<SchedulerTask> tasks;
+        private bool disposed;
+        private readonly ConcurrentStack<SchedulerTask> tasks;
 
         public virtual ICancellable Schedule(IScheduled scheduled, object data, long delayBefore, long interval)
             => CreateAndStore(
@@ -34,7 +35,7 @@ namespace Vlingo.Common
 
         public Scheduler()
         {
-            tasks = new ConcurrentBag<SchedulerTask>();
+            tasks = new ConcurrentStack<SchedulerTask>();
         }
 
         public virtual void Close()
@@ -43,6 +44,33 @@ namespace Vlingo.Common
             {
                 task.Cancel();
             }
+
+            tasks.Clear();
+            Dispose(true);
+        }
+        
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+            {
+                return;    
+            }
+      
+            if (disposing) {
+                
+                if (!tasks.IsEmpty)
+                {
+                    Close();
+                }
+            }
+      
+            disposed = true;
         }
 
         private SchedulerTask CreateAndStore(
@@ -53,7 +81,7 @@ namespace Vlingo.Common
             bool repeats)
         {
             var task = new SchedulerTask(scheduled, data, delayBefore, interval, repeats);
-            tasks.Add(task);
+            tasks.Push(task);
             return task;
         }
 
@@ -69,7 +97,7 @@ namespace Vlingo.Common
                 this.scheduled = scheduled;
                 this.repeats = repeats;
                 hasRun = false;
-                timer = new Timer(new TimerCallback(Tick), data, delayBefore, interval);
+                timer = new Timer(Tick, data, delayBefore, interval);
             }
 
             private void Tick(object data)
@@ -89,7 +117,7 @@ namespace Vlingo.Common
                 {
                     using (timer)
                     {
-                        timer.Change(-1, -1);
+                        timer.Change(Timeout.Infinite, Timeout.Infinite);
                     }
                     timer = null;
                 }

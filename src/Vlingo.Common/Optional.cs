@@ -26,8 +26,6 @@ namespace Vlingo.Common
             hasValue = false;
         }
 
-        
-
         public Optional<T> Filter(Func<T, bool> predicate)
         {
             if (hasValue && predicate(value))
@@ -67,10 +65,8 @@ namespace Vlingo.Common
                 return Optional.Empty<U>();
             }
 
-            return Optional.Of<U>(mapper(value));
+            return Optional.Of(mapper(value));
         }
-
-        
 
         public T OrElse(T other)
         {
@@ -105,12 +101,12 @@ namespace Vlingo.Common
                 return false;
             }
 
-            if(!other.hasValue && !this.hasValue)
+            if(!other.hasValue && !hasValue)
             {
                 return true; // both empty
             }
 
-            if(!other.hasValue || !this.hasValue || !value.Equals(other.value))
+            if(!other.hasValue || !hasValue || !value.Equals(other.value))
             {
                 return false;
             }

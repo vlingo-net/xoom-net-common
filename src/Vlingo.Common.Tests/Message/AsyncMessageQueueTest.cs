@@ -5,6 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Vlingo.Common.Message;
@@ -12,7 +13,7 @@ using Xunit;
 
 namespace Vlingo.Common.Tests.Message
 {
-    public class AsyncMessageQueueTest
+    public class AsyncMessageQueueTest: IDisposable
     {
         private readonly CountingDeadLettersQueue countingDeadLettersQueue;
         private readonly CountingDeadLettersListener countingDeadLettersListener;
@@ -91,6 +92,24 @@ namespace Vlingo.Common.Tests.Message
             Assert.NotEqual(1001, deliveredMessages.Count);
             Assert.Equal(1000, deliveredMessages.Count);
         }
+        
+        [Fact]
+        public void TestDispose()
+        {
+            for (int idx = 0; idx < 1000; ++idx)
+            {
+                queue.Enqueue(new Message());
+            }
+
+            queue.Dispose();
+
+            queue.Enqueue(new Message());
+
+            queue.Flush();
+
+            Assert.NotEqual(1001, deliveredMessages.Count);
+            Assert.Equal(1000, deliveredMessages.Count);
+        }
 
         [Fact]
         public void TestDeadLettersQueue()
@@ -112,6 +131,13 @@ namespace Vlingo.Common.Tests.Message
 
             Assert.Equal(5, countingDeadLettersQueue.EnqueuedCount);
             Assert.Equal(5, countingDeadLettersListener.HandledCount);
+        }
+        
+        public void Dispose()
+        {
+            countingDeadLettersQueue?.Dispose();
+            queue?.Dispose();
+            exceptionsQueue?.Dispose();
         }
 
         private class Message : IMessage { }

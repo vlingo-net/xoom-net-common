@@ -12,10 +12,6 @@ namespace Vlingo.Common.Compiler
 {
     public class DynaClassLoader
     {
-        public DynaClassLoader()
-        {
-        }
-
         internal Type AddDynaClass(string fullyQualifiedClassName, byte[] byteCode)
         {
             var loadedAssembly = Assembly.Load(byteCode);
@@ -30,7 +26,7 @@ namespace Vlingo.Common.Compiler
 
         public Type LoadClass(string fullyQualifiedClassName)
         {
-            var assemblies = AppDomain.CurrentDomain?.GetAssemblies();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             foreach (var assembly in assemblies)
             {
                 var type = assembly.GetType(fullyQualifiedClassName);

@@ -19,10 +19,6 @@ namespace Vlingo.Common.Compiler
 {
     public class DynaCompiler
     {
-        public DynaCompiler()
-        {
-        }
-
         public Type Compile(Input input)
         {
             try
@@ -57,7 +53,7 @@ namespace Vlingo.Common.Compiler
                     .AddReferences(metadataRefs)
                     .AddSyntaxTrees(tree);
 
-                byte[] byteCode = null;
+                byte[] byteCode;
 
                 using (var ilStream = new MemoryStream())
                 {

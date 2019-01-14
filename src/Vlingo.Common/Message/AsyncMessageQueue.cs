@@ -12,16 +12,18 @@ using System.Threading.Tasks;
 
 namespace Vlingo.Common.Message
 {
-    public class AsyncMessageQueue : IMessageQueue, IRunnable
+    public class AsyncMessageQueue : IMessageQueue, IRunnable, IDisposable
     {
+        private bool disposed;
         private readonly IMessageQueue deadLettersQueue;
-        private AtomicBoolean dispatching;
+        private readonly AtomicBoolean dispatching;
         private IMessageQueueListener listener;
-        private AtomicBoolean open;
+        private readonly AtomicBoolean open;
         private readonly ConcurrentQueue<IMessage> queue;
 
         private readonly CancellationTokenSource cancellationSource;
-        private readonly AutoResetEvent resetEvent;
+        private readonly AutoResetEvent taskProcessedEvent;
+        private readonly AutoResetEvent endDispatchingEvent;
 
         public AsyncMessageQueue()
             : this(null)
@@ -35,7 +37,8 @@ namespace Vlingo.Common.Message
             open = new AtomicBoolean(false);
             queue = new ConcurrentQueue<IMessage>();
 
-            resetEvent = new AutoResetEvent(false);
+            taskProcessedEvent = new AutoResetEvent(false);
+            endDispatchingEvent = new AutoResetEvent(false);
             cancellationSource = new CancellationTokenSource();
             Task.Run(() => TaskAction(), cancellationSource.Token);
         }
@@ -54,8 +57,9 @@ namespace Vlingo.Common.Message
                 }
 
                 cancellationSource.Cancel();
-                resetEvent.Set();
+                taskProcessedEvent.Set();
             }
+            Dispose(true);
         }
 
         public virtual void Enqueue(IMessage message)
@@ -63,27 +67,20 @@ namespace Vlingo.Common.Message
             if (open.Get())
             {
                 queue.Enqueue(message);
-                resetEvent.Set();
+                taskProcessedEvent.Set();
             }
         }
 
         public virtual void Flush()
         {
-            try
+            while (!queue.IsEmpty)
             {
-                while (!queue.IsEmpty)
-                {
-                    Thread.Sleep(1);
-                }
-
-                while (dispatching.Get())
-                {
-                    Thread.Sleep(1);
-                }
+                endDispatchingEvent.WaitOne();
             }
-            catch (Exception)
+
+            while (dispatching.Get())
             {
-                // ignore
+                endDispatchingEvent.WaitOne();
             }
         }
 
@@ -121,7 +118,36 @@ namespace Vlingo.Common.Message
             finally
             {
                 dispatching.Set(false);
+                endDispatchingEvent.Set();
             }
+        }
+        
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+            {
+                return;    
+            }
+      
+            if (disposing) {
+                
+                if (open.Get())
+                {
+                    Close(true);
+                }
+
+                cancellationSource?.Dispose();
+                taskProcessedEvent?.Dispose();
+                endDispatchingEvent?.Dispose();
+            }
+      
+            disposed = true;
         }
 
         private IMessage Dequeue()
@@ -138,7 +164,7 @@ namespace Vlingo.Common.Message
         {
             while (!cancellationSource.IsCancellationRequested)
             {
-                resetEvent.WaitOne();
+                taskProcessedEvent.WaitOne();
                 while (!queue.IsEmpty)
                 {
                     Run();

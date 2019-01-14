@@ -11,14 +11,14 @@ namespace Vlingo.Common.Version
 {
     public class SemanticVersion
     {
-        public const int MAJOR_MASK = 0x7fff0000;
-        public const int MAJOR_SHIFT = 16;
-        public const int MAJOR_MAX = 32767;
-        public const int MINOR_MASK = 0x0000ff00;
-        public const int MINOR_SHIFT = 8;
-        public const int MINOR_MAX = 255;
-        public const int PATCH_MASK = 0x000000ff;
-        public const int PATCH_MAX = 255;
+        private const int MAJOR_MASK = 0x7fff0000;
+        private const int MAJOR_SHIFT = 16;
+        private const int MAJOR_MAX = 32767;
+        private const int MINOR_MASK = 0x0000ff00;
+        private const int MINOR_SHIFT = 8;
+        private const int MINOR_MAX = 255;
+        private const int PATCH_MASK = 0x000000ff;
+        private const int PATCH_MAX = 255;
 
         private readonly int major;
         private readonly int minor;

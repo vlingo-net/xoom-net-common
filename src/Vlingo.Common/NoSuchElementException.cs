@@ -17,7 +17,6 @@ namespace Vlingo.Common
 
         public NoSuchElementException(Exception inner) : this("No such element", inner)
         {
-
         }
     }
 }

@@ -41,15 +41,15 @@ namespace Vlingo.Common
 
         protected internal class RepeatableActiveState<TRActSt> : BasicActiveState<TRActSt>
         {
-            private ConcurrentQueue<Action<TRActSt>> actionsBackup;
-            private ConcurrentQueue<TRActSt> pendingOutcomes;
-            private AtomicBoolean repeating;
+            private readonly ConcurrentQueue<Action<TRActSt>> actionsBackup;
+            private readonly ConcurrentQueue<TRActSt> pendingOutcomes;
+            private readonly AtomicBoolean repeating;
 
             protected internal RepeatableActiveState(Scheduler scheduler) : base(scheduler)
             {
-                this.actionsBackup = new ConcurrentQueue<Action<TRActSt>>();
-                this.pendingOutcomes = new ConcurrentQueue<TRActSt>();
-                this.repeating = new AtomicBoolean(false);
+                actionsBackup = new ConcurrentQueue<Action<TRActSt>>();
+                pendingOutcomes = new ConcurrentQueue<TRActSt>();
+                repeating = new AtomicBoolean(false);
             }
 
             protected internal RepeatableActiveState() : this(null)

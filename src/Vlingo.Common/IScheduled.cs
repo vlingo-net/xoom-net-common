@@ -5,10 +5,17 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
+using System.Threading.Tasks;
+
 namespace Vlingo.Common
 {
     public interface IScheduled
     {
         void IntervalSignal(IScheduled scheduled, object data);
+    }
+
+    public interface IScheduledAsync : IScheduled
+    {
+        Task IntervalSignalAsync(IScheduled scheduled, object data);
     }
 }

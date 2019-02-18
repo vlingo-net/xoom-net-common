@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace Vlingo.Common
@@ -42,7 +41,7 @@ namespace Vlingo.Common
             }
             else
             {
-                this.state.FailedValue(outcome);
+                this.state.FailedValue(Optional.Of(outcome));
                 this.state.Failed();
             }
         }
@@ -53,7 +52,7 @@ namespace Vlingo.Common
             this.state.Outcome(outcome);
         }
 
-        public virtual ICompletes<T> AndThen(long timeout, T failedOutcomeValue, Func<T, T> function)
+        private ICompletes<T> AndThenInternal(long timeout, Optional<T> failedOutcomeValue, Func<T, T> function)
         {
             state.FailedValue(failedOutcomeValue);
             state.Action(Action<T>.With(function));
@@ -68,13 +67,19 @@ namespace Vlingo.Common
             return this;
         }
 
-        public virtual ICompletes<T> AndThen(T failedOutcomeValue, Func<T, T> function) => AndThen(-1L, failedOutcomeValue, function);
+        public virtual ICompletes<T> AndThen(long timeout, T failedOutcomeValue, Func<T, T> function)
+            => AndThenInternal(timeout, Optional.Of(failedOutcomeValue), function);
 
-        public virtual ICompletes<T> AndThen(long timeout, Func<T, T> function) => AndThen(timeout, default(T), function);
+        public virtual ICompletes<T> AndThen(T failedOutcomeValue, Func<T, T> function) 
+            => AndThenInternal(-1L, Optional.Of(failedOutcomeValue), function);
 
-        public virtual ICompletes<T> AndThen(Func<T, T> function) => AndThen(-1L, default(T), function);
+        public virtual ICompletes<T> AndThen(long timeout, Func<T, T> function) 
+            => AndThenInternal(timeout, Optional.Empty<T>(), function);
 
-        public virtual ICompletes<T> AndThenConsume(long timeout, T failedOutcomeValue, System.Action<T> consumer)
+        public virtual ICompletes<T> AndThen(Func<T, T> function) 
+            => AndThenInternal(-1L, Optional.Empty<T>(), function);
+
+        private ICompletes<T> AndThenConsumeInternal(long timeout, Optional<T> failedOutcomeValue, System.Action<T> consumer)
         {
             state.FailedValue(failedOutcomeValue);
             state.Action(Action<T>.With(consumer));
@@ -89,15 +94,19 @@ namespace Vlingo.Common
             return this;
         }
 
+        public virtual ICompletes<T> AndThenConsume(long timeout, T failedOutcomeValue, System.Action<T> consumer)
+            => AndThenConsumeInternal(timeout, Optional.Of(failedOutcomeValue), consumer);
+
         public virtual ICompletes<T> AndThenConsume(long timeout, System.Action<T> consumer)
-            => AndThenConsume(timeout, default(T), consumer);
+            => AndThenConsumeInternal(timeout, Optional.Empty<T>(), consumer);
 
         public virtual ICompletes<T> AndThenConsume(T failedOutcomeValue, System.Action<T> consumer)
-            => AndThenConsume(-1L, failedOutcomeValue, consumer);
+            => AndThenConsumeInternal(-1L, Optional.Of(failedOutcomeValue), consumer);
 
-        public virtual ICompletes<T> AndThenConsume(System.Action<T> consumer) => AndThenConsume(-1L, default(T), consumer);
+        public virtual ICompletes<T> AndThenConsume(System.Action<T> consumer) 
+            => AndThenConsumeInternal(-1L, Optional.Empty<T>(), consumer);
 
-        public virtual O AndThenTo<F, O>(long timeout, F failedOutcomeValue, Func<T, O> function)
+        private O AndThenToInternal<F, O>(long timeout, Optional<F> failedOutcomeValue, Func<T, O> function)
         {
             var nestedCompletes = new BasicCompletes<O>(state.Scheduler);
             nestedCompletes.state.FailedValue(failedOutcomeValue);
@@ -114,14 +123,17 @@ namespace Vlingo.Common
             return (O)(object)nestedCompletes;
         }
 
+        public virtual O AndThenTo<F, O>(long timeout, F failedOutcomeValue, Func<T, O> function)
+            => AndThenToInternal(timeout, Optional.Of(failedOutcomeValue), function);
+
         public virtual O AndThenTo<F, O>(F failedOutcomeValue, Func<T, O> function)
-            => AndThenTo(-1L, failedOutcomeValue, function);
+            => AndThenToInternal(-1L, Optional.Of(failedOutcomeValue), function);
 
         public virtual O AndThenTo<O>(long timeout, Func<T, O> function)
-            => AndThenTo<object,O>(timeout, null, function);
+            => AndThenToInternal(timeout, Optional.Empty<object>(), function);
 
         public virtual O AndThenTo<O>(Func<T, O> function)
-            => AndThenTo<object, O>(-1L, null, function);
+            => AndThenToInternal(-1L, Optional.Empty<object>(), function);
 
         public virtual ICompletes<T> Otherwise(Func<T, T> function)
         {
@@ -195,7 +207,7 @@ namespace Vlingo.Common
 
         public virtual ICompletes<O> With<O>(O outcome)
         {
-            if (!state.HandleFailure((T)(object)outcome))
+            if (!state.HandleFailure(Optional.Of((T)(object)outcome)))
             {
                 state.CompletedWith((T)(object)outcome);
             }
@@ -276,12 +288,12 @@ namespace Vlingo.Common
             void CompletedWith(TActSt outcome);
             bool HasFailed { get; }
             void Failed();
-            void FailedValue<F>(F failedOutcomeValue);
+            void FailedValue<F>(Optional<F> failedOutcomeValue);
             TActSt FailedValue();
             void FailureAction(Action<TActSt> action);
             void FailureAction();
             Action<TActSt> FailureActionFunction();
-            bool HandleFailure(TActSt outcome);
+            bool HandleFailure(Optional<TActSt> outcome);
             void ExceptionAction(Func<Exception, TActSt> function);
             void HandleException(Exception e);
             bool HasException { get; }
@@ -303,7 +315,7 @@ namespace Vlingo.Common
             private readonly AtomicBoolean completing;
             private readonly AtomicBoolean executingActions;
             private readonly AtomicBoolean failed;
-            private TBActSt failedOutcomeValue;
+            private Optional<TBActSt> failedOutcomeValue;
             private Action<TBActSt> failureAction;
             private readonly AtomicReference<Exception> exception;
             private Func<Exception, TBActSt> exceptionAction;
@@ -319,7 +331,7 @@ namespace Vlingo.Common
                 completing = new AtomicBoolean(false);
                 executingActions = new AtomicBoolean(false);
                 failed = new AtomicBoolean(false);
-                failedOutcomeValue = default(TBActSt);
+                failedOutcomeValue = Optional.Empty<TBActSt>();
                 exception = new AtomicReference<Exception>(null);
                 outcome = new AtomicReference<object>(null);
                 timedOut = new AtomicBoolean(false);
@@ -388,12 +400,15 @@ namespace Vlingo.Common
                 HandleFailure(failedOutcomeValue);
             }
 
-            public virtual void FailedValue<F>(F failedOutcomeValue)
+            public virtual void FailedValue<F>(Optional<F> failedOutcomeValue)
             {
-                this.failedOutcomeValue = (TBActSt)(object)failedOutcomeValue;
+                if (failedOutcomeValue.IsPresent)
+                {
+                    this.failedOutcomeValue = failedOutcomeValue.Map(x => (TBActSt)(object)x);
+                }
             }
 
-            public virtual TBActSt FailedValue() => failedOutcomeValue;
+            public virtual TBActSt FailedValue() => failedOutcomeValue.Get();
 
             public virtual void FailureAction(Action<TBActSt> action)
             {
@@ -422,7 +437,7 @@ namespace Vlingo.Common
 
             public virtual Action<TBActSt> FailureActionFunction() => failureAction;
 
-            public virtual bool HandleFailure(TBActSt outcome)
+            public virtual bool HandleFailure(Optional<TBActSt> outcome)
             {
                 if (IsCompleted && HasFailed)
                 {
@@ -430,20 +445,17 @@ namespace Vlingo.Common
                 }
 
                 var handle = false;
-                if (outcome == null && failedOutcomeValue == null)
+                if (outcome.Equals(failedOutcomeValue))
                 {
                     handle = true;
                 }
-                else if (outcome != null && failedOutcomeValue != null && failedOutcomeValue.Equals(outcome))
-                {
-                    handle = true;
-                }
+
 
                 if (handle)
                 {
                     failed.Set(true);
                     ClearQueue(actions);
-                    this.outcome.Set(failedOutcomeValue);
+                    this.outcome.Set(failedOutcomeValue.Get());
                     completed.Set(true);
                     FailureAction();
                 }

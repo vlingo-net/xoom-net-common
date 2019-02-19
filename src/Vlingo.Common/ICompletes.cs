@@ -11,7 +11,7 @@ namespace Vlingo.Common
 {
     public interface ICompletes
     {
-        ICompletes<O> With<O>(O outcome);
+        ICompletes<TO> With<TO>(TO outcome);
     }
 
     public interface ICompletes<T> : ICompletes
@@ -26,10 +26,10 @@ namespace Vlingo.Common
         ICompletes<T> AndThenConsume(TimeSpan timeout, Action<T> consumer);
         ICompletes<T> AndThenConsume(Action<T> consumer);
 
-        O AndThenTo<F, O>(TimeSpan timeout, F failedOutcomeValue, Func<T, O> function);
-        O AndThenTo<F,O>(F failedOutcomeValue, Func<T, O> function);
-        O AndThenTo<O>(TimeSpan timeout, Func<T, O> function);
-        O AndThenTo<O>(Func<T, O> function);
+        TO AndThenTo<TF, TO>(TimeSpan timeout, TF failedOutcomeValue, Func<T, TO> function);
+        TO AndThenTo<TF, TO>(TF failedOutcomeValue, Func<T, TO> function);
+        TO AndThenTo<TO>(TimeSpan timeout, Func<T, TO> function);
+        TO AndThenTo<TO>(Func<T, TO> function);
 
         ICompletes<T> Otherwise(Func<T, T> function);
         ICompletes<T> OtherwiseConsume(Action<T> consumer);
@@ -43,7 +43,6 @@ namespace Vlingo.Common
         bool HasOutcome { get; }
         T Outcome { get; }
         ICompletes<T> Repeat();
-        
     }
 
     public static class Completes

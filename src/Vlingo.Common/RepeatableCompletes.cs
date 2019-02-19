@@ -32,11 +32,11 @@ namespace Vlingo.Common
             return this;
         }
 
-        public override ICompletes<O> With<O>(O outcome)
+        public override ICompletes<TO> With<TO>(TO outcome)
         {
             state.Outcome((T)(object)outcome);
             state.Repeat();
-            return (ICompletes<O>)this;
+            return (ICompletes<TO>)this;
         }
 
         protected internal class RepeatableActiveState<TRActSt> : BasicActiveState<TRActSt>

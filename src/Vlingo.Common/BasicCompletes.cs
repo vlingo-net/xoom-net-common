@@ -106,12 +106,12 @@ namespace Vlingo.Common
         public virtual ICompletes<T> AndThenConsume(System.Action<T> consumer) 
             => AndThenConsumeInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<T>(), consumer);
 
-        private O AndThenToInternal<F, O>(TimeSpan timeout, Optional<F> failedOutcomeValue, Func<T, O> function)
+        private TO AndThenToInternal<TF, TO>(TimeSpan timeout, Optional<TF> failedOutcomeValue, Func<T, TO> function)
         {
-            var nestedCompletes = new BasicCompletes<O>(state.Scheduler);
+            var nestedCompletes = new BasicCompletes<TO>(state.Scheduler);
             nestedCompletes.state.FailedValue(failedOutcomeValue);
-            nestedCompletes.state.FailureAction((BasicCompletes<O>.Action<O>)(object)state.FailureActionFunction());
-            state.Action((Action<T>)(object)BasicCompletes<O>.Action<O>.With(function, nestedCompletes));
+            nestedCompletes.state.FailureAction((BasicCompletes<TO>.Action<TO>)(object)state.FailureActionFunction());
+            state.Action((Action<T>)(object)BasicCompletes<TO>.Action<TO>.With(function, nestedCompletes));
             if (state.IsCompleted)
             {
                 state.CompleteActions();
@@ -120,19 +120,19 @@ namespace Vlingo.Common
             {
                 state.StartTimer(timeout);
             }
-            return (O)(object)nestedCompletes;
+            return (TO)(object)nestedCompletes;
         }
 
-        public virtual O AndThenTo<F, O>(TimeSpan timeout, F failedOutcomeValue, Func<T, O> function)
+        public virtual TO AndThenTo<TF, TO>(TimeSpan timeout, TF failedOutcomeValue, Func<T, TO> function)
             => AndThenToInternal(timeout, Optional.Of(failedOutcomeValue), function);
 
-        public virtual O AndThenTo<F, O>(F failedOutcomeValue, Func<T, O> function)
+        public virtual TO AndThenTo<TF, TO>(TF failedOutcomeValue, Func<T, TO> function)
             => AndThenToInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), function);
 
-        public virtual O AndThenTo<O>(TimeSpan timeout, Func<T, O> function)
+        public virtual TO AndThenTo<TO>(TimeSpan timeout, Func<T, TO> function)
             => AndThenToInternal(timeout, Optional.Empty<object>(), function);
 
-        public virtual O AndThenTo<O>(Func<T, O> function)
+        public virtual TO AndThenTo<TO>(Func<T, TO> function)
             => AndThenToInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<object>(), function);
 
         public virtual ICompletes<T> Otherwise(Func<T, T> function)
@@ -195,14 +195,14 @@ namespace Vlingo.Common
             throw new NotSupportedException();
         }
 
-        public virtual ICompletes<O> With<O>(O outcome)
+        public virtual ICompletes<TO> With<TO>(TO outcome)
         {
             if (!state.HandleFailure(Optional.Of((T)(object)outcome)))
             {
                 state.CompletedWith((T)(object)outcome);
             }
 
-            return (ICompletes<O>)this;
+            return (ICompletes<TO>)this;
         }
 
         protected internal class Action<TAct>

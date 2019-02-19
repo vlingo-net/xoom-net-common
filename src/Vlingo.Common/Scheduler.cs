@@ -16,19 +16,19 @@ namespace Vlingo.Common
         private bool disposed;
         private readonly ConcurrentStack<SchedulerTask> tasks;
 
-        public virtual ICancellable Schedule(IScheduled scheduled, object data, long delayBefore, long interval)
+        public virtual ICancellable Schedule(IScheduled scheduled, object data, TimeSpan delayBefore, TimeSpan interval)
             => CreateAndStore(
                 scheduled,
                 data,
-                TimeSpan.FromMilliseconds(delayBefore),
-                TimeSpan.FromMilliseconds(interval),
+                delayBefore,
+                interval,
                 true);
 
-        public virtual ICancellable ScheduleOnce(IScheduled scheduled, object data, long delayBefore, long interval)
+        public virtual ICancellable ScheduleOnce(IScheduled scheduled, object data, TimeSpan delayBefore, TimeSpan interval)
             => CreateAndStore(
                 scheduled,
                 data,
-                TimeSpan.FromMilliseconds(delayBefore + interval),
+                delayBefore + interval,
                 TimeSpan.FromMilliseconds(Timeout.Infinite),
                 false);
 

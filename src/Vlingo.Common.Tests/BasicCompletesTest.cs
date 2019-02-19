@@ -81,11 +81,11 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThen(1000L, value => value * 2)
+                .AndThen(TimeSpan.FromMilliseconds(1000), value => value * 2)
                 .AndThen(x => andThenValue = x);
 
             completes.With(5);
-            completes.Await(10);
+            completes.Await(TimeSpan.FromMilliseconds(10));
 
             Assert.Equal(10, andThenValue);
         }
@@ -97,7 +97,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThen(1, -10, value => value * 2)
+                .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
                 .AndThen(x => andThenValue = x);
 
             Thread.Sleep(100);
@@ -150,7 +150,7 @@ namespace Vlingo.Common.Tests
         {
             var completes = new BasicCompletes<int>(new Scheduler());
 
-            var completed = completes.Await(10);
+            var completed = completes.Await(TimeSpan.FromMilliseconds(10));
 
             completes.With(5);
 

@@ -52,7 +52,7 @@ namespace Vlingo.Common
             this.state.Outcome(outcome);
         }
 
-        private ICompletes<T> AndThenInternal(long timeout, Optional<T> failedOutcomeValue, Func<T, T> function)
+        private ICompletes<T> AndThenInternal(TimeSpan timeout, Optional<T> failedOutcomeValue, Func<T, T> function)
         {
             state.FailedValue(failedOutcomeValue);
             state.Action(Action<T>.With(function));
@@ -67,19 +67,19 @@ namespace Vlingo.Common
             return this;
         }
 
-        public virtual ICompletes<T> AndThen(long timeout, T failedOutcomeValue, Func<T, T> function)
+        public virtual ICompletes<T> AndThen(TimeSpan timeout, T failedOutcomeValue, Func<T, T> function)
             => AndThenInternal(timeout, Optional.Of(failedOutcomeValue), function);
 
         public virtual ICompletes<T> AndThen(T failedOutcomeValue, Func<T, T> function) 
-            => AndThenInternal(-1L, Optional.Of(failedOutcomeValue), function);
+            => AndThenInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), function);
 
-        public virtual ICompletes<T> AndThen(long timeout, Func<T, T> function) 
+        public virtual ICompletes<T> AndThen(TimeSpan timeout, Func<T, T> function) 
             => AndThenInternal(timeout, Optional.Empty<T>(), function);
 
         public virtual ICompletes<T> AndThen(Func<T, T> function) 
-            => AndThenInternal(-1L, Optional.Empty<T>(), function);
+            => AndThenInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<T>(), function);
 
-        private ICompletes<T> AndThenConsumeInternal(long timeout, Optional<T> failedOutcomeValue, System.Action<T> consumer)
+        private ICompletes<T> AndThenConsumeInternal(TimeSpan timeout, Optional<T> failedOutcomeValue, System.Action<T> consumer)
         {
             state.FailedValue(failedOutcomeValue);
             state.Action(Action<T>.With(consumer));
@@ -94,19 +94,19 @@ namespace Vlingo.Common
             return this;
         }
 
-        public virtual ICompletes<T> AndThenConsume(long timeout, T failedOutcomeValue, System.Action<T> consumer)
+        public virtual ICompletes<T> AndThenConsume(TimeSpan timeout, T failedOutcomeValue, System.Action<T> consumer)
             => AndThenConsumeInternal(timeout, Optional.Of(failedOutcomeValue), consumer);
 
-        public virtual ICompletes<T> AndThenConsume(long timeout, System.Action<T> consumer)
+        public virtual ICompletes<T> AndThenConsume(TimeSpan timeout, System.Action<T> consumer)
             => AndThenConsumeInternal(timeout, Optional.Empty<T>(), consumer);
 
         public virtual ICompletes<T> AndThenConsume(T failedOutcomeValue, System.Action<T> consumer)
-            => AndThenConsumeInternal(-1L, Optional.Of(failedOutcomeValue), consumer);
+            => AndThenConsumeInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), consumer);
 
         public virtual ICompletes<T> AndThenConsume(System.Action<T> consumer) 
-            => AndThenConsumeInternal(-1L, Optional.Empty<T>(), consumer);
+            => AndThenConsumeInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<T>(), consumer);
 
-        private O AndThenToInternal<F, O>(long timeout, Optional<F> failedOutcomeValue, Func<T, O> function)
+        private O AndThenToInternal<F, O>(TimeSpan timeout, Optional<F> failedOutcomeValue, Func<T, O> function)
         {
             var nestedCompletes = new BasicCompletes<O>(state.Scheduler);
             nestedCompletes.state.FailedValue(failedOutcomeValue);
@@ -123,17 +123,17 @@ namespace Vlingo.Common
             return (O)(object)nestedCompletes;
         }
 
-        public virtual O AndThenTo<F, O>(long timeout, F failedOutcomeValue, Func<T, O> function)
+        public virtual O AndThenTo<F, O>(TimeSpan timeout, F failedOutcomeValue, Func<T, O> function)
             => AndThenToInternal(timeout, Optional.Of(failedOutcomeValue), function);
 
         public virtual O AndThenTo<F, O>(F failedOutcomeValue, Func<T, O> function)
-            => AndThenToInternal(-1L, Optional.Of(failedOutcomeValue), function);
+            => AndThenToInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), function);
 
-        public virtual O AndThenTo<O>(long timeout, Func<T, O> function)
+        public virtual O AndThenTo<O>(TimeSpan timeout, Func<T, O> function)
             => AndThenToInternal(timeout, Optional.Empty<object>(), function);
 
         public virtual O AndThenTo<O>(Func<T, O> function)
-            => AndThenToInternal(-1L, Optional.Empty<object>(), function);
+            => AndThenToInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<object>(), function);
 
         public virtual ICompletes<T> Otherwise(Func<T, T> function)
         {
@@ -153,37 +153,27 @@ namespace Vlingo.Common
             return this;
         }
 
-        public virtual T Await() => Await(-1L);
+        public virtual T Await() => Await(TimeSpan.FromMilliseconds(Timeout.Infinite));
 
-        public virtual T Await(long timeout)
+        public virtual T Await(TimeSpan timeout)
         {
-            long countDown = timeout;
-            while (true)
+            if (IsCompleted)
             {
-                if (IsCompleted)
-                {
-                    return Outcome;
-                }
+                return Outcome;
+            }
+
+            using (var manualResetEvent = new ManualResetEventSlim(false))
+            {
                 try
                 {
-                    Thread.Sleep(TimeSpan.FromMilliseconds((countDown >= 0 && countDown < 100) ? countDown : 100));
+                    manualResetEvent.Wait(timeout, state.CompletedSignalToken.Token);
                 }
-                catch (Exception)
+                catch
                 {
                     // ignore
                 }
-                if (IsCompleted)
-                {
-                    return Outcome;
-                }
-                if (timeout >= 0)
-                {
-                    countDown -= 100;
-                    if (countDown <= 0)
-                    {
-                        return default(T);
-                    }
-                }
+
+                return Outcome;
             }
         }
 
@@ -304,7 +294,8 @@ namespace Vlingo.Common
             bool IsRepeatable { get; }
             void Repeat();
             Scheduler Scheduler { get; }
-            void StartTimer(long timeout);
+            void StartTimer(TimeSpan timeout);
+            CancellationTokenSource CompletedSignalToken { get; }
         }
 
         protected internal class BasicActiveState<TBActSt> : IActiveState<TBActSt>, IScheduled
@@ -335,6 +326,7 @@ namespace Vlingo.Common
                 exception = new AtomicReference<Exception>(null);
                 outcome = new AtomicReference<object>(null);
                 timedOut = new AtomicBoolean(false);
+                CompletedSignalToken = new CancellationTokenSource();
             }
 
             protected internal BasicActiveState() : this(null)
@@ -371,7 +363,7 @@ namespace Vlingo.Common
                 if (completing.CompareAndSet(false, true))
                 {
                     ExecuteActions();
-                    completed.Set(true);
+                    SetCompleted();
                     completing.Set(false);
                 }
             }
@@ -388,7 +380,7 @@ namespace Vlingo.Common
                     }
 
                     ExecuteActions();
-                    completed.Set(true);
+                    SetCompleted();
                     completing.Set(false);
                 }
             }
@@ -450,13 +442,12 @@ namespace Vlingo.Common
                     handle = true;
                 }
 
-
                 if (handle)
                 {
                     failed.Set(true);
                     ClearQueue(actions);
                     this.outcome.Set(failedOutcomeValue.Get());
-                    completed.Set(true);
+                    SetCompleted();
                     FailureAction();
                 }
                 return handle;
@@ -479,7 +470,7 @@ namespace Vlingo.Common
                     failed.Set(true);
                     ClearQueue(actions);
                     outcome.Set(exceptionAction.Invoke(e));
-                    completed.Set(true);
+                    SetCompleted();
                 }
             }
 
@@ -496,7 +487,7 @@ namespace Vlingo.Common
 
             public virtual O Outcome<O>()
             {
-                return (O)outcome.Get();
+                return (O)(outcome.Get() ?? default(O));
             }
 
             public virtual bool IsRepeatable => false;
@@ -508,12 +499,14 @@ namespace Vlingo.Common
 
             public virtual Scheduler Scheduler => scheduler;
 
-            public virtual void StartTimer(long timeout)
+            public CancellationTokenSource CompletedSignalToken { get; }
+
+            public virtual void StartTimer(TimeSpan timeout)
             {
-                if (timeout > 0 && scheduler != null)
+                if (timeout.TotalMilliseconds > 0 && scheduler != null)
                 {
-                    // 2L delayBefore prevents timeout until after return from here
-                    cancellable = scheduler.ScheduleOnce(this, null, 2L, timeout);
+                    // 2ms delayBefore prevents timeout until after return from here
+                    cancellable = scheduler.ScheduleOnce(this, null, TimeSpan.FromMilliseconds(2), timeout);
                 }
             }
 
@@ -568,6 +561,12 @@ namespace Vlingo.Common
                     }
                 }
                 executingActions.Set(false);
+            }
+
+            private void SetCompleted()
+            {
+                completed.Set(true);
+                CompletedSignalToken.Cancel();
             }
 
             private static void ClearQueue(ConcurrentQueue<Action<TBActSt>> queue)

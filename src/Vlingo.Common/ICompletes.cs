@@ -16,19 +16,19 @@ namespace Vlingo.Common
 
     public interface ICompletes<T> : ICompletes
     {
-        ICompletes<T> AndThen(long timeout, T failedOutcomeValue, Func<T, T> function);
+        ICompletes<T> AndThen(TimeSpan timeout, T failedOutcomeValue, Func<T, T> function);
         ICompletes<T> AndThen(T failedOutcomeValue, Func<T, T> function);
-        ICompletes<T> AndThen(long timeout, Func<T, T> function);
+        ICompletes<T> AndThen(TimeSpan timeout, Func<T, T> function);
         ICompletes<T> AndThen(Func<T, T> function);
 
-        ICompletes<T> AndThenConsume(long timeout, T failedOutcomeValue, Action<T> consumer);
+        ICompletes<T> AndThenConsume(TimeSpan timeout, T failedOutcomeValue, Action<T> consumer);
         ICompletes<T> AndThenConsume(T failedOutcomeValue, Action<T> consumer);
-        ICompletes<T> AndThenConsume(long timeout, Action<T> consumer);
+        ICompletes<T> AndThenConsume(TimeSpan timeout, Action<T> consumer);
         ICompletes<T> AndThenConsume(Action<T> consumer);
 
-        O AndThenTo<F, O>(long timeout, F failedOutcomeValue, Func<T, O> function);
+        O AndThenTo<F, O>(TimeSpan timeout, F failedOutcomeValue, Func<T, O> function);
         O AndThenTo<F,O>(F failedOutcomeValue, Func<T, O> function);
-        O AndThenTo<O>(long timeout, Func<T, O> function);
+        O AndThenTo<O>(TimeSpan timeout, Func<T, O> function);
         O AndThenTo<O>(Func<T, O> function);
 
         ICompletes<T> Otherwise(Func<T, T> function);
@@ -36,7 +36,7 @@ namespace Vlingo.Common
         ICompletes<T> RecoverFrom(Func<Exception, T> function);
 
         T Await();
-        T Await(long timeout);
+        T Await(TimeSpan timeout);
         bool IsCompleted { get; }
         bool HasFailed { get; }
         void Failed();

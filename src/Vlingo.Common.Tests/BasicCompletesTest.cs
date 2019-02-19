@@ -81,11 +81,11 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThen(1000L, value => value * 2)
+                .AndThen(TimeSpan.FromMilliseconds(1000), value => value * 2)
                 .AndThen(x => andThenValue = x);
 
             completes.With(5);
-            completes.Await(10);
+            completes.Await(TimeSpan.FromMilliseconds(10));
 
             Assert.Equal(10, andThenValue);
         }
@@ -97,7 +97,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThen(1, 0, value => value * 2)
+                .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
                 .AndThen(x => andThenValue = x);
 
             Thread.Sleep(100);
@@ -112,19 +112,19 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestThatFailureOutcomeFails()
         {
-            int andThenValue = -1, failueValue = 0;
+            int andThenValue = -1, failureValue = 0;
             var completes = new BasicCompletes<int>(new Scheduler());
             completes
-                .AndThen(value => 2 / value)
+                .AndThen(-100, value => 2 * value)
                 .AndThen(x => andThenValue = x)
-                .Otherwise(x => failueValue = 1000);
+                .Otherwise(x => failureValue = 1000);
 
-            completes.With(0);
+            completes.With(-100);
             completes.Await();
 
             Assert.True(completes.HasFailed);
             Assert.Equal(-1, andThenValue);
-            Assert.Equal(1000, failueValue);
+            Assert.Equal(1000, failureValue);
         }
 
         [Fact]
@@ -146,11 +146,11 @@ namespace Vlingo.Common.Tests
         }
 
         [Fact]
-        public void TestThatAwaitTimesout()
+        public void TestThatAwaitTimesOut()
         {
             var completes = new BasicCompletes<int>(new Scheduler());
 
-            var completed = completes.Await(10);
+            var completed = completes.Await(TimeSpan.FromMilliseconds(10));
 
             completes.With(5);
 

@@ -11,39 +11,38 @@ namespace Vlingo.Common
 {
     public interface ICompletes
     {
-        ICompletes<O> With<O>(O outcome);
+        ICompletes<TO> With<TO>(TO outcome);
     }
 
     public interface ICompletes<T> : ICompletes
     {
-        ICompletes<T> AndThen(long timeout, T failedOutcomeValue, Func<T, T> function);
+        ICompletes<T> AndThen(TimeSpan timeout, T failedOutcomeValue, Func<T, T> function);
         ICompletes<T> AndThen(T failedOutcomeValue, Func<T, T> function);
-        ICompletes<T> AndThen(long timeout, Func<T, T> function);
+        ICompletes<T> AndThen(TimeSpan timeout, Func<T, T> function);
         ICompletes<T> AndThen(Func<T, T> function);
 
-        ICompletes<T> AndThenConsume(long timeout, T failedOutcomeValue, Action<T> consumer);
+        ICompletes<T> AndThenConsume(TimeSpan timeout, T failedOutcomeValue, Action<T> consumer);
         ICompletes<T> AndThenConsume(T failedOutcomeValue, Action<T> consumer);
-        ICompletes<T> AndThenConsume(long timeout, Action<T> consumer);
+        ICompletes<T> AndThenConsume(TimeSpan timeout, Action<T> consumer);
         ICompletes<T> AndThenConsume(Action<T> consumer);
 
-        O AndThenTo<F, O>(long timeout, F failedOutcomeValue, Func<T, O> function);
-        O AndThenTo<F,O>(F failedOutcomeValue, Func<T, O> function);
-        O AndThenTo<O>(long timeout, Func<T, O> function);
-        O AndThenTo<O>(Func<T, O> function);
+        TO AndThenTo<TF, TO>(TimeSpan timeout, TF failedOutcomeValue, Func<T, TO> function);
+        TO AndThenTo<TF, TO>(TF failedOutcomeValue, Func<T, TO> function);
+        TO AndThenTo<TO>(TimeSpan timeout, Func<T, TO> function);
+        TO AndThenTo<TO>(Func<T, TO> function);
 
         ICompletes<T> Otherwise(Func<T, T> function);
         ICompletes<T> OtherwiseConsume(Action<T> consumer);
         ICompletes<T> RecoverFrom(Func<Exception, T> function);
 
         T Await();
-        T Await(long timeout);
+        T Await(TimeSpan timeout);
         bool IsCompleted { get; }
         bool HasFailed { get; }
         void Failed();
         bool HasOutcome { get; }
         T Outcome { get; }
         ICompletes<T> Repeat();
-        
     }
 
     public static class Completes

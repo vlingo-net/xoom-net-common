@@ -33,7 +33,7 @@ namespace Vlingo.Common.Tests
             using (var holder = new CounterHolder(1))
             {
 
-                scheduler.ScheduleOnce(scheduled, holder, 0, 1);
+                scheduler.ScheduleOnce(scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
 
                 holder.Completes();
 
@@ -46,7 +46,7 @@ namespace Vlingo.Common.Tests
         {
             using (var holder = new CounterHolder(505))
             {
-                scheduler.Schedule(scheduled, holder, 0, 1);
+                scheduler.Schedule(scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
 
                 holder.Completes();
 

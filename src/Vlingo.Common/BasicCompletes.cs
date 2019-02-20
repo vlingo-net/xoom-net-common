@@ -52,7 +52,7 @@ namespace Vlingo.Common
             this.state.Outcome(outcome);
         }
 
-        private ICompletes<T> AndThenInternal(TimeSpan timeout, Optional<T> failedOutcomeValue, Func<T, T> function)
+        private ICompletes<TO> AndThenInternal<TO>(TimeSpan timeout, Optional<TO> failedOutcomeValue, Func<T, TO> function)
         {
             state.FailedValue(failedOutcomeValue);
             state.Action(Action<T>.With(function));
@@ -64,20 +64,20 @@ namespace Vlingo.Common
             {
                 state.StartTimer(timeout);
             }
-            return this;
+            return (ICompletes<TO>)this;
         }
 
-        public virtual ICompletes<T> AndThen(TimeSpan timeout, T failedOutcomeValue, Func<T, T> function)
+        public virtual ICompletes<TO> AndThen<TO>(TimeSpan timeout, TO failedOutcomeValue, Func<T, TO> function)
             => AndThenInternal(timeout, Optional.Of(failedOutcomeValue), function);
 
-        public virtual ICompletes<T> AndThen(T failedOutcomeValue, Func<T, T> function) 
+        public virtual ICompletes<TO> AndThen<TO>(TO failedOutcomeValue, Func<T, TO> function)
             => AndThenInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), function);
 
-        public virtual ICompletes<T> AndThen(TimeSpan timeout, Func<T, T> function) 
-            => AndThenInternal(timeout, Optional.Empty<T>(), function);
+        public virtual ICompletes<TO> AndThen<TO>(TimeSpan timeout, Func<T, TO> function)
+            => AndThenInternal(timeout, Optional.Empty<TO>(), function);
 
-        public virtual ICompletes<T> AndThen(Func<T, T> function) 
-            => AndThenInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<T>(), function);
+        public virtual ICompletes<TO> AndThen<TO>(Func<T, TO> function)
+            => AndThenInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<TO>(), function);
 
         private ICompletes<T> AndThenConsumeInternal(TimeSpan timeout, Optional<T> failedOutcomeValue, System.Action<T> consumer)
         {
@@ -103,7 +103,7 @@ namespace Vlingo.Common
         public virtual ICompletes<T> AndThenConsume(T failedOutcomeValue, System.Action<T> consumer)
             => AndThenConsumeInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), consumer);
 
-        public virtual ICompletes<T> AndThenConsume(System.Action<T> consumer) 
+        public virtual ICompletes<T> AndThenConsume(System.Action<T> consumer)
             => AndThenConsumeInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<T>(), consumer);
 
         private TO AndThenToInternal<TF, TO>(TimeSpan timeout, Optional<TF> failedOutcomeValue, Func<T, TO> function)

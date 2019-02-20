@@ -100,8 +100,13 @@ namespace Vlingo.Common.Tests
                 .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
                 .AndThen(x => andThenValue = x);
 
-            Thread.Sleep(100);
-            completes.With(5);
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(5);
+            }));
+            thread.Start();
+
             completes.Await();
 
             Assert.True(completes.HasFailed);
@@ -135,7 +140,7 @@ namespace Vlingo.Common.Tests
 
             completes
                 .AndThen(42, value => value * 2)
-                .AndThen(value => throw new ApplicationException((2 * value).ToString()))
+                .AndThen<int>(value => throw new ApplicationException((2 * value).ToString()))
                 .RecoverFrom(e => failureValue = int.Parse(e.Message));
 
             completes.With(2);

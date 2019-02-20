@@ -99,6 +99,10 @@ namespace Vlingo.Common.Completes
             return Outcome;
         }
 
-        private void ResetLatch() => latch = new CountdownEvent(1);
+        private void ResetLatch()
+        {
+            latch.Dispose();
+            latch = new CountdownEvent(1);
+        }
     }
 }

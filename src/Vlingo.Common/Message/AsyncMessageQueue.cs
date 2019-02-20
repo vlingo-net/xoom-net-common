@@ -112,7 +112,7 @@ namespace Vlingo.Common.Message
                 {
                     deadLettersQueue.Enqueue(message);
                 }
-                Console.WriteLine($"AsyncMessageQueue: Dispatch to listener failed because: {e.Message}");
+                Console.WriteLine($"AsyncMessageQueue: Dispatch to listener has failed because: {e.Message}");
                 Console.WriteLine(e.StackTrace);
             }
             finally

@@ -25,7 +25,7 @@ namespace Vlingo.Common.Completes.Barrier
 
         public void Initialize()
         {
-            timeoutCancellable = scheduler.ScheduleOnce(new TimeBarrierScheduledTask(), didTimeout, TimeSpan.Zero, timeout);
+            timeoutCancellable = scheduler?.ScheduleOnce(new TimeBarrierScheduledTask(), didTimeout, TimeSpan.Zero, timeout);
         }
 
         public void Execute(IRunnable section, IOperation nextOperation)

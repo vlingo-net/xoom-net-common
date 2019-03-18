@@ -242,12 +242,12 @@ namespace Vlingo.Common
             void BackUp(Action<TActSt> action);
             void CancelTimer();
             void CompletedWith(TActSt outcome);
+            bool ExecuteFailureAction();
             bool HasFailed { get; }
             void Failed();
             void FailedValue<F>(Optional<F> failedOutcomeValue);
             TActSt FailedValue();
             void FailureAction(Action<TActSt> action);
-            void FailureAction();
             Action<TActSt> FailureActionFunction();
             bool HandleFailure(Optional<TActSt> outcome);
             void ExceptionAction(Func<Exception, TActSt> function);
@@ -346,7 +346,11 @@ namespace Vlingo.Common
 
                     state.BackUp(action);
 
-                    if (action.hasDefaultValue && state.OutcomeMustDefault)
+                    if(state.HasOutcome && state.HasFailed)
+                    {
+                        state.ExecuteFailureAction();
+                    }
+                    else if (action.hasDefaultValue && state.OutcomeMustDefault)
                     {
                         state.Outcome(action.defaultValue);
                     }
@@ -458,6 +462,29 @@ namespace Vlingo.Common
                 IsOutcomeKnown = true;
             }
 
+            public bool ExecuteFailureAction()
+            {
+                if(failureAction != null)
+                {
+                    var executeFailureAction = failureAction;
+                    failureAction = null;
+                    failed.Set(true);
+
+                    if (executeFailureAction.IsConsumer)
+                    {
+                        executeFailureAction.AsConsumer().Invoke((TBActSt)outcome.Get());
+                    }
+                    else
+                    {
+                        outcome.Set(executeFailureAction.AsFunction().Invoke((TBActSt)outcome.Get()));
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
+
             public virtual bool HasFailed => failed.Get();
 
             public virtual void Failed()
@@ -480,23 +507,7 @@ namespace Vlingo.Common
                 failureAction = action;
                 if (IsOutcomeKnown && HasFailed)
                 {
-                    FailureAction();
-                }
-            }
-
-            public virtual void FailureAction()
-            {
-                failed.Set(true);
-                if (failureAction != null)
-                {
-                    if (failureAction.IsConsumer)
-                    {
-                        failureAction.AsConsumer().Invoke((TBActSt)outcome.Get());
-                    }
-                    else
-                    {
-                        outcome.Set(failureAction.AsFunction().Invoke((TBActSt)outcome.Get()));
-                    }
+                    ExecuteFailureAction();
                 }
             }
 
@@ -521,7 +532,7 @@ namespace Vlingo.Common
                     executables.Reset();
                     this.outcome.Set(failedOutcomeValue.Get());
                     IsOutcomeKnown = true;
-                    FailureAction();
+                    ExecuteFailureAction();
                 }
 
                 return handle;

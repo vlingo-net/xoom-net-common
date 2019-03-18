@@ -25,7 +25,7 @@ namespace Vlingo.Common
 
         public override ICompletes<T> Repeat()
         {
-            if (state.IsCompleted)
+            if (state.IsOutcomeKnown)
             {
                 state.Repeat();
             }
@@ -34,7 +34,7 @@ namespace Vlingo.Common
 
         public override ICompletes<TO> With<TO>(TO outcome)
         {
-            state.Outcome((T)(object)outcome);
+            base.With(outcome);
             state.Repeat();
             return (ICompletes<TO>)this;
         }
@@ -42,13 +42,11 @@ namespace Vlingo.Common
         protected internal class RepeatableActiveState<TRActSt> : BasicActiveState<TRActSt>
         {
             private readonly ConcurrentQueue<Action<TRActSt>> actionsBackup;
-            private readonly ConcurrentQueue<TRActSt> pendingOutcomes;
             private readonly AtomicBoolean repeating;
 
             protected internal RepeatableActiveState(Scheduler scheduler) : base(scheduler)
             {
                 actionsBackup = new ConcurrentQueue<Action<TRActSt>>();
-                pendingOutcomes = new ConcurrentQueue<TRActSt>();
                 repeating = new AtomicBoolean(false);
             }
 
@@ -56,45 +54,32 @@ namespace Vlingo.Common
             {
             }
 
-            public override Action<TRActSt> Action()
+            public override void BackUp(Action<TRActSt> action)
             {
-                var action = base.Action();
-                BackUp(action);
-                return action;
-            }
-
-            public override void Outcome(TRActSt outcome)
-            {
-                CancelTimer();
-                pendingOutcomes.Enqueue(outcome);
+                if(action != null)
+                {
+                    actionsBackup.Enqueue(action);
+                }
             }
 
             public override void Repeat()
             {
                 if (repeating.CompareAndSet(false, true))
                 {
-                    while (pendingOutcomes.TryDequeue(out var pendingOutcome))
-                    {
-                        CompletedWith(pendingOutcome);
-                        Restore();
-                    }
+                    Restore();
+                    IsOutcomeKnown = false;
                     repeating.Set(false);
                 }
             }
 
-            private void BackUp(Action<TRActSt> action)
+            public override void Restore()
             {
-                if (action != null)
+                while (!actionsBackup.IsEmpty)
                 {
-                    actionsBackup.Enqueue(action);
-                }
-            }
-
-            private void Restore()
-            {
-                while (actionsBackup.TryDequeue(out var action))
-                {
-                    Action(action);
+                    if (actionsBackup.TryDequeue(out var action))
+                    {
+                        Restore(action);
+                    }
                 }
             }
         }

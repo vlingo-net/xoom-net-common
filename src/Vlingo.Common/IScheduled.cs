@@ -7,8 +7,8 @@
 
 namespace Vlingo.Common
 {
-    public interface IScheduled
+    public interface IScheduled<T>
     {
-        void IntervalSignal(IScheduled scheduled, object data);
+        void IntervalSignal(IScheduled<T> scheduled, T data);
     }
 }

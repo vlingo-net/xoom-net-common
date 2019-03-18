@@ -16,10 +16,10 @@ namespace Vlingo.Common
 
     public interface ICompletes<T> : ICompletes
     {
-        ICompletes<T> AndThen(TimeSpan timeout, T failedOutcomeValue, Func<T, T> function);
-        ICompletes<T> AndThen(T failedOutcomeValue, Func<T, T> function);
-        ICompletes<T> AndThen(TimeSpan timeout, Func<T, T> function);
-        ICompletes<T> AndThen(Func<T, T> function);
+        ICompletes<TO> AndThen<TO>(TimeSpan timeout, TO failedOutcomeValue, Func<T, TO> function);
+        ICompletes<TO> AndThen<TO>(TO failedOutcomeValue, Func<T, TO> function);
+        ICompletes<TO> AndThen<TO>(TimeSpan timeout, Func<T, TO> function);
+        ICompletes<TO> AndThen<TO>(Func<T, TO> function);
 
         ICompletes<T> AndThenConsume(TimeSpan timeout, T failedOutcomeValue, Action<T> consumer);
         ICompletes<T> AndThenConsume(T failedOutcomeValue, Action<T> consumer);
@@ -45,7 +45,7 @@ namespace Vlingo.Common
         ICompletes<T> Repeat();
     }
 
-    public static class Completes
+    public static class CompletesExt
     {
         public static ICompletes<T> Using<T>(Scheduler scheduler)
         {

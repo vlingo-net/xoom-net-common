@@ -36,7 +36,7 @@ namespace Vlingo.Common
 
         public virtual ICompletes<TValue> AsCompletes()
         {
-            return Completes.WithSuccess(value);
+            return CompletesExt.WithSuccess(value);
         }
 
         public virtual Optional<TValue> AsOptional()

@@ -13,7 +13,7 @@ namespace Vlingo.Common.Tests
 {
     public class SchedulerTest : IDisposable
     {
-        private readonly IScheduled scheduled;
+        private readonly IScheduled<CounterHolder> scheduled;
         private readonly Scheduler scheduler;
 
         public SchedulerTest()
@@ -55,11 +55,11 @@ namespace Vlingo.Common.Tests
         }
 
 
-        private class Scheduled : IScheduled
+        private class Scheduled : IScheduled<CounterHolder>
         {
-            public void IntervalSignal(IScheduled scheduled, object data)
+            public void IntervalSignal(IScheduled<CounterHolder> scheduled, CounterHolder data)
             {
-                ((CounterHolder)data).Increment();
+                data.Increment();
             }
         }
 

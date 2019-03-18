@@ -11,12 +11,27 @@ using System.Threading;
 
 namespace Vlingo.Common
 {
+    /// <summary>
+    /// Provide time-based notifications to a <code>IScheduled&lt;T&gt;</code> once or any number of
+    /// times until cancellation. The implementor of the <code>IScheduled&lt;T&gt;</code> protocol
+    /// is not assumed to be an <code>Actor</code> and may be a POCO, but the notifications
+    /// are quite effectively used in an Actor-based asynchronous environment.
+    /// </summary>
     public class Scheduler: IDisposable
     {
         private bool disposed;
-        private readonly ConcurrentStack<SchedulerTask> tasks;
+        private readonly ConcurrentStack<ICancellable> tasks;
 
-        public virtual ICancellable Schedule(IScheduled scheduled, object data, TimeSpan delayBefore, TimeSpan interval)
+        /// <summary>
+        /// Answer a <code>ICancellable</code> for the repeating scheduled notifier.
+        /// </summary>
+        /// <typeparam name="T">The type of data to be sent with each notification.</typeparam>
+        /// <param name="scheduled">The <code>IScheduled&lt;T&gt;</code> to receive notification.</param>
+        /// <param name="data">The data to be sent with each notification.</param>
+        /// <param name="delayBefore">The duration before notification interval timing will begin.</param>
+        /// <param name="interval">The duration between each notification.</param>
+        /// <returns><code>ICancellable</code></returns>
+        public virtual ICancellable Schedule<T>(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval)
             => CreateAndStore(
                 scheduled,
                 data,
@@ -24,7 +39,16 @@ namespace Vlingo.Common
                 interval,
                 true);
 
-        public virtual ICancellable ScheduleOnce(IScheduled scheduled, object data, TimeSpan delayBefore, TimeSpan interval)
+        /// <summary>
+        /// Answer a <code>ICancellable</code> for single scheduled notifier.
+        /// </summary>
+        /// <typeparam name="T">The type of data to be sent with each notification.</typeparam>
+        /// <param name="scheduled">The <code>IScheduled&lt;T&gt;</code> to receive notification.</param>
+        /// <param name="data">The data to be sent with the notification.</param>
+        /// <param name="delayBefore">The duration before notification interval timing will begin.</param>
+        /// <param name="interval">The duration before the single notification.</param>
+        /// <returns><code>ICancellable</code></returns>
+        public virtual ICancellable ScheduleOnce<T>(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval)
             => CreateAndStore(
                 scheduled,
                 data,
@@ -35,7 +59,7 @@ namespace Vlingo.Common
 
         public Scheduler()
         {
-            tasks = new ConcurrentStack<SchedulerTask>();
+            tasks = new ConcurrentStack<ICancellable>();
         }
 
         public virtual void Close()
@@ -73,26 +97,26 @@ namespace Vlingo.Common
             disposed = true;
         }
 
-        private SchedulerTask CreateAndStore(
-            IScheduled scheduled,
-            object data,
+        private SchedulerTask<T> CreateAndStore<T>(
+            IScheduled<T> scheduled,
+            T data,
             TimeSpan delayBefore,
             TimeSpan interval,
             bool repeats)
         {
-            var task = new SchedulerTask(scheduled, data, delayBefore, interval, repeats);
+            var task = new SchedulerTask<T>(scheduled, data, delayBefore, interval, repeats);
             tasks.Push(task);
             return task;
         }
 
-        private class SchedulerTask : ICancellable
+        private class SchedulerTask<T> : ICancellable
         {
-            private readonly IScheduled scheduled;
+            private readonly IScheduled<T> scheduled;
             private readonly bool repeats;
             private Timer timer;
             private bool hasRun;
 
-            public SchedulerTask(IScheduled scheduled, object data, TimeSpan delayBefore, TimeSpan interval, bool repeats)
+            public SchedulerTask(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval, bool repeats)
             {
                 this.scheduled = scheduled;
                 this.repeats = repeats;
@@ -103,7 +127,7 @@ namespace Vlingo.Common
             private void Tick(object data)
             {
                 hasRun = true;
-                scheduled.IntervalSignal(scheduled, data);
+                scheduled.IntervalSignal(scheduled, (T)data);
 
                 if (!repeats)
                 {

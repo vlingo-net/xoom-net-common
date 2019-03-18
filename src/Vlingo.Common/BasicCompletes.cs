@@ -52,45 +52,29 @@ namespace Vlingo.Common
             this.state.Outcome(outcome);
         }
 
-        private ICompletes<T> AndThenInternal(TimeSpan timeout, Optional<T> failedOutcomeValue, Func<T, T> function)
+        private ICompletes<TO> AndThenInternal<TO>(TimeSpan timeout, Optional<TO> failedOutcomeValue, Func<T, TO> function)
         {
             state.FailedValue(failedOutcomeValue);
-            state.Action(Action<T>.With(function));
-            if (state.IsCompleted)
-            {
-                state.CompleteActions();
-            }
-            else
-            {
-                state.StartTimer(timeout);
-            }
-            return this;
+            state.RegisterWithExecution(Action<T>.With(function), timeout, state);
+            return (ICompletes<TO>)this;
         }
 
-        public virtual ICompletes<T> AndThen(TimeSpan timeout, T failedOutcomeValue, Func<T, T> function)
+        public virtual ICompletes<TO> AndThen<TO>(TimeSpan timeout, TO failedOutcomeValue, Func<T, TO> function)
             => AndThenInternal(timeout, Optional.Of(failedOutcomeValue), function);
 
-        public virtual ICompletes<T> AndThen(T failedOutcomeValue, Func<T, T> function) 
+        public virtual ICompletes<TO> AndThen<TO>(TO failedOutcomeValue, Func<T, TO> function)
             => AndThenInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), function);
 
-        public virtual ICompletes<T> AndThen(TimeSpan timeout, Func<T, T> function) 
-            => AndThenInternal(timeout, Optional.Empty<T>(), function);
+        public virtual ICompletes<TO> AndThen<TO>(TimeSpan timeout, Func<T, TO> function)
+            => AndThenInternal(timeout, Optional.Empty<TO>(), function);
 
-        public virtual ICompletes<T> AndThen(Func<T, T> function) 
-            => AndThenInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<T>(), function);
+        public virtual ICompletes<TO> AndThen<TO>(Func<T, TO> function)
+            => AndThenInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<TO>(), function);
 
         private ICompletes<T> AndThenConsumeInternal(TimeSpan timeout, Optional<T> failedOutcomeValue, System.Action<T> consumer)
         {
             state.FailedValue(failedOutcomeValue);
-            state.Action(Action<T>.With(consumer));
-            if (state.IsCompleted)
-            {
-                state.CompleteActions();
-            }
-            else
-            {
-                state.StartTimer(timeout);
-            }
+            state.RegisterWithExecution(Action<T>.With(consumer), timeout, state);
             return this;
         }
 
@@ -103,7 +87,7 @@ namespace Vlingo.Common
         public virtual ICompletes<T> AndThenConsume(T failedOutcomeValue, System.Action<T> consumer)
             => AndThenConsumeInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), consumer);
 
-        public virtual ICompletes<T> AndThenConsume(System.Action<T> consumer) 
+        public virtual ICompletes<T> AndThenConsume(System.Action<T> consumer)
             => AndThenConsumeInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<T>(), consumer);
 
         private TO AndThenToInternal<TF, TO>(TimeSpan timeout, Optional<TF> failedOutcomeValue, Func<T, TO> function)
@@ -111,15 +95,7 @@ namespace Vlingo.Common
             var nestedCompletes = new BasicCompletes<TO>(state.Scheduler);
             nestedCompletes.state.FailedValue(failedOutcomeValue);
             nestedCompletes.state.FailureAction((BasicCompletes<TO>.Action<TO>)(object)state.FailureActionFunction());
-            state.Action((Action<T>)(object)BasicCompletes<TO>.Action<TO>.With(function, nestedCompletes));
-            if (state.IsCompleted)
-            {
-                state.CompleteActions();
-            }
-            else
-            {
-                state.StartTimer(timeout);
-            }
+            state.RegisterWithExecution((Action<T>)(object)BasicCompletes<TO>.Action<TO>.With(function, nestedCompletes), timeout, state);
             return (TO)(object)nestedCompletes;
         }
 
@@ -153,31 +129,23 @@ namespace Vlingo.Common
             return this;
         }
 
-        public virtual T Await() => Await(TimeSpan.FromMilliseconds(Timeout.Infinite));
+        public virtual T Await()
+        {
+            state.Await();
+            return Outcome;
+        }
 
         public virtual T Await(TimeSpan timeout)
         {
-            if (IsCompleted)
+            if (state.Await(timeout))
             {
                 return Outcome;
             }
 
-            using (var manualResetEvent = new ManualResetEventSlim(false))
-            {
-                try
-                {
-                    manualResetEvent.Wait(timeout, state.CompletedSignalToken.Token);
-                }
-                catch
-                {
-                    // ignore
-                }
-
-                return Outcome;
-            }
+            return default(T);
         }
 
-        public virtual bool IsCompleted => state.IsCompleted;
+        public virtual bool IsCompleted => state.IsOutcomeKnown;
 
         public virtual bool HasFailed => state.HasFailed;
 
@@ -269,85 +237,211 @@ namespace Vlingo.Common
 
         protected internal interface IActiveState<TActSt>
         {
-            bool HasAction { get; }
-            void Action(Action<TActSt> action);
-            Action<TActSt> Action();
+            void Await();
+            bool Await(TimeSpan timeout);
+            void BackUp(Action<TActSt> action);
             void CancelTimer();
-            bool IsCompleted { get; }
-            void CompleteActions();
             void CompletedWith(TActSt outcome);
+            bool ExecuteFailureAction();
             bool HasFailed { get; }
             void Failed();
             void FailedValue<F>(Optional<F> failedOutcomeValue);
             TActSt FailedValue();
             void FailureAction(Action<TActSt> action);
-            void FailureAction();
             Action<TActSt> FailureActionFunction();
             bool HandleFailure(Optional<TActSt> outcome);
             void ExceptionAction(Func<Exception, TActSt> function);
             void HandleException(Exception e);
             bool HasException { get; }
             bool HasOutcome { get; }
-            bool OutcomeMustDefault { get; }
             void Outcome(TActSt outcome);
             O Outcome<O>();
+            bool IsOutcomeKnown { get; set; }
+            bool OutcomeMustDefault { get; }
+            void RegisterWithExecution(Action<TActSt> action, TimeSpan timeout, IActiveState<TActSt> state);
             bool IsRepeatable { get; }
             void Repeat();
+            void Restore();
+            void Restore(Action<TActSt> action);
             Scheduler Scheduler { get; }
             void StartTimer(TimeSpan timeout);
-            CancellationTokenSource CompletedSignalToken { get; }
         }
 
-        protected internal class BasicActiveState<TBActSt> : IActiveState<TBActSt>, IScheduled
+        private class Executables<TExec>
         {
-            private readonly ConcurrentQueue<Action<TBActSt>> actions;
+            private AtomicBoolean accessible;
+            private ConcurrentQueue<Action<TExec>> actions;
+            private AtomicBoolean readyToExecute;
+
+            internal Executables()
+            {
+                accessible = new AtomicBoolean(false);
+                actions = new ConcurrentQueue<Action<TExec>>();
+                readyToExecute = new AtomicBoolean(false);
+            }
+
+            internal int Count => actions.Count;
+
+            internal void Execute(IActiveState<TExec> state)
+            {
+                while (true)
+                {
+                    if(accessible.CompareAndSet(false, true))
+                    {
+                        readyToExecute.Set(true);
+                        ExecuteActions(state);
+                        accessible.Set(false);
+                        break;
+                    }
+                }
+            }
+
+            internal bool IsReadyToExecute => readyToExecute.Get();
+
+            internal void RegisterWithExecution(Action<TExec> action, TimeSpan timeout, IActiveState<TExec> state)
+            {
+                while (true)
+                {
+                    if(accessible.CompareAndSet(false, true))
+                    {
+                        actions.Enqueue(action);
+                        if (IsReadyToExecute)
+                        {
+                            ExecuteActions(state);
+                        }
+                        else
+                        {
+                            state.StartTimer(timeout);
+                        }
+                        accessible.Set(false);
+                        break;
+                    }
+                }
+            }
+
+            internal void Reset()
+            {
+                readyToExecute.Set(false);
+                while (!actions.IsEmpty)
+                {
+                    actions.TryDequeue(out _);
+                }
+            }
+
+            internal void Restore(Action<TExec> action)
+            {
+                actions.Enqueue(action);
+            }
+
+            private bool HasActions => !actions.IsEmpty;
+
+            private void ExecuteActions(IActiveState<TExec> state)
+            {
+                while (HasActions)
+                {
+                    if(!actions.TryDequeue(out var action))
+                    {
+                        continue;
+                    }
+
+                    state.BackUp(action);
+
+                    if(state.HasOutcome && state.HasFailed)
+                    {
+                        state.ExecuteFailureAction();
+                    }
+                    else if (action.hasDefaultValue && state.OutcomeMustDefault)
+                    {
+                        state.Outcome(action.defaultValue);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            if (action.IsConsumer)
+                            {
+                                action.AsConsumer().Invoke(state.Outcome<TExec>());
+                            }
+                            else if (action.IsFunction)
+                            {
+                                if (action.HasNestedCompletes)
+                                {
+                                    ((ICompletes<TExec>)action.AsFunction().Invoke(state.Outcome<TExec>()))
+                                        .AndThenConsume(value => action.NestedCompletes.With(value));
+                                }
+                                else
+                                {
+                                    state.Outcome(action.AsFunction().Invoke(state.Outcome<TExec>()));
+                                }
+                            }
+                        }
+                        catch(Exception ex)
+                        {
+                            state.HandleException(ex);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        protected internal class BasicActiveState<TBActSt> : IActiveState<TBActSt>, IScheduled<object>
+        {
             private ICancellable cancellable;
-            private readonly AtomicBoolean completed;
-            private readonly AtomicBoolean completing;
-            private readonly AtomicBoolean executingActions;
+            private readonly Executables<TBActSt> executables;
             private readonly AtomicBoolean failed;
             private Optional<TBActSt> failedOutcomeValue;
             private Action<TBActSt> failureAction;
             private readonly AtomicReference<Exception> exception;
             private Func<Exception, TBActSt> exceptionAction;
             private readonly AtomicReference<object> outcome;
+            private ManualResetEventSlim outcomeKnown;
             private readonly Scheduler scheduler;
             private readonly AtomicBoolean timedOut;
 
             protected internal BasicActiveState(Scheduler scheduler)
             {
                 this.scheduler = scheduler;
-                actions = new ConcurrentQueue<Action<TBActSt>>();
-                completed = new AtomicBoolean(false);
-                completing = new AtomicBoolean(false);
-                executingActions = new AtomicBoolean(false);
+                executables = new Executables<TBActSt>();
                 failed = new AtomicBoolean(false);
                 failedOutcomeValue = Optional.Empty<TBActSt>();
                 exception = new AtomicReference<Exception>(null);
                 outcome = new AtomicReference<object>(null);
+                outcomeKnown = new ManualResetEventSlim(false);
                 timedOut = new AtomicBoolean(false);
-                CompletedSignalToken = new CancellationTokenSource();
             }
 
             protected internal BasicActiveState() : this(null)
             {
             }
 
-            public virtual bool HasAction => !actions.IsEmpty;
-
-            public virtual void Action(Action<TBActSt> action) => actions.Enqueue(action);
-
-            public virtual Action<TBActSt> Action()
+            public void Await()
             {
-                if (actions.TryDequeue(out Action<TBActSt> act))
+                try
                 {
-                    return act;
+                    outcomeKnown.Wait();
                 }
-
-                return null;
+                catch { }
             }
 
-            public virtual void CancelTimer()
+            public bool Await(TimeSpan timeout)
+            {
+                try
+                {
+                    return outcomeKnown.Wait(timeout);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            public virtual void BackUp(Action<TBActSt> action)
+            {
+                // unused; see RepeatableCompletes
+            }
+
+            public void CancelTimer()
             {
                 if (cancellable != null)
                 {
@@ -356,33 +450,39 @@ namespace Vlingo.Common
                 }
             }
 
-            public virtual bool IsCompleted => completed.Get();
-
-            public virtual void CompleteActions()
+            public void CompletedWith(TBActSt outcome)
             {
-                if (completing.CompareAndSet(false, true))
+                CancelTimer();
+                if (!timedOut.Get())
                 {
-                    ExecuteActions();
-                    SetCompleted();
-                    completing.Set(false);
+                    this.outcome.Set(outcome);
                 }
+
+                executables.Execute(this);
+                IsOutcomeKnown = true;
             }
 
-            public virtual void CompletedWith(TBActSt outcome)
+            public bool ExecuteFailureAction()
             {
-                if (completing.CompareAndSet(false, true))
+                if(failureAction != null)
                 {
-                    CancelTimer();
+                    var executeFailureAction = failureAction;
+                    failureAction = null;
+                    failed.Set(true);
 
-                    if (!timedOut.Get())
+                    if (executeFailureAction.IsConsumer)
                     {
-                        this.outcome.Set(outcome);
+                        executeFailureAction.AsConsumer().Invoke((TBActSt)outcome.Get());
+                    }
+                    else
+                    {
+                        outcome.Set(executeFailureAction.AsFunction().Invoke((TBActSt)outcome.Get()));
                     }
 
-                    ExecuteActions();
-                    SetCompleted();
-                    completing.Set(false);
+                    return true;
                 }
+
+                return false;
             }
 
             public virtual bool HasFailed => failed.Get();
@@ -404,34 +504,18 @@ namespace Vlingo.Common
 
             public virtual void FailureAction(Action<TBActSt> action)
             {
-                this.failureAction = action;
-                if (IsCompleted && HasFailed)
+                failureAction = action;
+                if (IsOutcomeKnown && HasFailed)
                 {
-                    FailureAction();
+                    ExecuteFailureAction();
                 }
             }
 
-            public virtual void FailureAction()
-            {
-                failed.Set(true);
-                if (failureAction != null)
-                {
-                    if (failureAction.IsConsumer)
-                    {
-                        failureAction.AsConsumer().Invoke((TBActSt)outcome.Get());
-                    }
-                    else
-                    {
-                        outcome.Set(failureAction.AsFunction().Invoke((TBActSt)outcome.Get()));
-                    }
-                }
-            }
+            public Action<TBActSt> FailureActionFunction() => failureAction;
 
-            public virtual Action<TBActSt> FailureActionFunction() => failureAction;
-
-            public virtual bool HandleFailure(Optional<TBActSt> outcome)
+            public bool HandleFailure(Optional<TBActSt> outcome)
             {
-                if (IsCompleted && HasFailed)
+                if (IsOutcomeKnown && HasFailed)
                 {
                     return true; // already reached below
                 }
@@ -445,11 +529,12 @@ namespace Vlingo.Common
                 if (handle)
                 {
                     failed.Set(true);
-                    ClearQueue(actions);
+                    executables.Reset();
                     this.outcome.Set(failedOutcomeValue.Get());
-                    SetCompleted();
-                    FailureAction();
+                    IsOutcomeKnown = true;
+                    ExecuteFailureAction();
                 }
+
                 return handle;
             }
 
@@ -468,17 +553,15 @@ namespace Vlingo.Common
                 if (exceptionAction != null)
                 {
                     failed.Set(true);
-                    ClearQueue(actions);
+                    executables.Reset();
                     outcome.Set(exceptionAction.Invoke(e));
-                    SetCompleted();
+                    IsOutcomeKnown = true;
                 }
             }
 
             public virtual bool HasException => exception.Get() != null;
 
             public virtual bool HasOutcome => outcome.Get() != null;
-
-            public virtual bool OutcomeMustDefault => outcome.Get() == null;
 
             public virtual void Outcome(TBActSt outcome)
             {
@@ -490,6 +573,30 @@ namespace Vlingo.Common
                 return (O)(outcome.Get() ?? default(O));
             }
 
+            public bool IsOutcomeKnown
+            {
+                get
+                {
+                    return outcomeKnown.IsSet;
+                }
+                set
+                {
+                    if (value)
+                    {
+                        outcomeKnown.Set();
+                    }
+                    else
+                    {
+                        outcomeKnown.Reset();
+                    }
+                }
+            }
+
+            public bool OutcomeMustDefault => outcome.Get() == null;
+
+            public void RegisterWithExecution(Action<TBActSt> action, TimeSpan timeout, IActiveState<TBActSt> state)
+                => executables.RegisterWithExecution(action, timeout, state);
+
             public virtual bool IsRepeatable => false;
 
             public virtual void Repeat()
@@ -497,9 +604,14 @@ namespace Vlingo.Common
                 throw new NotSupportedException();
             }
 
-            public virtual Scheduler Scheduler => scheduler;
+            public virtual void Restore()
+            {
+                // unused; see RepeatableCompletes
+            }
 
-            public CancellationTokenSource CompletedSignalToken { get; }
+            public void Restore(Action<TBActSt> action) => executables.Restore(action);
+
+            public virtual Scheduler Scheduler => scheduler;
 
             public virtual void StartTimer(TimeSpan timeout)
             {
@@ -510,68 +622,22 @@ namespace Vlingo.Common
                 }
             }
 
-            public virtual void IntervalSignal(IScheduled scheduled, object data)
+            public void IntervalSignal(IScheduled<object> scheduled, object data)
             {
-                timedOut.Set(true);
-                Failed();
+                if(IsOutcomeKnown || executables.IsReadyToExecute)
+                {
+                    // do nothing
+                }
+                else
+                {
+                    timedOut.Set(true);
+                    Failed();
+                }
             }
 
             public override string ToString()
             {
-                return "BasicActiveState[actions=" + actions.Count + "]";
-            }
-
-            protected virtual void ExecuteActions()
-            {
-                executingActions.CompareAndSet(false, true);
-
-                while (HasAction)
-                {
-                    Action<TBActSt> action = Action();
-                    if (action.hasDefaultValue && OutcomeMustDefault)
-                    {
-                        Outcome(action.defaultValue);
-                    }
-                    else
-                    {
-                        try
-                        {
-                            if (action.IsConsumer)
-                            {
-                                action.AsConsumer().Invoke((TBActSt)outcome.Get());
-                            }
-                            else if (action.IsFunction)
-                            {
-                                if (action.HasNestedCompletes)
-                                {
-                                    ((ICompletes<TBActSt>)action.AsFunction().Invoke((TBActSt)outcome.Get()))
-                                      .AndThenConsume(value => action.NestedCompletes.With(value));
-                                }
-                                else
-                                {
-                                    outcome.Set(action.AsFunction().Invoke((TBActSt)outcome.Get()));
-                                }
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            HandleException(e);
-                            break;
-                        }
-                    }
-                }
-                executingActions.Set(false);
-            }
-
-            private void SetCompleted()
-            {
-                completed.Set(true);
-                CompletedSignalToken.Cancel();
-            }
-
-            private static void ClearQueue(ConcurrentQueue<Action<TBActSt>> queue)
-            {
-                while (!queue.IsEmpty && queue.TryDequeue(out _)) ;
+                return "BasicActiveState[actions=" + executables.Count + "]";
             }
         }
     }

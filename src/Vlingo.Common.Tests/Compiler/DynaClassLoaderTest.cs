@@ -58,10 +58,29 @@ namespace Vlingo.Common.Tests.Compiler
             var actorDynaClass = classLoader.LoadClass("Vlingo.Common.Compiler.DynaFile");
             Assert.NotNull(actorDynaClass);
         }
+        
+        [Fact]
+        public void TestLoadImplementationDifferentNamespace()
+        {
+            var protocolName = typeof(IRunnable);
+            var classLoader = new DynaClassLoader();
+            
+            // Vlingo.Common.Runnable__Proxy is what is being called if the interface is implemented in
+            // different namespace than the implementation.
+            var dynaNamingClassType = classLoader.LoadClass("Vlingo.Common.Runnable__Proxy", protocolName);
+            Assert.NotNull(dynaNamingClassType);
+        }
     }
 
     public interface ITestInterface
     {
         int Test();
+    }
+    
+    public class Runnable__Proxy : IRunnable
+    {
+        public void Run()
+        {
+        }
     }
 }

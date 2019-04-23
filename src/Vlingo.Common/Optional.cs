@@ -106,7 +106,7 @@ namespace Vlingo.Common
                 return true; // both empty
             }
 
-            if(!other.hasValue || !hasValue || !value.Equals(other.value))
+            if(!other.hasValue || !hasValue || !Equals(value, other.value))
             {
                 return false;
             }

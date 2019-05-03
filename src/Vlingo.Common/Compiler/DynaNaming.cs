@@ -6,15 +6,16 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+using System.Linq;
 
 namespace Vlingo.Common.Compiler
 {
     public static class DynaNaming
     {
-        public static string ClassNameFor<T>(string postfix)
-            => ClassNameFor(typeof(T), postfix);
+        public static string ClassNameFor<T>(string postfix, bool forTypeLookup = false)
+            => ClassNameFor(typeof(T), postfix, forTypeLookup);
 
-        public static string ClassNameFor(Type type, string postfix)
+        public static string ClassNameFor(Type type, string postfix, bool forTypeLookup = false)
         {
             var className = type.Name;
 
@@ -27,20 +28,38 @@ namespace Vlingo.Common.Compiler
                 className = className.Substring(0, className.IndexOf('`'));
             }
 
-            return $"{className}{postfix}";
-        }
-
-        public static string FullyQualifiedClassNameFor<T>(string postfix)
-            => FullyQualifiedClassNameFor(typeof(T), postfix);
-
-        public static string FullyQualifiedClassNameFor(Type type, string postfix)
-        {
-            if (string.IsNullOrWhiteSpace(type.Namespace))
+            var genericTypeParams = string.Empty;
+            if (type.IsGenericType)
             {
-                return ClassNameFor(type, postfix);
+                var numGenericParams = type.GetGenericArguments().Length;
+                if (forTypeLookup)
+                {
+                    genericTypeParams = $"`{numGenericParams}";
+                }
+                else
+                {
+                    var genericDefinition = type.IsGenericTypeDefinition ? type : type.GetGenericTypeDefinition();
+                    var typeListString = string.Join(", ", genericDefinition.GetGenericArguments().Select(x => x.Name));
+                    genericTypeParams = $"<{typeListString}>";
+                }
             }
 
-            return $"{type.Namespace}.{ClassNameFor(type, postfix)}";
+            return $"{className}{postfix}{genericTypeParams}";
+        }
+
+        public static string FullyQualifiedClassNameFor<T>(string postfix, bool forTypeLookup = false, bool useActorsNamespace = true)
+            => FullyQualifiedClassNameFor(typeof(T), postfix, forTypeLookup);
+
+        public static string FullyQualifiedClassNameFor(Type type, string postfix, bool forTypeLookup = false, bool useActorsNamespace = true)
+        {
+            var nameSpace = useActorsNamespace ? "Vlingo.Actors" : type.Namespace;
+
+            if (string.IsNullOrWhiteSpace(nameSpace))
+            {
+                return ClassNameFor(type, postfix, forTypeLookup);
+            }
+
+            return $"{nameSpace}.{ClassNameFor(type, postfix, forTypeLookup)}";
         }
     }
 }

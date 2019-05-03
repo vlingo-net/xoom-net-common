@@ -46,11 +46,18 @@ namespace Vlingo.Common.Compiler
 
         private static string ToPath(string fullyQualifiedClassName, bool includeClassName)
         {
-            var lastDotIndex = fullyQualifiedClassName.LastIndexOf('.');
-            var directoryPath = fullyQualifiedClassName.Substring(0, lastDotIndex).Replace('.', Path.DirectorySeparatorChar);
+            var safeGenericClassName = fullyQualifiedClassName;
+            var indexOfGenericStart = safeGenericClassName.IndexOf('<');
+            if(indexOfGenericStart >= 0)
+            {
+                safeGenericClassName = safeGenericClassName.Substring(0, indexOfGenericStart);
+            }
+
+            var lastDotIndex = safeGenericClassName.LastIndexOf('.');
+            var directoryPath = safeGenericClassName.Substring(0, lastDotIndex).Replace('.', Path.DirectorySeparatorChar);
             if (includeClassName)
             {
-                return $"{directoryPath}{Path.DirectorySeparatorChar}{fullyQualifiedClassName.Substring(lastDotIndex + 1)}";
+                return $"{directoryPath}{Path.DirectorySeparatorChar}{safeGenericClassName.Substring(lastDotIndex + 1)}";
             }
             else
             {

@@ -39,6 +39,7 @@ namespace Vlingo.Common.Tests.Compiler
             var input = new Input(
                     typeof(ITestInterface),
                     ClassName,
+                    ClassName,
                     Source,
                     PersistDynaClassSource(pathToSource, Source),
                     classLoader,

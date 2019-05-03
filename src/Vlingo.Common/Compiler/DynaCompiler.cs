@@ -14,7 +14,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 using static Vlingo.Common.Compiler.DynaFile;
-using static Vlingo.Common.Compiler.DynaNaming;
 
 namespace Vlingo.Common.Compiler
 {

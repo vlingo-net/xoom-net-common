@@ -47,19 +47,17 @@ namespace Vlingo.Common.Compiler
             return $"{className}{postfix}{genericTypeParams}";
         }
 
-        public static string FullyQualifiedClassNameFor<T>(string postfix, bool forTypeLookup = false, bool useActorsNamespace = true)
+        public static string FullyQualifiedClassNameFor<T>(string postfix, bool forTypeLookup = false)
             => FullyQualifiedClassNameFor(typeof(T), postfix, forTypeLookup);
 
-        public static string FullyQualifiedClassNameFor(Type type, string postfix, bool forTypeLookup = false, bool useActorsNamespace = true)
+        public static string FullyQualifiedClassNameFor(Type type, string postfix, bool forTypeLookup = false)
         {
-            var nameSpace = useActorsNamespace ? "Vlingo.Actors" : type.Namespace;
-
-            if (string.IsNullOrWhiteSpace(nameSpace))
+            if (string.IsNullOrWhiteSpace(type.Namespace))
             {
                 return ClassNameFor(type, postfix, forTypeLookup);
             }
 
-            return $"{nameSpace}.{ClassNameFor(type, postfix, forTypeLookup)}";
+            return $"{type.Namespace}.{ClassNameFor(type, postfix, forTypeLookup)}";
         }
     }
 }

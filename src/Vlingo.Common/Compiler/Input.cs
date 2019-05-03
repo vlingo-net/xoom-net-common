@@ -15,6 +15,7 @@ namespace Vlingo.Common.Compiler
         public Input(
             Type protocol,
             string fullyQualifiedClassName,
+            string lookupTypeName,
             string source,
             FileInfo sourceFile,
             DynaClassLoader classLoader,
@@ -23,6 +24,7 @@ namespace Vlingo.Common.Compiler
         {
             Protocol = protocol;
             FullyQualifiedClassName = fullyQualifiedClassName;
+            FullyQualifiedNameForTypeLookup = lookupTypeName;
             Source = source;
             SourceFile = sourceFile;
             ClassLoader = classLoader;
@@ -32,6 +34,7 @@ namespace Vlingo.Common.Compiler
 
         public Type Protocol { get; }
         public string FullyQualifiedClassName { get; }
+        public string FullyQualifiedNameForTypeLookup { get; }
         public string Source { get; }
         public FileInfo SourceFile { get; }
         public DynaClassLoader ClassLoader { get; }

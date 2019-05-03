@@ -6,15 +6,16 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+using System.Linq;
 
 namespace Vlingo.Common.Compiler
 {
     public static class DynaNaming
     {
-        public static string ClassNameFor<T>(string postfix)
-            => ClassNameFor(typeof(T), postfix);
+        public static string ClassNameFor<T>(string postfix, bool forTypeLookup = false)
+            => ClassNameFor(typeof(T), postfix, forTypeLookup);
 
-        public static string ClassNameFor(Type type, string postfix)
+        public static string ClassNameFor(Type type, string postfix, bool forTypeLookup = false)
         {
             var className = type.Name;
 
@@ -27,20 +28,36 @@ namespace Vlingo.Common.Compiler
                 className = className.Substring(0, className.IndexOf('`'));
             }
 
-            return $"{className}{postfix}";
+            var genericTypeParams = string.Empty;
+            if (type.IsGenericType)
+            {
+                var numGenericParams = type.GetGenericArguments().Length;
+                if (forTypeLookup)
+                {
+                    genericTypeParams = $"`{numGenericParams}";
+                }
+                else
+                {
+                    var genericDefinition = type.IsGenericTypeDefinition ? type : type.GetGenericTypeDefinition();
+                    var typeListString = string.Join(", ", genericDefinition.GetGenericArguments().Select(x => x.Name));
+                    genericTypeParams = $"<{typeListString}>";
+                }
+            }
+
+            return $"{className}{postfix}{genericTypeParams}";
         }
 
-        public static string FullyQualifiedClassNameFor<T>(string postfix)
-            => FullyQualifiedClassNameFor(typeof(T), postfix);
+        public static string FullyQualifiedClassNameFor<T>(string postfix, bool forTypeLookup = false)
+            => FullyQualifiedClassNameFor(typeof(T), postfix, forTypeLookup);
 
-        public static string FullyQualifiedClassNameFor(Type type, string postfix)
+        public static string FullyQualifiedClassNameFor(Type type, string postfix, bool forTypeLookup = false)
         {
             if (string.IsNullOrWhiteSpace(type.Namespace))
             {
-                return ClassNameFor(type, postfix);
+                return ClassNameFor(type, postfix, forTypeLookup);
             }
 
-            return $"{type.Namespace}.{ClassNameFor(type, postfix)}";
+            return $"{type.Namespace}.{ClassNameFor(type, postfix, forTypeLookup)}";
         }
     }
 }

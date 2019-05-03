@@ -14,6 +14,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 using static Vlingo.Common.Compiler.DynaFile;
+using static Vlingo.Common.Compiler.DynaNaming;
 
 namespace Vlingo.Common.Compiler
 {
@@ -69,9 +70,11 @@ namespace Vlingo.Common.Compiler
 
                 Persist(input, byteCode);
 
+                var lookupTypeName = input.FullyQualifiedNameForTypeLookup;
+
                 // to prevent exception when trying to generate and load proxy of same interface in parallel from different places/thread
-                return input.ClassLoader.LoadClass(input.FullyQualifiedClassName) ??
-                    input.ClassLoader.AddDynaClass(input.FullyQualifiedClassName, byteCode);
+                return input.ClassLoader.LoadClass(lookupTypeName) ??
+                    input.ClassLoader.AddDynaClass(lookupTypeName, byteCode);
             }
             catch (Exception ex)
             {

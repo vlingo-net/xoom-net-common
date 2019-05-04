@@ -36,6 +36,7 @@ namespace Vlingo.Common.Compiler
                     typeof(object).GetTypeInfo().Assembly,
                     input.Protocol.GetTypeInfo().Assembly,
                     Assembly.GetCallingAssembly(),
+                    Assembly.Load(new AssemblyName("System.Runtime")),
                     Assembly.Load(new AssemblyName("mscorlib")),
                     Assembly.Load(new AssemblyName("netstandard")),
                 };

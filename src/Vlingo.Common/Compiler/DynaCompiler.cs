@@ -35,11 +35,15 @@ namespace Vlingo.Common.Compiler
                 {
                     typeof(object).GetTypeInfo().Assembly,
                     input.Protocol.GetTypeInfo().Assembly,
+                    GetType().Assembly, // Adding Vlingo.Common
                     Assembly.GetCallingAssembly(),
                     Assembly.Load(new AssemblyName("System.Runtime")),
                     Assembly.Load(new AssemblyName("mscorlib")),
                     Assembly.Load(new AssemblyName("netstandard")),
                 };
+
+                // Adding Vlingo.Actors, if available
+                TryLoadActorsAssembly(assembliesToLoad);
 
                 input.Protocol.Assembly
                     .GetReferencedAssemblies()
@@ -84,6 +88,16 @@ namespace Vlingo.Common.Compiler
             }
 
             throw new ArgumentException($"Dynamically generated class source did not compile: {input.FullyQualifiedClassName}");
+        }
+
+        private void TryLoadActorsAssembly(HashSet<Assembly> assembliesToLoad)
+        {
+            try
+            {
+                var assembly = Assembly.Load(new AssemblyName("Vlingo.Actors"));
+                assembliesToLoad.Add(assembly);
+            }
+            catch (Exception) { }
         }
 
         private void Persist(Input input, byte[] byteCode)

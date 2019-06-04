@@ -24,6 +24,7 @@ namespace Vlingo.Common.Message
         private readonly CancellationTokenSource cancellationSource;
         private readonly AutoResetEvent taskProcessedEvent;
         private readonly AutoResetEvent endDispatchingEvent;
+        private readonly Task backgroundWorker;
 
         public AsyncMessageQueue()
             : this(null)
@@ -40,7 +41,7 @@ namespace Vlingo.Common.Message
             taskProcessedEvent = new AutoResetEvent(false);
             endDispatchingEvent = new AutoResetEvent(false);
             cancellationSource = new CancellationTokenSource();
-            Task.Run(() => TaskAction(), cancellationSource.Token);
+            backgroundWorker = Task.Run(() => TaskAction(cancellationSource.Token), cancellationSource.Token);
         }
 
         public virtual void Close() => Close(true);
@@ -58,6 +59,7 @@ namespace Vlingo.Common.Message
 
                 cancellationSource.Cancel();
                 taskProcessedEvent.Set();
+                backgroundWorker.Wait(cancellationSource.Token);
             }
             Dispose(true);
         }
@@ -160,9 +162,9 @@ namespace Vlingo.Common.Message
             return null;
         }
 
-        private void TaskAction()
+        private void TaskAction(CancellationToken token)
         {
-            while (!cancellationSource.IsCancellationRequested)
+            while (!token.IsCancellationRequested)
             {
                 taskProcessedEvent.WaitOne();
                 while (!queue.IsEmpty)

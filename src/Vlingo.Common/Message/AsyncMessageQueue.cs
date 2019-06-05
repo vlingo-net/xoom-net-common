@@ -59,7 +59,14 @@ namespace Vlingo.Common.Message
 
                 cancellationSource.Cancel();
                 taskProcessedEvent.Set();
-                backgroundWorker.Wait(cancellationSource.Token);
+                try
+                {
+                    backgroundWorker.Wait(cancellationSource.Token);
+                }
+                catch (OperationCanceledException e)
+                {
+                    // TODO: log or do nothing but everything is ok
+                }
             }
             Dispose(true);
         }

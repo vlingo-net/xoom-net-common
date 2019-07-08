@@ -129,20 +129,20 @@ namespace Vlingo.Common
             return this;
         }
 
-        public virtual T Await()
+        public virtual TO Await<TO>()
         {
             state.Await();
-            return Outcome;
+            return (TO)(object)Outcome;
         }
 
-        public virtual T Await(TimeSpan timeout)
+        public virtual TO Await<TO>(TimeSpan timeout)
         {
             if (state.Await(timeout))
             {
-                return Outcome;
+                return (TO)(object)Outcome;
             }
 
-            return default(T);
+            return default(TO);
         }
 
         public virtual bool IsCompleted => state.IsOutcomeKnown;
@@ -251,6 +251,7 @@ namespace Vlingo.Common
             Action<TActSt> FailureActionFunction();
             bool HandleFailure(Optional<TActSt> outcome);
             void ExceptionAction(Func<Exception, TActSt> function);
+            void HandleException();
             void HandleException(Exception e);
             bool HasException { get; }
             bool HasOutcome { get; }
@@ -339,18 +340,24 @@ namespace Vlingo.Common
             {
                 while (HasActions)
                 {
+                    if(state.HasOutcome && state.HasFailed)
+                    {
+                        state.ExecuteFailureAction();
+                        return;
+                    }
+                    else if(state.HasException)
+                    {
+                        state.HandleException();
+                        return;
+                    }
+
                     if(!actions.TryDequeue(out var action))
                     {
                         continue;
                     }
-
                     state.BackUp(action);
 
-                    if(state.HasOutcome && state.HasFailed)
-                    {
-                        state.ExecuteFailureAction();
-                    }
-                    else if (action.hasDefaultValue && state.OutcomeMustDefault)
+                    if (action.hasDefaultValue && state.OutcomeMustDefault)
                     {
                         state.Outcome(action.defaultValue);
                     }
@@ -541,6 +548,11 @@ namespace Vlingo.Common
             public virtual void ExceptionAction(Func<Exception, TBActSt> function)
             {
                 exceptionAction = function;
+                HandleException();
+            }
+
+            public virtual void HandleException()
+            {
                 if (HasException)
                 {
                     HandleException(exception.Get());

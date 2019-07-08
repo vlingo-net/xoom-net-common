@@ -109,9 +109,10 @@ namespace Vlingo.Common
             return task;
         }
 
-        private class SchedulerTask<T> : ICancellable
+        private class SchedulerTask<T> : ICancellable, IRunnable
         {
             private readonly IScheduled<T> scheduled;
+            private readonly T data;
             private readonly bool repeats;
             private Timer timer;
             private bool hasRun;
@@ -119,15 +120,18 @@ namespace Vlingo.Common
             public SchedulerTask(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval, bool repeats)
             {
                 this.scheduled = scheduled;
+                this.data = data;
                 this.repeats = repeats;
                 hasRun = false;
-                timer = new Timer(Tick, data, delayBefore, interval);
+                timer = new Timer(Tick, null, delayBefore, interval);
             }
 
-            private void Tick(object data)
+            private void Tick(object data) => Run();
+
+            public void Run()
             {
                 hasRun = true;
-                scheduled.IntervalSignal(scheduled, (T)data);
+                scheduled.IntervalSignal(scheduled, data);
 
                 if (!repeats)
                 {

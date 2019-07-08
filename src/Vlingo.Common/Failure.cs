@@ -35,7 +35,7 @@ namespace Vlingo.Common
 
         public virtual ICompletes<TValue> AsCompletes()
         {
-            return CompletesExt.WithFailure<TValue>();
+            return Completes.WithFailure<TValue>();
         }
 
         public virtual Optional<TValue> AsOptional()
@@ -76,6 +76,10 @@ namespace Vlingo.Common
         {
             return onFailedOutcome.Invoke(cause);
         }
+
+        public virtual IOutcome<TNextFailure, TValue> OtherwiseFail<TNextFailure>(Func<TCause, TNextFailure> action) 
+            where TNextFailure : Exception
+            => Failure.Of<TNextFailure, TValue>(action.Invoke(cause));
 
         public override bool Equals(object obj)
         {

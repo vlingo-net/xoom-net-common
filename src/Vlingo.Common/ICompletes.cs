@@ -35,8 +35,8 @@ namespace Vlingo.Common
         ICompletes<T> OtherwiseConsume(Action<T> consumer);
         ICompletes<T> RecoverFrom(Func<Exception, T> function);
 
-        T Await();
-        T Await(TimeSpan timeout);
+        TO Await<TO>();
+        TO Await<TO>(TimeSpan timeout);
         bool IsCompleted { get; }
         bool HasFailed { get; }
         void Failed();
@@ -45,7 +45,7 @@ namespace Vlingo.Common
         ICompletes<T> Repeat();
     }
 
-    public static class CompletesExt
+    public static class Completes
     {
         public static ICompletes<T> Using<T>(Scheduler scheduler)
         {

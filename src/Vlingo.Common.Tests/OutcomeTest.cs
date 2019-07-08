@@ -274,6 +274,17 @@ namespace Vlingo.Common.Tests
             Assert.Throws<InvalidOperationException>(() => wrapped.Get());
         }
 
+        [Fact]
+        public void TestThatOtherwiseFailMapsTheException()
+        {
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                Failure.Of<Exception, int>(RandomException())
+                    .OtherwiseFail(f => new InvalidOperationException())
+                    .Get();
+            });
+        }
+
         private static int RandomInt() => new Random().Next(1, 100);
 
         private static Exception RandomException() => new ApplicationException();

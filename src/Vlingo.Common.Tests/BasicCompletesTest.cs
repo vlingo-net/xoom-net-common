@@ -85,7 +85,7 @@ namespace Vlingo.Common.Tests
                 .AndThen(x => andThenValue = x);
 
             completes.With(5);
-            completes.Await(TimeSpan.FromMilliseconds(10));
+            completes.Await<int>(TimeSpan.FromMilliseconds(10));
 
             Assert.Equal(10, andThenValue);
         }
@@ -107,7 +107,7 @@ namespace Vlingo.Common.Tests
             }));
             thread.Start();
 
-            completes.Await();
+            completes.Await<int>();
 
             Assert.True(completes.HasFailed);
             Assert.NotEqual(10, andThenValue);
@@ -125,7 +125,7 @@ namespace Vlingo.Common.Tests
                 .Otherwise(x => failureValue = 1000);
 
             completes.With(-100);
-            completes.Await();
+            completes.Await<int>();
 
             Assert.True(completes.HasFailed);
             Assert.Equal(-1, andThenValue);
@@ -144,10 +144,29 @@ namespace Vlingo.Common.Tests
                 .RecoverFrom(e => failureValue = int.Parse(e.Message));
 
             completes.With(2);
-            completes.Await();
+            completes.Await<int>();
 
             Assert.True(completes.HasFailed);
             Assert.Equal(8, failureValue);
+        }
+
+        [Fact]
+        public void TestThatExceptionHandlerDelayRecovers()
+        {
+            var failureValue = -1;
+            var completes = new BasicCompletes<int>(new Scheduler());
+            completes
+                .AndThen(0, value => value * 2)
+                .AndThen<int>(value => throw new Exception($"{value * 2}"));
+
+            completes.With(10);
+
+            completes.RecoverFrom(e => failureValue = int.Parse(e.Message));
+
+            completes.Await<int>();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(40, failureValue);
         }
 
         [Fact]
@@ -155,7 +174,7 @@ namespace Vlingo.Common.Tests
         {
             var completes = new BasicCompletes<int>(new Scheduler());
 
-            var completed = completes.Await(TimeSpan.FromMilliseconds(10));
+            var completed = completes.Await<int>(TimeSpan.FromMilliseconds(10));
 
             completes.With(5);
 
@@ -175,7 +194,7 @@ namespace Vlingo.Common.Tests
             }));
             thread.Start();
 
-            var completed = completes.Await();
+            var completed = completes.Await<int>();
 
             Assert.Equal(5, completed);
         }

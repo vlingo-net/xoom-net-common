@@ -143,10 +143,7 @@ namespace Vlingo.Common
             {
                 if (timer != null)
                 {
-                    using (timer)
-                    {
-                        timer.Change(Timeout.Infinite, Timeout.Infinite);
-                    }
+                    timer.Dispose();
                     timer = null;
                 }
 

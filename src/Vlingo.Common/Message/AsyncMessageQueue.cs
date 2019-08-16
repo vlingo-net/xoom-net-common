@@ -63,7 +63,7 @@ namespace Vlingo.Common.Message
                 {
                     backgroundWorker.Wait(cancellationSource.Token);
                 }
-                catch (OperationCanceledException e)
+                catch (OperationCanceledException)
                 {
                     // TODO: log or do nothing but everything is ok
                 }

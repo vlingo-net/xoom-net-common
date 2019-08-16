@@ -39,7 +39,7 @@ namespace Vlingo.Common.Compiler
                 else
                 {
                     var genericDefinition = type.IsGenericTypeDefinition ? type : type.GetGenericTypeDefinition();
-                    var typeListString = string.Join(", ", genericDefinition.GetGenericArguments().Select(x => x.Name));
+                    var typeListString = string.Join(", ", genericDefinition.GetGenericArguments().Select(x => x.FullName ?? x.Name));
                     genericTypeParams = $"<{typeListString}>";
                 }
             }

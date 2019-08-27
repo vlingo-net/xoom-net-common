@@ -13,13 +13,15 @@
       The vlingo-net-common project consists of some tools that are used across various other vlingo-net projects.
     </Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/vlingo-net/vlingo-net-common</PackageProjectUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/vlingo-net/vlingo-net-common/master/vlingo-64x64.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/vlingo-net/vlingo-net-common</RepositoryUrl>
     <PackageTags>vlingo-net-common;actor-model;dotnet;netstandard;c#;reactive-programming</PackageTags>
   </PropertyGroup>
-
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.9.0" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />

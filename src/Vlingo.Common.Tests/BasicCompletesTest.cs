@@ -199,6 +199,23 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, completed);
         }
 
+        [Fact(Skip = "fails")]
+        public void TestAndThenToWithComplexTypes()
+        {
+            var completes = new BasicCompletes<IUser>(new Scheduler());
+            
+            completes
+                .AndThenTo(user => user.WithName("Tomasz"))
+                .OtherwiseConsume(noUser => completes.With(new UserState(string.Empty, string.Empty, string.Empty)))
+                .AndThenConsume(userState => {
+                    completes.With(userState);
+                });
+
+            var completed = completes.Await<UserState>();
+            
+            Assert.Equal("Tomasz", completed.Name);
+        }
+
         private class Sender
         {
             private readonly Action<int> callback;
@@ -214,6 +231,28 @@ namespace Vlingo.Common.Tests
             {
                 callback(value);
             }
+        }
+    }
+    
+    public interface IUser
+    {
+        ICompletes<UserState> WithContact(string contact);
+        ICompletes<UserState> WithName(string name);
+    }
+    
+    public class UserState
+    {
+        public string Id { get; }
+        public string Name { get; }
+        public string Contact { get; }
+
+        public UserState WithName(string name) => new UserState(Id, name, Contact);
+
+        public UserState(string id, string name, string contact)
+        {
+            Id = id;
+            Name = name;
+            Contact = contact;
         }
     }
 }

@@ -626,3 +626,4 @@ namespace Vlingo.Common.Tests
         }
     }
 }
+ 

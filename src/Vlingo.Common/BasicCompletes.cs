@@ -175,8 +175,8 @@ namespace Vlingo.Common
 
         protected internal class Action<TAct>
         {
-            protected internal readonly TAct defaultValue;
-            protected internal readonly bool hasDefaultValue;
+            protected internal readonly TAct DefaultValue;
+            protected internal readonly bool HasDefaultValue;
             private readonly object function;
             private readonly ICompletes<TAct> nestedCompletes;
 
@@ -191,32 +191,32 @@ namespace Vlingo.Common
             Action(object function)
             {
                 this.function = function;
-                this.defaultValue = default(TAct);
-                this.hasDefaultValue = false;
+                this.DefaultValue = default(TAct);
+                this.HasDefaultValue = false;
                 this.nestedCompletes = null;
             }
 
             Action(object function, TAct defaultValue)
             {
                 this.function = function;
-                this.defaultValue = defaultValue;
-                this.hasDefaultValue = true;
+                this.DefaultValue = defaultValue;
+                this.HasDefaultValue = true;
                 this.nestedCompletes = null;
             }
 
             Action(object function, ICompletes<TAct> nestedCompletes)
             {
                 this.function = function;
-                this.defaultValue = default(TAct);
-                this.hasDefaultValue = false;
+                this.DefaultValue = default(TAct);
+                this.HasDefaultValue = false;
                 this.nestedCompletes = nestedCompletes;
             }
 
             Action(object function, TAct defaultValue, ICompletes<TAct> nestedCompletes)
             {
                 this.function = function;
-                this.defaultValue = defaultValue;
-                this.hasDefaultValue = true;
+                this.DefaultValue = defaultValue;
+                this.HasDefaultValue = true;
                 this.nestedCompletes = nestedCompletes;
             }
 
@@ -357,9 +357,9 @@ namespace Vlingo.Common
                     }
                     state.BackUp(action);
 
-                    if (action.hasDefaultValue && state.OutcomeMustDefault)
+                    if (action.HasDefaultValue && state.OutcomeMustDefault)
                     {
-                        state.Outcome(action.defaultValue);
+                        state.Outcome(action.DefaultValue);
                     }
                     else
                     {

@@ -178,7 +178,7 @@ namespace Vlingo.Common
             protected internal readonly TAct DefaultValue;
             protected internal readonly bool HasDefaultValue;
             private readonly object function;
-            private readonly ICompletes<TAct> nestedCompletes;
+            private readonly ICompletes nestedCompletes;
 
             protected internal static Action<TAct> With(object function) => new Action<TAct>(function);
 
@@ -232,7 +232,7 @@ namespace Vlingo.Common
 
             public virtual bool HasNestedCompletes => nestedCompletes != null;
 
-            public virtual ICompletes<TAct> NestedCompletes => nestedCompletes;
+            public virtual ICompletes NestedCompletes => nestedCompletes;
         }
 
         protected internal interface IActiveState<TActSt>

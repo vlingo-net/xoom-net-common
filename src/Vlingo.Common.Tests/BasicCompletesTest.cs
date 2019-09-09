@@ -209,12 +209,12 @@ namespace Vlingo.Common.Tests
 
 //            nestedCompletes.Await<int>();
 
-            var completes2 = new BasicCompletes<int>(scheduler);
+            /*var completes2 = new BasicCompletes<int>(scheduler);
             completes2.AndThenTo<string>(v => (v * 10).ToString());
             completes2.With(10);
             var result = completes2.Await<string>();
 
-            Assert.Equal("100", result);
+            Assert.Equal("100", result);*/
 
             /*var completes = new BasicCompletes<IUser>(new Scheduler());
 

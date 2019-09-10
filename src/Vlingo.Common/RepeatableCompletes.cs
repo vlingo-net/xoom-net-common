@@ -11,15 +11,15 @@ namespace Vlingo.Common
 {
     public class RepeatableCompletes<T> : BasicCompletes<T>
     {
-        public RepeatableCompletes(Scheduler scheduler) : base(new RepeatableActiveState(scheduler))
+        public RepeatableCompletes(Scheduler scheduler) : base(new RepeatableActiveState<T>(scheduler))
         {
         }
 
-        public RepeatableCompletes(T outcome, bool succeeded) : base(new RepeatableActiveState(), outcome, succeeded)
+        public RepeatableCompletes(T outcome, bool succeeded) : base(new RepeatableActiveState<T>(), outcome, succeeded)
         {
         }
 
-        public RepeatableCompletes(T outcome) : base(new RepeatableActiveState(), outcome)
+        public RepeatableCompletes(T outcome) : base(new RepeatableActiveState<T>(), outcome)
         {
         }
 
@@ -39,14 +39,14 @@ namespace Vlingo.Common
             return (ICompletes<TO>)this;
         }
 
-        protected internal class RepeatableActiveState : BasicActiveState
+        protected internal class RepeatableActiveState<TRActSt> : BasicActiveState<TRActSt>
         {
-            private readonly ConcurrentQueue<Action<T>> actionsBackup;
+            private readonly ConcurrentQueue<Action<TRActSt>> actionsBackup;
             private readonly AtomicBoolean repeating;
 
             protected internal RepeatableActiveState(Scheduler scheduler) : base(scheduler)
             {
-                actionsBackup = new ConcurrentQueue<Action<T>>();
+                actionsBackup = new ConcurrentQueue<Action<TRActSt>>();
                 repeating = new AtomicBoolean(false);
             }
 
@@ -54,7 +54,7 @@ namespace Vlingo.Common
             {
             }
 
-            public override void BackUp(Action<T> action)
+            public override void BackUp(Action<TRActSt> action)
             {
                 if(action != null)
                 {

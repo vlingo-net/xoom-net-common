@@ -203,31 +203,28 @@ namespace Vlingo.Common.Tests
         public void TestAndThenToWithComplexTypes()
         {
             var scheduler = new Scheduler();
-            /*var nestedCompletes = new BasicCompletes<int>(scheduler);
             var completes1 = new BasicCompletes<int>(scheduler);
-            completes1.AndThenTo(state => nestedCompletes.With(state * 2));*/
-
-//            nestedCompletes.Await<int>();
-
-            var completes2 = new BasicCompletes<int>(scheduler);
-            completes2.AndThenTo<string>(v => (v * 10).ToString());
-            completes2.With(10);
-            var result = completes2.Await<int>();
+            completes1.AndThenTo(v => (v * 10).ToString());
+            completes1.With(10);
+            var result = completes1.Await<int>();
 
             Assert.Equal(10, result);
 
-            /*var completes = new BasicCompletes<IUser>(new Scheduler());
+            var completes = new BasicCompletes<IUser>(scheduler);
+            var nestedCompletes = new BasicCompletes<UserState>(scheduler);
 
             completes
-                .AndThenTo(user => user.WithName("Tomasz"));
-                /*.OtherwiseConsume(noUser => completes.With(new UserState(string.Empty, string.Empty, string.Empty)))
+                .AndThenTo(user => user.WithName("Tomasz"))
+                .OtherwiseConsume(noUser => nestedCompletes.With(new UserState(string.Empty, string.Empty, string.Empty)))
                 .AndThenConsume(userState => {
-                    completes.With(userState);
-                });#1#
+                    nestedCompletes.With(userState);
+                });
 
-            var completed = completes.Await<UserState>();
+            completes.With<IUser>(new User());
+
+            var completed = completes.Await<User>();
             
-            Assert.Equal("Tomasz", completed.Name);*/
+            Assert.Equal("1", completed.Name);
         }
 
         private class Sender
@@ -254,6 +251,28 @@ namespace Vlingo.Common.Tests
         ICompletes<UserState> WithName(string name);
     }
     
+    public class User : IUser
+    {
+        private UserState _userState;
+
+        public string Name => _userState.Name;
+
+        public User()
+        {
+            _userState = new UserState("1", "1", "1");
+        }
+        
+        public ICompletes<UserState> WithContact(string contact)
+        {
+            return new BasicCompletes<UserState>(_userState.WithContact(contact));
+        }
+
+        public ICompletes<UserState> WithName(string name)
+        {
+            return new BasicCompletes<UserState>(_userState.WithName(name));
+        }
+    }
+
     public class UserState
     {
         public string Id { get; }
@@ -261,6 +280,8 @@ namespace Vlingo.Common.Tests
         public string Contact { get; }
 
         public UserState WithName(string name) => new UserState(Id, name, Contact);
+        
+        public UserState WithContact(string contact) => new UserState(Id, Name, contact);
 
         public UserState(string id, string name, string contact)
         {

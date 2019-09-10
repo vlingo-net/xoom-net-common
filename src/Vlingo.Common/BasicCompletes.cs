@@ -92,11 +92,19 @@ namespace Vlingo.Common
 
         private TO AndThenToInternal<TF, TO>(TimeSpan timeout, Optional<TF> failedOutcomeValue, Func<T, TO> function)
         {
+            if (typeof(ICompletes).IsAssignableFrom(typeof(TO)))
+            {
+                var genericParameter = typeof(TO).GenericTypeArguments[0];
+                var nestedGenericTypeDefinition = typeof(BasicCompletes<>);
+                var nestedGenericType = nestedGenericTypeDefinition.MakeGenericType(genericParameter);
+                var instance = Activator.CreateInstance(nestedGenericType, state.Scheduler);
+                return (TO) instance;
+            }
             var nestedCompletes = new BasicCompletes<TO>(state.Scheduler);
             nestedCompletes.state.FailedValue(failedOutcomeValue);
             nestedCompletes.state.FailureAction((BasicCompletes<TO>.Action<TO>)(object)state.FailureActionFunction());
             state.RegisterWithExecution(Action<T>.With(function, nestedCompletes), timeout, state);
-            return nestedCompletes.Outcome;
+            return default(TO);
         }
 
         public virtual TO AndThenTo<TF, TO>(TimeSpan timeout, TF failedOutcomeValue, Func<T, TO> function)

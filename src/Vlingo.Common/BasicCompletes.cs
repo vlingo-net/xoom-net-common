@@ -15,15 +15,15 @@ namespace Vlingo.Common
     {
         protected readonly IActiveState<T> state;
 
-        public BasicCompletes(Scheduler scheduler) : this(new BasicActiveState<T>(scheduler))
+        public BasicCompletes(Scheduler scheduler) : this(new BasicActiveState(scheduler))
         {
         }
 
-        public BasicCompletes(T outcome, bool succeeded) : this(new BasicActiveState<T>(), outcome, succeeded)
+        public BasicCompletes(T outcome, bool succeeded) : this(new BasicActiveState(), outcome, succeeded)
         {
         }
 
-        public BasicCompletes(T outcome) : this(new BasicActiveState<T>(), outcome)
+        public BasicCompletes(T outcome) : this(new BasicActiveState(), outcome)
         {
         }
 
@@ -95,8 +95,8 @@ namespace Vlingo.Common
             var nestedCompletes = new BasicCompletes<TO>(state.Scheduler);
             nestedCompletes.state.FailedValue(failedOutcomeValue);
             nestedCompletes.state.FailureAction((BasicCompletes<TO>.Action<TO>)(object)state.FailureActionFunction());
-            state.RegisterWithExecution((Action<T>)(object)BasicCompletes<TO>.Action<TO>.With(function, nestedCompletes), timeout, state);
-            return (TO)(object)nestedCompletes;
+            state.RegisterWithExecution(Action<T>.With(function, nestedCompletes), timeout, state);
+            return nestedCompletes.Outcome;
         }
 
         public virtual TO AndThenTo<TF, TO>(TimeSpan timeout, TF failedOutcomeValue, Func<T, TO> function)
@@ -173,19 +173,38 @@ namespace Vlingo.Common
             return (ICompletes<TO>)this;
         }
 
-        protected internal class Action<TAct>
+        protected internal interface IAction
         {
-            protected internal readonly TAct DefaultValue;
-            protected internal readonly bool HasDefaultValue;
+            F Function<F>();
+            
+            System.Action<T> AsConsumer();
+            
+            bool IsConsumer { get; }
+            
+            bool IsFunction { get; }
+            
+            bool HasNestedCompletes { get; }
+            
+            ICompletes NestedCompletes { get; }
+            
+            Func<T, T> AsFunction();
+            
+            object DefaultValue { get; }
+            
+            bool HasDefaultValue { get; }
+        }
+
+        protected internal class Action<TAct> : IAction
+        {
             private readonly object function;
             private readonly ICompletes nestedCompletes;
 
             protected internal static Action<TAct> With(object function) => new Action<TAct>(function);
 
-            protected internal static Action<TAct> With(object function, ICompletes<TAct> nestedCompletes)
+            protected internal static Action<TAct> With(object function, ICompletes nestedCompletes)
                 => new Action<TAct>(function, nestedCompletes);
 
-            protected internal static Action<TAct> With(object function, TAct defaultValue, ICompletes<TAct> nestedCompletes)
+            protected internal static Action<TAct> With(object function, TAct defaultValue, ICompletes nestedCompletes)
                 => new Action<TAct>(function, defaultValue, nestedCompletes);
 
             Action(object function)
@@ -204,7 +223,7 @@ namespace Vlingo.Common
                 this.nestedCompletes = null;
             }
 
-            Action(object function, ICompletes<TAct> nestedCompletes)
+            Action(object function, ICompletes nestedCompletes)
             {
                 this.function = function;
                 this.DefaultValue = default(TAct);
@@ -212,7 +231,7 @@ namespace Vlingo.Common
                 this.nestedCompletes = nestedCompletes;
             }
 
-            Action(object function, TAct defaultValue, ICompletes<TAct> nestedCompletes)
+            Action(object function, TAct defaultValue, ICompletes nestedCompletes)
             {
                 this.function = function;
                 this.DefaultValue = defaultValue;
@@ -222,11 +241,15 @@ namespace Vlingo.Common
 
             public virtual F Function<F>() => (F)function;
 
-            public virtual System.Action<TAct> AsConsumer() => (System.Action<TAct>)function;
+            public virtual System.Action<T> AsConsumer() => (System.Action<T>)function;
 
             public virtual bool IsConsumer => (function is System.Action<TAct>);
 
-            public virtual Func<TAct, TAct> AsFunction() => (Func<TAct, TAct>)function;
+            public virtual Func<T, T> AsFunction() => (Func<T, T>)function;
+            
+            public object DefaultValue { get; }
+            
+            public bool HasDefaultValue { get; }
 
             public virtual bool IsFunction => (function is Func<TAct, TAct>);
 
@@ -239,7 +262,7 @@ namespace Vlingo.Common
         {
             void Await();
             bool Await(TimeSpan timeout);
-            void BackUp(Action<TActSt> action);
+            void BackUp(IAction action);
             void CancelTimer();
             void CompletedWith(TActSt outcome);
             bool ExecuteFailureAction();
@@ -268,22 +291,22 @@ namespace Vlingo.Common
             void StartTimer(TimeSpan timeout);
         }
 
-        private class Executables<TExec>
+        private class Executables
         {
             private AtomicBoolean accessible;
-            private ConcurrentQueue<Action<TExec>> actions;
+            private ConcurrentQueue<IAction> actions;
             private AtomicBoolean readyToExecute;
 
             internal Executables()
             {
                 accessible = new AtomicBoolean(false);
-                actions = new ConcurrentQueue<Action<TExec>>();
+                actions = new ConcurrentQueue<IAction>();
                 readyToExecute = new AtomicBoolean(false);
             }
 
             internal int Count => actions.Count;
 
-            internal void Execute(IActiveState<TExec> state)
+            internal void Execute(IActiveState<T> state)
             {
                 while (true)
                 {
@@ -299,7 +322,7 @@ namespace Vlingo.Common
 
             internal bool IsReadyToExecute => readyToExecute.Get();
 
-            internal void RegisterWithExecution(Action<TExec> action, TimeSpan timeout, IActiveState<TExec> state)
+            internal void RegisterWithExecution(Action<T> action, TimeSpan timeout, IActiveState<T> state)
             {
                 while (true)
                 {
@@ -329,14 +352,14 @@ namespace Vlingo.Common
                 }
             }
 
-            internal void Restore(Action<TExec> action)
+            internal void Restore(Action<T> action)
             {
                 actions.Enqueue(action);
             }
 
             private bool HasActions => !actions.IsEmpty;
 
-            private void ExecuteActions(IActiveState<TExec> state)
+            private void ExecuteActions(IActiveState<T> state)
             {
                 while (HasActions)
                 {
@@ -345,7 +368,8 @@ namespace Vlingo.Common
                         state.ExecuteFailureAction();
                         return;
                     }
-                    else if(state.HasException)
+
+                    if(state.HasException)
                     {
                         state.HandleException();
                         return;
@@ -355,11 +379,12 @@ namespace Vlingo.Common
                     {
                         continue;
                     }
+                    
                     state.BackUp(action);
 
                     if (action.HasDefaultValue && state.OutcomeMustDefault)
                     {
-                        state.Outcome(action.DefaultValue);
+                        state.Outcome((T)action.DefaultValue);
                     }
                     else
                     {
@@ -367,18 +392,18 @@ namespace Vlingo.Common
                         {
                             if (action.IsConsumer)
                             {
-                                action.AsConsumer().Invoke(state.Outcome<TExec>());
+                                action.AsConsumer().Invoke(state.Outcome<T>());
                             }
                             else if (action.IsFunction)
                             {
                                 if (action.HasNestedCompletes)
                                 {
-                                    ((ICompletes<TExec>)action.AsFunction().Invoke(state.Outcome<TExec>()))
+                                    ((ICompletes<T>)action.AsFunction().Invoke(state.Outcome<T>()))
                                         .AndThenConsume(value => action.NestedCompletes.With(value));
                                 }
                                 else
                                 {
-                                    state.Outcome(action.AsFunction().Invoke(state.Outcome<TExec>()));
+                                    state.Outcome(action.AsFunction().Invoke(state.Outcome<T>()));
                                 }
                             }
                         }
@@ -392,15 +417,15 @@ namespace Vlingo.Common
             }
         }
 
-        protected internal class BasicActiveState<TBActSt> : IActiveState<TBActSt>, IScheduled<object>
+        protected internal class BasicActiveState : IActiveState<T>, IScheduled<object>
         {
             private ICancellable cancellable;
-            private readonly Executables<TBActSt> executables;
+            private readonly Executables executables;
             private readonly AtomicBoolean failed;
-            private Optional<TBActSt> failedOutcomeValue;
-            private Action<TBActSt> failureAction;
+            private Optional<T> failedOutcomeValue;
+            private Action<T> failureAction;
             private readonly AtomicReference<Exception> exception;
-            private Func<Exception, TBActSt> exceptionAction;
+            private Func<Exception, T> exceptionAction;
             private readonly AtomicReference<object> outcome;
             private ManualResetEventSlim outcomeKnown;
             private readonly Scheduler scheduler;
@@ -409,9 +434,9 @@ namespace Vlingo.Common
             protected internal BasicActiveState(Scheduler scheduler)
             {
                 this.scheduler = scheduler;
-                executables = new Executables<TBActSt>();
+                executables = new Executables();
                 failed = new AtomicBoolean(false);
-                failedOutcomeValue = Optional.Empty<TBActSt>();
+                failedOutcomeValue = Optional.Empty<T>();
                 exception = new AtomicReference<Exception>(null);
                 outcome = new AtomicReference<object>(null);
                 outcomeKnown = new ManualResetEventSlim(false);
@@ -443,7 +468,11 @@ namespace Vlingo.Common
                 }
             }
 
-            public virtual void BackUp(Action<TBActSt> action)
+            public void BackUp(IAction action)
+            {
+            }
+
+            public virtual void BackUp(Action<T> action)
             {
                 // unused; see RepeatableCompletes
             }
@@ -457,7 +486,7 @@ namespace Vlingo.Common
                 }
             }
 
-            public void CompletedWith(TBActSt outcome)
+            public void CompletedWith(T outcome)
             {
                 CancelTimer();
                 if (!timedOut.Get())
@@ -479,11 +508,11 @@ namespace Vlingo.Common
 
                     if (executeFailureAction.IsConsumer)
                     {
-                        executeFailureAction.AsConsumer().Invoke((TBActSt)outcome.Get());
+                        executeFailureAction.AsConsumer().Invoke((T)outcome.Get());
                     }
                     else
                     {
-                        outcome.Set(executeFailureAction.AsFunction().Invoke((TBActSt)outcome.Get()));
+                        outcome.Set(executeFailureAction.AsFunction().Invoke((T)outcome.Get()));
                     }
 
                     return true;
@@ -503,13 +532,13 @@ namespace Vlingo.Common
             {
                 if (failedOutcomeValue.IsPresent)
                 {
-                    this.failedOutcomeValue = failedOutcomeValue.Map(x => (TBActSt)(object)x);
+                    this.failedOutcomeValue = failedOutcomeValue.Map(x => (T)(object)x);
                 }
             }
 
-            public virtual TBActSt FailedValue() => failedOutcomeValue.Get();
+            public virtual T FailedValue() => failedOutcomeValue.Get();
 
-            public virtual void FailureAction(Action<TBActSt> action)
+            public virtual void FailureAction(Action<T> action)
             {
                 failureAction = action;
                 if (IsOutcomeKnown && HasFailed)
@@ -518,9 +547,9 @@ namespace Vlingo.Common
                 }
             }
 
-            public Action<TBActSt> FailureActionFunction() => failureAction;
+            public Action<T> FailureActionFunction() => failureAction;
 
-            public bool HandleFailure(Optional<TBActSt> outcome)
+            public bool HandleFailure(Optional<T> outcome)
             {
                 if (IsOutcomeKnown && HasFailed)
                 {
@@ -545,7 +574,7 @@ namespace Vlingo.Common
                 return handle;
             }
 
-            public virtual void ExceptionAction(Func<Exception, TBActSt> function)
+            public virtual void ExceptionAction(Func<Exception, T> function)
             {
                 exceptionAction = function;
                 HandleException();
@@ -575,7 +604,7 @@ namespace Vlingo.Common
 
             public virtual bool HasOutcome => outcome.Get() != null;
 
-            public virtual void Outcome(TBActSt outcome)
+            public virtual void Outcome(T outcome)
             {
                 this.outcome.Set(outcome);
             }
@@ -606,7 +635,7 @@ namespace Vlingo.Common
 
             public bool OutcomeMustDefault => outcome.Get() == null;
 
-            public void RegisterWithExecution(Action<TBActSt> action, TimeSpan timeout, IActiveState<TBActSt> state)
+            public void RegisterWithExecution(Action<T> action, TimeSpan timeout, IActiveState<T> state)
                 => executables.RegisterWithExecution(action, timeout, state);
 
             public virtual bool IsRepeatable => false;
@@ -621,7 +650,7 @@ namespace Vlingo.Common
                 // unused; see RepeatableCompletes
             }
 
-            public void Restore(Action<TBActSt> action) => executables.Restore(action);
+            public void Restore(Action<T> action) => executables.Restore(action);
 
             public virtual Scheduler Scheduler => scheduler;
 

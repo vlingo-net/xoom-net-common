@@ -97,9 +97,13 @@ namespace Vlingo.Common
                 var genericParameter = typeof(TO).GenericTypeArguments[0];
                 var nestedGenericTypeDefinition = typeof(BasicCompletes<>);
                 var nestedGenericType = nestedGenericTypeDefinition.MakeGenericType(genericParameter);
-                var instance = Activator.CreateInstance(nestedGenericType, state.Scheduler);
-                return (TO) instance;
+                var innerCompletes = (dynamic)Activator.CreateInstance(nestedGenericType, state.Scheduler);
+                innerCompletes.state.FailedValue(failedOutcomeValue);
+                // innerCompletes.state.FailureAction(state.FailureActionFunction());
+                state.RegisterWithExecution(Action<T>.With(function, innerCompletes), timeout, state);
+                return (TO) innerCompletes;
             }
+            
             var nestedCompletes = new BasicCompletes<TO>(state.Scheduler);
             nestedCompletes.state.FailedValue(failedOutcomeValue);
             nestedCompletes.state.FailureAction((BasicCompletes<TO>.Action<TO>)(object)state.FailureActionFunction());
@@ -181,27 +185,6 @@ namespace Vlingo.Common
             return (ICompletes<TO>)this;
         }
 
-        protected internal interface IAction
-        {
-            F Function<F>();
-            
-            System.Action<T> AsConsumer();
-            
-            bool IsConsumer { get; }
-            
-            bool IsFunction { get; }
-            
-            bool HasNestedCompletes { get; }
-            
-            ICompletes NestedCompletes { get; }
-            
-            Func<T, T> AsFunction();
-            
-            object DefaultValue { get; }
-            
-            bool HasDefaultValue { get; }
-        }
-
         protected internal class Action<TAct>
         {
             protected internal readonly TAct DefaultValue;
@@ -253,11 +236,11 @@ namespace Vlingo.Common
 
             public virtual System.Action<TAct> AsConsumer() => (System.Action<TAct>)function;
 
-            public virtual bool IsConsumer => (function is System.Action<TAct>);
+            public virtual bool IsConsumer => function.GetType().Name.Contains("Action`1");
 
-            public virtual Func<TAct, TAct> AsFunction() => (Func<TAct, TAct>)function;
+            public virtual dynamic AsFunction() => function;
 
-            public virtual bool IsFunction => (function is Func<TAct, TAct>);
+            public virtual bool IsFunction => function.GetType().Name.Contains("Func`2");
 
             public virtual bool HasNestedCompletes => nestedCompletes != null;
 

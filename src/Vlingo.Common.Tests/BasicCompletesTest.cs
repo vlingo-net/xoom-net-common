@@ -264,12 +264,12 @@ namespace Vlingo.Common.Tests
         
         public ICompletes<UserState> WithContact(string contact)
         {
-            return new BasicCompletes<UserState>(_userState.WithContact(contact));
+            return Completes.WithSuccess(_userState.WithContact(contact));
         }
 
         public ICompletes<UserState> WithName(string name)
         {
-            return new BasicCompletes<UserState>(_userState.WithName(name));
+            return Completes.WithSuccess(_userState.WithName(name));
         }
     }
 

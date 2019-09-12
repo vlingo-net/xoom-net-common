@@ -129,8 +129,8 @@ namespace Vlingo.Common
         }
 
         public bool HasOutcome { get; }
-        
-        public T Outcome { get; }
+
+        public T Outcome => _outcome;
         
         public ICompletes<T> Repeat()
         {

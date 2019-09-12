@@ -99,14 +99,14 @@ namespace Vlingo.Common
                 var nestedGenericType = nestedGenericTypeDefinition.MakeGenericType(genericParameter);
                 var innerCompletes = (dynamic)Activator.CreateInstance(nestedGenericType, state.Scheduler);
                 innerCompletes.state.FailedValue(failedOutcomeValue);
-                // innerCompletes.state.FailureAction(state.FailureActionFunction());
+                innerCompletes.state.FailureAction((BasicCompletes<TO>.Action<TO>)(object)state.FailureActionFunction()); // THIS BLOWS because of binder runtime exception
                 state.RegisterWithExecution(Action<T>.With(function, innerCompletes), timeout, state);
                 return (TO) innerCompletes;
             }
             
             var nestedCompletes = new BasicCompletes<TO>(state.Scheduler);
             nestedCompletes.state.FailedValue(failedOutcomeValue);
-            nestedCompletes.state.FailureAction((BasicCompletes<TO>.Action<TO>)(object)state.FailureActionFunction());
+            nestedCompletes.state.FailureAction((BasicCompletes<TO>.Action<TO>)(object)state.FailureActionFunction()); // TODO: this will fails if types doesn't match
             state.RegisterWithExecution(Action<T>.With(function, nestedCompletes), timeout, state);
             return default(TO);
         }

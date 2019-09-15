@@ -175,6 +175,8 @@ namespace Vlingo.Common
             throw new NotSupportedException();
         }
 
+        public ICompletes<T> Ready() => this;
+
         public virtual ICompletes<TO> With<TO>(TO outcome)
         {
             if (!state.HandleFailure(Optional.Of((T)(object)outcome)))

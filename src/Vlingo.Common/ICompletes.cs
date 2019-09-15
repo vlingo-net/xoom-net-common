@@ -43,6 +43,7 @@ namespace Vlingo.Common
         bool HasOutcome { get; }
         T Outcome { get; }
         ICompletes<T> Repeat();
+        ICompletes<T> Ready();
     }
 
     public static class Completes

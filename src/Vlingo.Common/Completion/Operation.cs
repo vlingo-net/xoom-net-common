@@ -15,18 +15,18 @@ namespace Vlingo.Common.Completion
         
         public abstract void OnOutcome(TReceives receives);
 
-        public void OnError(Exception cause) => EmitError(cause);
+        public virtual void OnError(Exception cause) => EmitError(cause);
 
-        public void OnCompletion() => EmitCompletion();
+        public virtual void OnCompletion() => EmitCompletion();
 
         public virtual bool HasBeenCompleted => _subscriber.HasBeenCompleted;
         
-        public void EmitOutcome(TExposes outcome) => _subscriber.OnOutcome(outcome);
+        public virtual void EmitOutcome(TExposes outcome) => _subscriber.OnOutcome(outcome);
 
-        public void EmitError(Exception cause) => _subscriber.OnError(cause);
+        public virtual void EmitError(Exception cause) => _subscriber.OnError(cause);
 
-        public void EmitCompletion() => _subscriber.OnCompletion();
+        public virtual void EmitCompletion() => _subscriber.OnCompletion();
 
-        public void Subscribe(ISink<TExposes> subscriber) => _subscriber = subscriber;
+        public virtual void Subscribe(ISink<TExposes> subscriber) => _subscriber = subscriber;
     }
 }

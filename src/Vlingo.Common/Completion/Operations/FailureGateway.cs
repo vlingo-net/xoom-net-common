@@ -11,13 +11,13 @@ namespace Vlingo.Common.Completion.Operations
 {
     public class FailureGateway<T> : Operation<T, T>
     {
-        private T _failureOutcome;
+        private readonly T failureOutcome;
 
-        public FailureGateway(T failureOutcome) => _failureOutcome = failureOutcome;
+        public FailureGateway(T failureOutcome) => this.failureOutcome = failureOutcome;
 
         public override void OnOutcome(T receives)
         {
-            if (receives.Equals(_failureOutcome))
+            if (receives.Equals(failureOutcome))
             {
                 EmitError(new FailedOperationException(receives));
             }

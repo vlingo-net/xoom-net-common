@@ -6,6 +6,8 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+using System.Threading.Tasks;
+using Vlingo.Common.Completion.Operations;
 using Vlingo.Common.Completion.Sinks;
 using Vlingo.Common.Completion.Sources;
 
@@ -46,7 +48,18 @@ namespace Vlingo.Common.Completion
 
         public ICompletes<TO> AndThen<TO>(TimeSpan timeout, TO failedOutcomeValue, Func<T, TO> function)
         {
-            throw new NotImplementedException();
+            var failureGateway = new FailureGateway<TO>(failedOutcomeValue);
+            var timeoutGateway = new TimeoutGateway<T>(scheduler, timeout);
+            var newSource = new AndThen<T, TO>(function);
+            currentOperation.Subscribe(timeoutGateway);
+            timeoutGateway.Subscribe(newSource);
+            newSource.Subscribe(failureGateway);
+            //failureGateway.Subscribe(sink);
+
+            var task = new Task<int>(() => 1).ContinueWith(t => t.Result.ToString())
+                .ContinueWith(task1 => task1.Result);
+
+            return new SinkAndSourceBasedCompletes<TO, TSource>(scheduler, source, failureGateway, sink);
         }
 
         public ICompletes<TO> AndThen<TO>(TO failedOutcomeValue, Func<T, TO> function)

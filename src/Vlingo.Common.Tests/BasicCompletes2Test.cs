@@ -5,8 +5,6 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-using System;
-using System.Threading;
 using Xunit;
 
 namespace Vlingo.Common.Tests
@@ -21,10 +19,10 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, completes.Outcome);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        /*[Fact]
         public void TestCompletesAfterFunction()
         {
-            var completes = new BasicCompletes2<int>(0);
+            var completes = new BasicCompletes<int>(0);
             completes.AndThen(value => value * 2);
 
             completes.With(5);
@@ -32,11 +30,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal(10, completes.Outcome);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestCompletesAfterConsumer()
         {
             int andThenValue = 0;
-            var completes = new BasicCompletes2<int>(0);
+            var completes = new BasicCompletes<int>(0);
             completes.AndThen(x => andThenValue = x);
 
             completes.With(5);
@@ -44,11 +42,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, andThenValue);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestCompletesAfterAndThen()
         {
             int andThenValue = 0;
-            var completes = new BasicCompletes2<int>(0);
+            var completes = new BasicCompletes<int>(0);
             completes
                 .AndThen(value => value * 2)
                 .AndThen(x => andThenValue = x);
@@ -58,11 +56,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal(10, andThenValue);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestCompletesAfterAndThenMessageOut()
         {
             int andThenValue = 0;
-            var completes = new BasicCompletes2<int>(0);
+            var completes = new BasicCompletes<int>(0);
             var sender = new Sender(x => andThenValue = x);
 
             completes
@@ -74,11 +72,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal(10, andThenValue);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestOutcomeBeforeTimeout()
         {
             int andThenValue = 0;
-            var completes = new BasicCompletes2<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1000), value => value * 2)
@@ -90,11 +88,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal(10, andThenValue);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestTimeoutBeforeOutcome()
         {
             int andThenValue = 0;
-            var completes = new BasicCompletes2<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
@@ -114,11 +112,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal(0, andThenValue);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestThatFailureOutcomeFails()
         {
             int andThenValue = -1, failureValue = 0;
-            var completes = new BasicCompletes2<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler());
             completes
                 .AndThen(-100, value => 2 * value)
                 .AndThen(x => andThenValue = x)
@@ -132,11 +130,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal(1000, failureValue);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestThatExceptionOutcomeFails()
         {
             int failureValue = -1;
-            var completes = new BasicCompletes2<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
                 .AndThen(42, value => value * 2)
@@ -150,11 +148,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal(8, failureValue);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestThatExceptionHandlerDelayRecovers()
         {
             var failureValue = -1;
-            var completes = new BasicCompletes2<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler());
             completes
                 .AndThen(0, value => value * 2)
                 .AndThen<int>(value => throw new Exception($"{value * 2}"));
@@ -169,10 +167,10 @@ namespace Vlingo.Common.Tests
             Assert.Equal(40, failureValue);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestThatAwaitTimesOut()
         {
-            var completes = new BasicCompletes2<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler());
 
             var completed = completes.Await<int>(TimeSpan.FromMilliseconds(10));
 
@@ -182,10 +180,10 @@ namespace Vlingo.Common.Tests
             Assert.Equal(default(int), completed);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestThatAwaitCompletes()
         {
-            var completes = new BasicCompletes2<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler());
 
             var thread = new Thread(new ThreadStart(() =>
             {
@@ -199,23 +197,23 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, completed);
         }
 
-        [Fact(Skip = "Implementation in progress")]
+        [Fact]
         public void TestAndThenToWithComplexTypes()
         {
             var scheduler = new Scheduler();
-            var completes1 = new BasicCompletes2<int>(scheduler);
+            var completes1 = new BasicCompletes<int>(scheduler);
             completes1.AndThenTo(v => (v * 10).ToString());
             completes1.With(10);
             var result = completes1.Await<int>();
 
             Assert.Equal(10, result);
 
-            var completes = new BasicCompletes2<IUser2>(scheduler);
-            var nestedCompletes = new BasicCompletes2<UserState2>(scheduler);
+            var completes = new BasicCompletes<IUser>(scheduler);
+            var nestedCompletes = new BasicCompletes<UserState>(scheduler);
 
             completes
                 .AndThenTo(user => user.WithName("Tomasz"))
-                .OtherwiseConsume(noUser => nestedCompletes.With(new UserState2(string.Empty, string.Empty, string.Empty)))
+                .OtherwiseConsume(noUser => nestedCompletes.With(new UserState(string.Empty, string.Empty, string.Empty)))
                 .AndThenConsume(userState => {
                     nestedCompletes.With(userState);
                 });
@@ -245,49 +243,49 @@ namespace Vlingo.Common.Tests
         }
     }
     
-    public interface IUser2
+    public interface IUser
     {
-        ICompletes<UserState2> WithContact(string contact);
-        ICompletes<UserState2> WithName(string name);
+        ICompletes<UserState> WithContact(string contact);
+        ICompletes<UserState> WithName(string name);
     }
     
-    public class User2 : IUser2
+    public class User : IUser
     {
-        private UserState2 _userState;
+        private UserState _userState;
 
         public string Name => _userState.Name;
 
-        public User2()
+        public User()
         {
-            _userState = new UserState2("1", "1", "1");
+            _userState = new UserState("1", "1", "1");
         }
         
-        public ICompletes<UserState2> WithContact(string contact)
+        public ICompletes<UserState> WithContact(string contact)
         {
-            return Completes2.WithSuccess(_userState.WithContact(contact));
+            return Completes.WithSuccess(_userState.WithContact(contact));
         }
 
-        public ICompletes<UserState2> WithName(string name)
+        public ICompletes<UserState> WithName(string name)
         {
-            return Completes2.WithSuccess(_userState.WithName(name));
+            return Completes.WithSuccess(_userState.WithName(name));
         }
     }
 
-    public class UserState2
+    public class UserState
     {
         public string Id { get; }
         public string Name { get; }
         public string Contact { get; }
 
-        public UserState2 WithName(string name) => new UserState2(Id, name, Contact);
+        public UserState WithName(string name) => new UserState(Id, name, Contact);
         
-        public UserState2 WithContact(string contact) => new UserState2(Id, Name, contact);
+        public UserState WithContact(string contact) => new UserState(Id, Name, contact);
 
-        public UserState2(string id, string name, string contact)
+        public UserState(string id, string name, string contact)
         {
             Id = id;
             Name = name;
             Contact = contact;
-        }
+        }*/
     }
 }

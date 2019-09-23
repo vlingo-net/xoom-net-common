@@ -12,11 +12,11 @@ namespace Vlingo.Common
     public interface ICompletes2<TResult> : ICompletes
     {
         ICompletes2<TNewResult> AndThen<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
-        ICompletes2<TO> AndThen<TO>(TO failedOutcomeValue, Func<TResult, TO> function);
-        ICompletes2<TO> AndThen<TO>(TimeSpan timeout, Func<TResult, TO> function);
-        ICompletes2<TO> AndThen<TO>(Func<TResult, TO> function);
+        ICompletes2<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
+        ICompletes2<TNewResult> AndThen<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function);
+        ICompletes2<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function);
 
-        ICompletes2<TResult> AndThenConsume(TimeSpan timeout, TResult failedOutcomeValue, Action<TResult> consumer);
+        /*ICompletes2<TResult> AndThenConsume(TimeSpan timeout, TResult failedOutcomeValue, Action<TResult> consumer);
         ICompletes2<TResult> AndThenConsume(TResult failedOutcomeValue, Action<TResult> consumer);
         ICompletes2<TResult> AndThenConsume(TimeSpan timeout, Action<TResult> consumer);
         ICompletes2<TResult> AndThenConsume(Action<TResult> consumer);
@@ -38,6 +38,6 @@ namespace Vlingo.Common
         bool HasOutcome { get; }
         TResult Outcome { get; }
         ICompletes2<TResult> Repeat();
-        ICompletes2<TResult> Ready();
+        ICompletes2<TResult> Ready();*/
     }
 }

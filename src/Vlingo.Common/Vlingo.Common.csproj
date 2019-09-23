@@ -18,6 +18,7 @@
     <PackageIconUrl>https://raw.githubusercontent.com/vlingo-net/vlingo-net-common/master/vlingo-64x64.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/vlingo-net/vlingo-net-common</RepositoryUrl>
     <PackageTags>vlingo-net-common;actor-model;dotnet;netstandard;c#;reactive-programming</PackageTags>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\..\LICENSE" Pack="true" PackagePath="" />

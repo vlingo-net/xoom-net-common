@@ -33,7 +33,7 @@ namespace Vlingo.Common
         TResult Await();
         TResult Await(TimeSpan timeout);
 //        bool IsCompleted { get; }
-//        bool HasFailed { get; }
+        bool HasFailed { get; }
 //        void Failed();
 //        bool HasOutcome { get; }
         TResult Outcome { get; }

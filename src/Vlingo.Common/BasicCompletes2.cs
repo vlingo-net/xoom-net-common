@@ -46,6 +46,7 @@ namespace Vlingo.Common
     {
         private readonly Scheduler scheduler;
         private ManualResetEventSlim outcomeKnown = new ManualResetEventSlim(false);
+        private bool isFailed;
         protected TResult result;
 
         public BasicCompletes2(TResult outcome) : base(default)
@@ -67,7 +68,7 @@ namespace Vlingo.Common
             this.result = outcome;
             foreach (var completesContinuation in continuations)
             {
-                if (completesContinuation is StandardCompletesContinuation continuation)
+                if (!isFailed && completesContinuation is StandardCompletesContinuation continuation)
                 {
                     continuation.Run(this);
                 }   
@@ -78,21 +79,11 @@ namespace Vlingo.Common
             return this;
         }
 
-        private void TrySetResult()
-        {
-            var lastContinuation = continuations.Last();
-            if (lastContinuation is StandardCompletesContinuation standardCompletesContinuation)
-            {
-                if (standardCompletesContinuation.completes is BasicCompletes2<TResult> continuation)
-                {
-                    this.result = continuation.Outcome;
-                }
-            }
-        }
-
         public ICompletes2<TNewResult> AndThen<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            throw new NotImplementedException();
+            var scheduledContinuation = new ScheduledContinuationCompletesResult<TResult, TNewResult>(scheduler, this, timeout, function);
+            AndThenInternal(scheduledContinuation);
+            return scheduledContinuation;
         }
 
         public ICompletes2<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
@@ -142,11 +133,31 @@ namespace Vlingo.Common
             return result;
         }
 
+        public bool HasFailed => isFailed;
+
         public TResult Outcome => this.result;
         
         internal override void RegisterContinuation(CompletesContinuation continuation)
         {
             continuations.Add(continuation);
+        }
+
+        internal virtual void HandleFailure()
+        {
+            isFailed = true;
+        }
+        
+        private void TrySetResult()
+        {
+            var lastContinuation = continuations.Last();
+            if (lastContinuation is StandardCompletesContinuation standardCompletesContinuation)
+            {
+                if (standardCompletesContinuation.completes is BasicCompletes2<TResult> continuation)
+                {
+                    this.result = continuation.Outcome;
+                }
+            }
+            outcomeKnown.Set();
         }
     }
     
@@ -179,7 +190,12 @@ namespace Vlingo.Common
 //                return;
 //            }
         }
-        
+
+        internal override void HandleFailure()
+        {
+            antecedent.HandleFailure();
+        }
+
         internal override void RegisterContinuation(CompletesContinuation continuation)
         {
             antecedent.RegisterContinuation(continuation);
@@ -205,12 +221,22 @@ namespace Vlingo.Common
             this.timeout = timeout;
         }
 
-        internal override void InnerInvoke()
+        internal override void RegisterContinuation(CompletesContinuation continuation)
         {
             ClearTimer();
+            StartTimer();
+            base.RegisterContinuation(continuation);
+        }
+
+        internal override void InnerInvoke()
+        {
+            if (timedOut.Get())
+            {
+                return;
+            }
+            
             base.InnerInvoke();
             executed.Set(true);
-            StartTimer();
         }
 
         public void IntervalSignal(IScheduled<object> scheduled, object data)
@@ -218,6 +244,7 @@ namespace Vlingo.Common
             if (!executed.Get())
             {
                 timedOut.Set(true);
+                HandleFailure();
             }
         }
         

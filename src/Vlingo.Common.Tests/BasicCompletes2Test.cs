@@ -105,11 +105,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal(10, andThenValue);
         }
 
-        /*[Fact]
+        [Fact]
         public void TestTimeoutBeforeOutcome()
         {
             int andThenValue = 0;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes2<int>(new Scheduler());
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
@@ -122,14 +122,14 @@ namespace Vlingo.Common.Tests
             }));
             thread.Start();
 
-            completes.Await<int>();
+            completes.Await();
 
             Assert.True(completes.HasFailed);
             Assert.NotEqual(10, andThenValue);
             Assert.Equal(0, andThenValue);
         }
 
-        [Fact]
+        /*[Fact]
         public void TestThatFailureOutcomeFails()
         {
             int andThenValue = -1, failureValue = 0;

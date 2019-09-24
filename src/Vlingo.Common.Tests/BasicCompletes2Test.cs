@@ -73,11 +73,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal("10", andThenValue);
         }
 
-        /*[Fact]
+        [Fact]
         public void TestCompletesAfterAndThenMessageOut()
         {
             int andThenValue = 0;
-            var completes = new BasicCompletes<int>(0);
+            var completes = new BasicCompletes2<int>(0);
             var sender = new Sender(x => andThenValue = x);
 
             completes
@@ -89,7 +89,7 @@ namespace Vlingo.Common.Tests
             Assert.Equal(10, andThenValue);
         }
 
-        [Fact]
+        /*[Fact]
         public void TestOutcomeBeforeTimeout()
         {
             int andThenValue = 0;
@@ -240,7 +240,7 @@ namespace Vlingo.Common.Tests
             var completed = completes.Await<User>();
             
             Assert.Equal("1", completed.Name);
-        }
+        }*/
 
         private class Sender
         {
@@ -257,7 +257,7 @@ namespace Vlingo.Common.Tests
             {
                 callback(value);
             }
-        }*/
+        }
     }
     
     /*public interface IUser

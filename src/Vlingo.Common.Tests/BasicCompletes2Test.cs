@@ -21,18 +21,19 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, completes.Outcome);
         }
 
-        /*[Fact]
+        [Fact]
         public void TestCompletesAfterFunction()
         {
-            var completes = new BasicCompletes<int>(0);
-            completes.AndThen(value => value * 2);
+            var completes = new BasicCompletes2<int>(0);
+            completes
+                .AndThen(value => value * 2);
 
             completes.With(5);
 
             Assert.Equal(10, completes.Outcome);
         }
 
-        [Fact]
+        /*[Fact]
         public void TestCompletesAfterConsumer()
         {
             int andThenValue = 0;

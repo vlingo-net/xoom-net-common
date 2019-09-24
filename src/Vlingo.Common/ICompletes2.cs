@@ -9,8 +9,9 @@ using System;
 
 namespace Vlingo.Common
 {
-    public interface ICompletes2<TResult> : ICompletes
+    public interface ICompletes2<TResult>
     {
+        ICompletes2<TResult> With(TResult outcome);
         ICompletes2<TNewResult> AndThen<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
         ICompletes2<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
         ICompletes2<TNewResult> AndThen<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function);

@@ -89,23 +89,23 @@ namespace Vlingo.Common.Tests
             Assert.Equal(10, andThenValue);
         }
 
-        /*[Fact]
+        [Fact]
         public void TestOutcomeBeforeTimeout()
         {
             int andThenValue = 0;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes2<int>(new Scheduler());
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1000), value => value * 2)
                 .AndThen(x => andThenValue = x);
 
             completes.With(5);
-            completes.Await<int>(TimeSpan.FromMilliseconds(10));
+            completes.Await(TimeSpan.FromMilliseconds(10));
 
             Assert.Equal(10, andThenValue);
         }
 
-        [Fact]
+        /*[Fact]
         public void TestTimeoutBeforeOutcome()
         {
             int andThenValue = 0;

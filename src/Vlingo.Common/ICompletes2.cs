@@ -30,9 +30,8 @@ namespace Vlingo.Common
 //        ICompletes2<TResult> Otherwise(Func<TResult, TResult> function);
 //        ICompletes2<TResult> OtherwiseConsume(Action<TResult> consumer);
 //        ICompletes2<TResult> RecoverFrom(Func<Exception, TResult> function);
-//
-//        TO Await<TO>();
-//        TO Await<TO>(TimeSpan timeout);
+        TResult Await();
+        TResult Await(TimeSpan timeout);
 //        bool IsCompleted { get; }
 //        bool HasFailed { get; }
 //        void Failed();

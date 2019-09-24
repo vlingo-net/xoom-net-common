@@ -25,19 +25,18 @@ namespace Vlingo.Common.Tests
         public void TestCompletesAfterFunction()
         {
             var completes = new BasicCompletes2<int>(0);
-            completes
-                .AndThen(value => value * 2);
+            completes.AndThen(value => value * 2);
 
             completes.With(5);
 
             Assert.Equal(10, completes.Outcome);
         }
 
-        /*[Fact]
+        [Fact]
         public void TestCompletesAfterConsumer()
         {
             int andThenValue = 0;
-            var completes = new BasicCompletes<int>(0);
+            var completes = new BasicCompletes2<int>(0);
             completes.AndThen(x => andThenValue = x);
 
             completes.With(5);
@@ -45,7 +44,7 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, andThenValue);
         }
 
-        [Fact]
+        /*[Fact]
         public void TestCompletesAfterAndThen()
         {
             int andThenValue = 0;

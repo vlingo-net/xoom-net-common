@@ -44,11 +44,11 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, andThenValue);
         }
 
-        /*[Fact]
+        [Fact]
         public void TestCompletesAfterAndThen()
         {
             int andThenValue = 0;
-            var completes = new BasicCompletes<int>(0);
+            var completes = new BasicCompletes2<int>(0);
             completes
                 .AndThen(value => value * 2)
                 .AndThen(x => andThenValue = x);
@@ -58,7 +58,7 @@ namespace Vlingo.Common.Tests
             Assert.Equal(10, andThenValue);
         }
 
-        [Fact]
+        /*[Fact]
         public void TestCompletesAfterAndThenMessageOut()
         {
             int andThenValue = 0;

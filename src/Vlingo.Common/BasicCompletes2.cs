@@ -7,7 +7,7 @@ namespace Vlingo.Common
     public class BasicCompletes2
     {
         protected Delegate action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
-        protected List<object> continuations = new List<object>();
+        internal List<CompletesContinuation> continuations = new List<CompletesContinuation>();
         
         public BasicCompletes2(Delegate action)
         {
@@ -29,15 +29,15 @@ namespace Vlingo.Common
 //            }
         }
 
+        internal virtual void RegisterContinuation(CompletesContinuation continuation)
+        {
+            continuations.Add(continuation);
+        }
+
         protected void AndThenInternal(BasicCompletes2 continuationCompletes)
         {
             var continuation = new StandardCompletesContinuation(continuationCompletes);
-            AddCompletesContinuation(continuation);
-        }
-
-        private void AddCompletesContinuation(object continuationCompletes)
-        {
-            continuations.Add(continuationCompletes);
+            RegisterContinuation(continuation);
         }
     }
     
@@ -57,12 +57,12 @@ namespace Vlingo.Common
         public ICompletes2<TResult> With(TResult outcome)
         {
             this.result = outcome;
-            foreach (var continuation in continuations)
+            foreach (var completesContinuation in continuations)
             {
-                if (continuation is StandardCompletesContinuation cont)
+                if (completesContinuation is StandardCompletesContinuation continuation)
                 {
-                    cont.Run(this);
-                }
+                    continuation.Run(this);
+                }   
             }
 
             TrySetResult();
@@ -72,15 +72,12 @@ namespace Vlingo.Common
 
         private void TrySetResult()
         {
-            if (continuations.Any())
+            var lastContinuation = continuations.Last();
+            if (lastContinuation is StandardCompletesContinuation standardCompletesContinuation)
             {
-                var lastContinuation = continuations.Last();
-                if (lastContinuation is StandardCompletesContinuation standardCompletesContinuation)
+                if (standardCompletesContinuation.completes is BasicCompletes2<TResult> continuation)
                 {
-                    if (standardCompletesContinuation.completes is BasicCompletes2<TResult> continuation)
-                    {
-                        this.result = continuation.Outcome;
-                    }
+                    this.result = continuation.Outcome;
                 }
             }
         }
@@ -112,9 +109,9 @@ namespace Vlingo.Common
     }
     
     internal sealed class ContinuationCompletesResult<TAntecedentResult, TResult> : BasicCompletes2<TResult> {
-        private readonly ICompletes2<TAntecedentResult> antecedent;
+        private readonly BasicCompletes2<TAntecedentResult> antecedent;
 
-        public ContinuationCompletesResult(ICompletes2<TAntecedentResult> antecedent, Delegate function) : base(function)
+        public ContinuationCompletesResult(BasicCompletes2<TAntecedentResult> antecedent, Delegate function) : base(function)
         {
             this.antecedent = antecedent;
         }
@@ -138,6 +135,11 @@ namespace Vlingo.Common
 //                result = funcWithState(antecedent, m_stateObject);
 //                return;
 //            }
+        }
+
+        internal override void RegisterContinuation(CompletesContinuation completesContinuation)
+        {
+            antecedent.continuations.Add(completesContinuation);
         }
     }
 

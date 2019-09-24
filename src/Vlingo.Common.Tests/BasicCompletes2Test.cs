@@ -57,6 +57,21 @@ namespace Vlingo.Common.Tests
 
             Assert.Equal(10, andThenValue);
         }
+        
+        [Fact]
+        public void TestCompletesAfterAndThenAndThen()
+        {
+            string andThenValue = string.Empty;
+            var completes = new BasicCompletes2<int>(0);
+            completes
+                .AndThen(value => value * 2)
+                .AndThen(value => value.ToString())
+                .AndThen(x => andThenValue = x);
+
+            completes.With(5);
+
+            Assert.Equal("10", andThenValue);
+        }
 
         /*[Fact]
         public void TestCompletesAfterAndThenMessageOut()

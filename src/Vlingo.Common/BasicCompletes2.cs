@@ -106,6 +106,11 @@ namespace Vlingo.Common
         }
 
         public TResult Outcome => this.result;
+        
+        internal override void RegisterContinuation(CompletesContinuation continuation)
+        {
+            continuations.Add(continuation);
+        }
     }
     
     internal sealed class ContinuationCompletesResult<TAntecedentResult, TResult> : BasicCompletes2<TResult> {
@@ -136,10 +141,10 @@ namespace Vlingo.Common
 //                return;
 //            }
         }
-
-        internal override void RegisterContinuation(CompletesContinuation completesContinuation)
+        
+        internal override void RegisterContinuation(CompletesContinuation continuation)
         {
-            antecedent.continuations.Add(completesContinuation);
+            antecedent.RegisterContinuation(continuation);
         }
     }
 

@@ -129,25 +129,25 @@ namespace Vlingo.Common.Tests
             Assert.Equal(0, andThenValue);
         }
 
-        /*[Fact]
+        [Fact]
         public void TestThatFailureOutcomeFails()
         {
-            int andThenValue = -1, failureValue = 0;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            int andThenValue = -1, failureValue = 999;
+            var completes = new BasicCompletes2<int>(new Scheduler());
             completes
                 .AndThen(-100, value => 2 * value)
                 .AndThen(x => andThenValue = x)
-                .Otherwise(x => failureValue = 1000);
+                .Otherwise(x => failureValue = x + 1);
 
             completes.With(-100);
-            completes.Await<int>();
+            completes.Await();
 
             Assert.True(completes.HasFailed);
             Assert.Equal(-1, andThenValue);
             Assert.Equal(1000, failureValue);
         }
 
-        [Fact]
+        /*[Fact]
         public void TestThatExceptionOutcomeFails()
         {
             int failureValue = -1;

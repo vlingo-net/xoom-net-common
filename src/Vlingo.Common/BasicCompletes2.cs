@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace Vlingo.Common
 {
-    public class BasicCompletes2
+    public abstract class BasicCompletes2
     {
         protected Delegate action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
         internal List<CompletesContinuation> continuations = new List<CompletesContinuation>();
@@ -15,7 +15,11 @@ namespace Vlingo.Common
             this.action = action;
         }
 
-        internal virtual void InnerInvoke()
+        public virtual bool HasFailed { get; }
+        
+        internal virtual BasicCompletes2 Antecedent { get; }
+
+        internal virtual void InnerInvoke(BasicCompletes2 completedCompletes)
         {
             if (action is Action invokableAction)
             {
@@ -30,9 +34,15 @@ namespace Vlingo.Common
 //            }
         }
 
+        internal abstract void HandleFailure();
+        
         internal virtual void RegisterContinuation(CompletesContinuation continuation)
         {
             continuations.Add(continuation);
+        }
+
+        internal virtual void UpdateFailure(object outcome)
+        {
         }
 
         protected void AndThenInternal(BasicCompletes2 continuationCompletes)
@@ -46,7 +56,7 @@ namespace Vlingo.Common
     {
         private readonly Scheduler scheduler;
         private ManualResetEventSlim outcomeKnown = new ManualResetEventSlim(false);
-        private bool isFailed;
+        protected bool isFailed;
         protected TResult result;
 
         public BasicCompletes2(TResult outcome) : base(default)
@@ -70,7 +80,8 @@ namespace Vlingo.Common
             {
                 if (!isFailed && completesContinuation is StandardCompletesContinuation continuation)
                 {
-                    continuation.Run(this);
+                    continuation.completes.UpdateFailure(outcome);
+                    continuation.Run(continuation.completes.Antecedent);
                 }   
             }
 
@@ -81,26 +92,35 @@ namespace Vlingo.Common
 
         public ICompletes2<TNewResult> AndThen<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            var scheduledContinuation = new ScheduledContinuationCompletesResult<TResult, TNewResult>(scheduler, this, timeout, function);
+            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(scheduler, this, timeout, function);
             AndThenInternal(scheduledContinuation);
             return scheduledContinuation;
         }
 
         public ICompletes2<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            throw new NotImplementedException();
+            var scheduledContinuation = new AndThenContinuation<TResult, TNewResult>(this, Optional.Of(failedOutcomeValue), function);
+            AndThenInternal(scheduledContinuation);
+            return scheduledContinuation;
         }
 
         public ICompletes2<TNewResult> AndThen<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function)
         {
-            var scheduledContinuation = new ScheduledContinuationCompletesResult<TResult, TNewResult>(scheduler, this, timeout, function);
+            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(scheduler, this, timeout, function);
             AndThenInternal(scheduledContinuation);
             return scheduledContinuation;
         }
 
         public ICompletes2<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function)
         {
-            var continuationCompletes = new ContinuationCompletesResult<TResult, TNewResult>(this, function);
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(this, function);
+            AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public ICompletes2<TResult> Otherwise(Func<TResult, TResult> function)
+        {
+            var continuationCompletes = new OtherwiseContinuation<TResult, TResult>(this, function);
             AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
@@ -133,16 +153,16 @@ namespace Vlingo.Common
             return result;
         }
 
-        public bool HasFailed => isFailed;
+        public override bool HasFailed => isFailed;
 
         public TResult Outcome => this.result;
-        
-        internal override void RegisterContinuation(CompletesContinuation continuation)
-        {
-            continuations.Add(continuation);
-        }
 
-        internal virtual void HandleFailure()
+//        internal override void RegisterContinuation(CompletesContinuation continuation)
+//        {
+//            continuations.Add(continuation);
+//        }
+
+        internal override void HandleFailure()
         {
             isFailed = true;
         }
@@ -161,16 +181,70 @@ namespace Vlingo.Common
         }
     }
     
-    internal class ContinuationCompletesResult<TAntecedentResult, TResult> : BasicCompletes2<TResult>
+    internal class AndThenContinuation<TAntecedentResult, TResult> : BasicCompletes2<TResult>
+    {
+        private readonly Optional<TResult> failedOutcomeValue;
+        private readonly BasicCompletes2<TAntecedentResult> antecedent;
+
+        internal AndThenContinuation(BasicCompletes2<TAntecedentResult> antecedent, Delegate function) : this(antecedent, Optional.Empty<TResult>(), function)
+        {
+        }
+        
+        internal AndThenContinuation(BasicCompletes2<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function)
+        {
+            this.antecedent = antecedent;
+            this.failedOutcomeValue = failedOutcomeValue;
+        }
+
+        internal override void InnerInvoke(BasicCompletes2 completedCompletes)
+        {
+            if (isFailed)
+            {
+                return;
+            }
+            
+            if (action is Func<ICompletes2<TAntecedentResult>, TResult> funcCompletes)
+            {
+                result = funcCompletes(antecedent);
+                return;
+            }
+
+            if (action is Func<TAntecedentResult, TResult> function)
+            {
+                result = function(antecedent.Outcome);
+                return;
+            }
+
+//            if (action is Func<ICompletes2<TAntecedentResult>, object?, TResult> funcWithState)
+//            {
+//                result = funcWithState(antecedent, m_stateObject);
+//                return;
+//            }
+        }
+
+        internal override BasicCompletes2 Antecedent => antecedent;
+
+        internal override void HandleFailure()
+        {
+            base.HandleFailure();
+            antecedent.HandleFailure();
+        }
+
+        internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.RegisterContinuation(continuation);
+
+        internal override void UpdateFailure(object outcome) => isFailed = outcome.Equals(failedOutcomeValue.Get());
+    }
+    
+    internal class OtherwiseContinuation<TAntecedentResult, TResult> : BasicCompletes2<TResult>
     {
         private readonly BasicCompletes2<TAntecedentResult> antecedent;
 
-        public ContinuationCompletesResult(BasicCompletes2<TAntecedentResult> antecedent, Delegate function) : base(function)
+        internal OtherwiseContinuation(BasicCompletes2<TAntecedentResult> antecedent, Delegate function) : base(function)
         {
             this.antecedent = antecedent;
         }
 
-        internal override void InnerInvoke()
+        internal override void InnerInvoke(BasicCompletes2 completedCompletes)
         {
             if (action is Func<ICompletes2<TAntecedentResult>, TResult> funcCompletes)
             {
@@ -191,18 +265,12 @@ namespace Vlingo.Common
 //            }
         }
 
-        internal override void HandleFailure()
-        {
-            antecedent.HandleFailure();
-        }
-
-        internal override void RegisterContinuation(CompletesContinuation continuation)
-        {
-            antecedent.RegisterContinuation(continuation);
-        }
+        internal override BasicCompletes2 Antecedent => antecedent;
+        
+        internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.RegisterContinuation(continuation);
     }
     
-    internal sealed class ScheduledContinuationCompletesResult<TAntecedentResult, TResult> : ContinuationCompletesResult<TAntecedentResult, TResult>, IScheduled<object>
+    internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object>
     {
         private readonly Scheduler scheduler;
         private readonly TimeSpan timeout;
@@ -210,7 +278,7 @@ namespace Vlingo.Common
         private AtomicBoolean executed = new AtomicBoolean(false);
         private AtomicBoolean timedOut = new AtomicBoolean(false);
 
-        internal ScheduledContinuationCompletesResult(
+        internal AndThenScheduledContinuation(
             Scheduler scheduler,
             BasicCompletes2<TAntecedentResult> antecedent,
             TimeSpan timeout,
@@ -228,14 +296,14 @@ namespace Vlingo.Common
             base.RegisterContinuation(continuation);
         }
 
-        internal override void InnerInvoke()
+        internal override void InnerInvoke(BasicCompletes2 completedCompletes)
         {
             if (timedOut.Get())
             {
                 return;
             }
             
-            base.InnerInvoke();
+            base.InnerInvoke(completedCompletes);
             executed.Set(true);
         }
 
@@ -269,7 +337,7 @@ namespace Vlingo.Common
 
     internal abstract class CompletesContinuation
     {
-        internal abstract void Run(BasicCompletes2 completedCompletes);
+        internal abstract void Run(BasicCompletes2 antecedentCompletes);
     }
     
     internal class StandardCompletesContinuation : CompletesContinuation
@@ -281,11 +349,14 @@ namespace Vlingo.Common
             this.completes = completes;
         }
 
-        internal override void Run(BasicCompletes2 completedCompletes)
+        internal override void Run(BasicCompletes2 antecedentCompletes)
         {
-            // TODO: check if completedCompletes is not in error
+            if (antecedentCompletes != null && antecedentCompletes.HasFailed)
+            {
+                this.completes.HandleFailure();
+            }
             
-            this.completes.InnerInvoke();
+            this.completes.InnerInvoke(antecedentCompletes);
         }
     }
 }

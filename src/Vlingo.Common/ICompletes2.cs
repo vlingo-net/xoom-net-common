@@ -27,7 +27,7 @@ namespace Vlingo.Common
 //        TO AndThenTo<TO>(TimeSpan timeout, Func<TResult, TO> function);
 //        TO AndThenTo<TO>(Func<TResult, TO> function);
 //
-//        ICompletes2<TResult> Otherwise(Func<TResult, TResult> function);
+        ICompletes2<TResult> Otherwise(Func<TResult, TResult> function);
 //        ICompletes2<TResult> OtherwiseConsume(Action<TResult> consumer);
 //        ICompletes2<TResult> RecoverFrom(Func<Exception, TResult> function);
         TResult Await();

@@ -146,6 +146,24 @@ namespace Vlingo.Common.Tests
             Assert.Equal(-1, andThenValue);
             Assert.Equal(1000, failureValue);
         }
+        
+        [Fact]
+        public void TestThatFailureOutcomeFailsInMiddle()
+        {
+            int andThenValue = -1, failureValue = 999;
+            var completes = new BasicCompletes2<int>(new Scheduler());
+            completes
+                .AndThen(value => andThenValue = 100)
+                .AndThen(-100, x => andThenValue = 200)
+                .Otherwise(x => failureValue = 1000);
+
+            completes.With(-100);
+            completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(100, andThenValue);
+            Assert.Equal(1000, failureValue);
+        }
 
         /*[Fact]
         public void TestThatExceptionOutcomeFails()

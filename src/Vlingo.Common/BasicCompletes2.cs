@@ -136,6 +136,13 @@ namespace Vlingo.Common
             return continuationCompletes;
         }
 
+        public ICompletes2<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TFailedOutcome> function)
+        {
+            var continuationCompletes = new OtherwiseContinuation<TFailedOutcome, TFailedOutcome>(null, function);
+            OtherwiseInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
         public ICompletes2<TResult> Otherwise(Func<TResult, TResult> function)
         {
             var continuationCompletes = new OtherwiseContinuation<TResult, TResult>(this, function);
@@ -290,6 +297,8 @@ namespace Vlingo.Common
 //                result = funcWithState(antecedent, m_stateObject);
 //                return;
 //            }
+
+            throw new InvalidCastException("Cannot run 'Otherwise' function. Make sure that expecting type is the same as failedOutcomeValue type");
         }
 
         internal override BasicCompletes2 Antecedent => antecedent;

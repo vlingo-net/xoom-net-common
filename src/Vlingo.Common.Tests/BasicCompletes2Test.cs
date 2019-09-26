@@ -137,7 +137,7 @@ namespace Vlingo.Common.Tests
             completes
                 .AndThen(-100, value => 2 * value)
                 .AndThen(x => andThenValue = x)
-                .Otherwise(x => failureValue = 1000);
+                .Otherwise<int>(x => failureValue = 1000);
 
             completes.With(-100);
             completes.Await();
@@ -157,7 +157,7 @@ namespace Vlingo.Common.Tests
             completes
                 .AndThen(TimeSpan.FromMilliseconds(200), -10, value => value * 2)
                 .AndThen(x => andThenValue = 100)
-                .Otherwise(failedOutcome => failedValue = failedOutcome);
+                .Otherwise<int>(failedOutcome => failedValue = failedOutcome);
 
             var thread = new Thread(new ThreadStart(() =>
             {
@@ -183,7 +183,7 @@ namespace Vlingo.Common.Tests
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
                 .AndThen(x => andThenValue = 100)
-                .Otherwise(failedOutcome => failedValue = failedOutcome);
+                .Otherwise<int>(failedOutcome => failedValue = failedOutcome);
 
             var thread = new Thread(new ThreadStart(() =>
             {
@@ -209,7 +209,7 @@ namespace Vlingo.Common.Tests
             completes
                 .AndThen(x => andThenValue = 100)
                 .AndThen(TimeSpan.FromMilliseconds(200), -10, value => andThenValue = value * 2)
-                .Otherwise(failedOutcome => failedValue = failedOutcome);
+                .Otherwise<int>(failedOutcome => failedValue = failedOutcome);
 
             var thread = new Thread(new ThreadStart(() =>
             {
@@ -233,7 +233,7 @@ namespace Vlingo.Common.Tests
             completes
                 .AndThen(value => andThenValue = 100)
                 .AndThen(-100, x => andThenValue = 200)
-                .Otherwise(x => failureValue = 1000);
+                .Otherwise<int>(x => failureValue = 1000);
 
             completes.With(-100);
             completes.Await();
@@ -241,6 +241,19 @@ namespace Vlingo.Common.Tests
             Assert.True(completes.HasFailed);
             Assert.Equal(100, andThenValue);
             Assert.Equal(1000, failureValue);
+        }
+        
+        [Fact]
+        public void TestThatExceptionOutcomeInvalidCast()
+        {
+            int andThenValue = -1, failureValue = 999;
+            var completes = new BasicCompletes2<string>(new Scheduler());
+            completes
+                .AndThen("-100", value => (2 * int.Parse(value)).ToString())
+                .AndThen(x => andThenValue = int.Parse(x))
+                .Otherwise<int>(x => failureValue = 1000);
+
+            Assert.Throws<InvalidCastException>(() => completes.With("-100"));
         }
 
         /*[Fact]

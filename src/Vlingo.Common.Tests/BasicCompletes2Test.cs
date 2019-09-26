@@ -174,6 +174,32 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestThatFailureOutcomeFailsWhenScheduledTimesOut()
+        {
+            int andThenValue = 0;
+            int failedValue = -1;
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes
+                .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
+                .AndThen(x => andThenValue = 100)
+                .Otherwise(failedOutcome => failedValue = failedOutcome);
+
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(5);
+            }));
+            thread.Start();
+
+            completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(0, andThenValue);
+            Assert.Equal(-10, failedValue);
+        }
+        
+        [Fact]
         public void TestThatFailureOutcomeFailsWhenScheduledInMiddle()
         {
             int andThenValue = 0;

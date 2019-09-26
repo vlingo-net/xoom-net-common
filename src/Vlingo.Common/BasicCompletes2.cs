@@ -9,6 +9,7 @@ namespace Vlingo.Common
     {
         protected Delegate action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
         internal List<CompletesContinuation> continuations = new List<CompletesContinuation>();
+        internal CompletesContinuation failureContinuation;
         
         public BasicCompletes2(Delegate action)
         {
@@ -41,6 +42,11 @@ namespace Vlingo.Common
             continuations.Add(continuation);
         }
 
+        internal virtual void RegisterFailureContiuation(CompletesContinuation continuationCompletes)
+        {
+            this.failureContinuation = continuationCompletes;
+        }
+
         internal virtual void UpdateFailure(object outcome)
         {
         }
@@ -49,6 +55,12 @@ namespace Vlingo.Common
         {
             var continuation = new StandardCompletesContinuation(continuationCompletes);
             RegisterContinuation(continuation);
+        }
+
+        protected void OtherwiseInternal(BasicCompletes2 continuationCompletes)
+        {
+            var continuation = new StandardCompletesContinuation(continuationCompletes);
+            RegisterFailureContiuation(continuation);
         }
     }
     
@@ -78,9 +90,15 @@ namespace Vlingo.Common
             this.result = outcome;
             foreach (var completesContinuation in continuations)
             {
-                if (!isFailed && completesContinuation is StandardCompletesContinuation continuation)
+                if (completesContinuation is StandardCompletesContinuation continuation)
                 {
                     continuation.completes.UpdateFailure(outcome);
+                    if (continuation.completes.HasFailed)
+                    {
+                        this.HandleFailure();
+                        failureContinuation.Run(continuation.completes);
+                        break;
+                    }
                     continuation.Run(continuation.completes.Antecedent);
                 }   
             }
@@ -121,7 +139,7 @@ namespace Vlingo.Common
         public ICompletes2<TResult> Otherwise(Func<TResult, TResult> function)
         {
             var continuationCompletes = new OtherwiseContinuation<TResult, TResult>(this, function);
-            AndThenInternal(continuationCompletes);
+            OtherwiseInternal(continuationCompletes);
             return continuationCompletes;
         }
 
@@ -183,7 +201,7 @@ namespace Vlingo.Common
     
     internal class AndThenContinuation<TAntecedentResult, TResult> : BasicCompletes2<TResult>
     {
-        private readonly Optional<TResult> failedOutcomeValue;
+        internal readonly Optional<TResult> failedOutcomeValue;
         private readonly BasicCompletes2<TAntecedentResult> antecedent;
 
         internal AndThenContinuation(BasicCompletes2<TAntecedentResult> antecedent, Delegate function) : this(antecedent, Optional.Empty<TResult>(), function)
@@ -231,6 +249,9 @@ namespace Vlingo.Common
         }
 
         internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.RegisterContinuation(continuation);
+        
+        internal override void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
+            antecedent.RegisterFailureContiuation(continuationCompletes);
 
         internal override void UpdateFailure(object outcome) => isFailed = outcome.Equals(failedOutcomeValue.Get());
     }
@@ -254,8 +275,11 @@ namespace Vlingo.Common
 
             if (action is Func<TAntecedentResult, TResult> function)
             {
-                result = function(antecedent.Outcome);
-                return;
+                if (completedCompletes is AndThenContinuation<TResult, TAntecedentResult> andThenContinuation)
+                {
+                    result = function(andThenContinuation.failedOutcomeValue.Get());
+                    return;   
+                }
             }
 
 //            if (action is Func<ICompletes2<TAntecedentResult>, object?, TResult> funcWithState)
@@ -266,8 +290,9 @@ namespace Vlingo.Common
         }
 
         internal override BasicCompletes2 Antecedent => antecedent;
-        
-        internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.RegisterContinuation(continuation);
+
+        internal override void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
+            antecedent.RegisterFailureContiuation(continuationCompletes);
     }
     
     internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object>
@@ -351,11 +376,6 @@ namespace Vlingo.Common
 
         internal override void Run(BasicCompletes2 antecedentCompletes)
         {
-            if (antecedentCompletes != null && antecedentCompletes.HasFailed)
-            {
-                this.completes.HandleFailure();
-            }
-            
             this.completes.InnerInvoke(antecedentCompletes);
         }
     }

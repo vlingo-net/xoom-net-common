@@ -137,7 +137,7 @@ namespace Vlingo.Common.Tests
             completes
                 .AndThen(-100, value => 2 * value)
                 .AndThen(x => andThenValue = x)
-                .Otherwise(x => failureValue = x + 1);
+                .Otherwise(x => failureValue = 1000);
 
             completes.With(-100);
             completes.Await();

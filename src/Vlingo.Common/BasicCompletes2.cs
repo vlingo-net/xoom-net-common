@@ -110,7 +110,7 @@ namespace Vlingo.Common
 
         public ICompletes2<TNewResult> AndThen<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(scheduler, this, timeout, function);
+            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(scheduler, this, timeout, Optional.Of(failedOutcomeValue), function);
             AndThenInternal(scheduledContinuation);
             return scheduledContinuation;
         }
@@ -201,7 +201,7 @@ namespace Vlingo.Common
     
     internal class AndThenContinuation<TAntecedentResult, TResult> : BasicCompletes2<TResult>
     {
-        internal readonly Optional<TResult> failedOutcomeValue;
+        protected internal readonly Optional<TResult> failedOutcomeValue;
         private readonly BasicCompletes2<TAntecedentResult> antecedent;
 
         internal AndThenContinuation(BasicCompletes2<TAntecedentResult> antecedent, Delegate function) : this(antecedent, Optional.Empty<TResult>(), function)
@@ -309,6 +309,18 @@ namespace Vlingo.Common
             TimeSpan timeout,
             Delegate function)
             : base(antecedent, function)
+        {
+            this.scheduler = scheduler;
+            this.timeout = timeout;
+        }
+        
+        internal AndThenScheduledContinuation(
+            Scheduler scheduler,
+            BasicCompletes2<TAntecedentResult> antecedent,
+            TimeSpan timeout,
+            Optional<TResult> failedOutcomeValue,
+            Delegate function)
+            : base(antecedent, failedOutcomeValue, function)
         {
             this.scheduler = scheduler;
             this.timeout = timeout;

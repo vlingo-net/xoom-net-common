@@ -148,6 +148,58 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestThatFailureOutcomeFailsWhenScheduled()
+        {
+            int andThenValue = 0;
+            int failedValue = -1;
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes
+                .AndThen(TimeSpan.FromMilliseconds(200), -10, value => value * 2)
+                .AndThen(x => andThenValue = 100)
+                .Otherwise(failedOutcome => failedValue = failedOutcome);
+
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(-10);
+            }));
+            thread.Start();
+
+            completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(0, andThenValue);
+            Assert.Equal(-10, failedValue);
+        }
+        
+        [Fact]
+        public void TestThatFailureOutcomeFailsWhenScheduledInMiddle()
+        {
+            int andThenValue = 0;
+            int failedValue = -1;
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes
+                .AndThen(x => andThenValue = 100)
+                .AndThen(TimeSpan.FromMilliseconds(200), -10, value => andThenValue = value * 2)
+                .Otherwise(failedOutcome => failedValue = failedOutcome);
+
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(-10);
+            }));
+            thread.Start();
+
+            completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(100, andThenValue);
+            Assert.Equal(-10, failedValue);
+        }
+        
+        [Fact]
         public void TestThatFailureOutcomeFailsInMiddle()
         {
             int andThenValue = -1, failureValue = 999;

@@ -84,6 +84,7 @@ namespace Vlingo.Common
         private ManualResetEventSlim outcomeKnown = new ManualResetEventSlim(false);
         protected AtomicBoolean hasFailed = new AtomicBoolean(false);
         protected AtomicBoolean hasException = new AtomicBoolean(false);
+        protected internal Optional<TResult> failedOutcomeValue;
         protected AtomicReference<Exception> exception = new AtomicReference<Exception>();
         protected TResult result;
 
@@ -207,7 +208,7 @@ namespace Vlingo.Common
         public override bool HasFailed => hasFailed.Get();
         public void Failed()
         {
-            throw new NotImplementedException();
+            With(failedOutcomeValue.Get());
         }
 
         public bool HasOutcome => result != null;
@@ -246,7 +247,6 @@ namespace Vlingo.Common
     
     internal class AndThenContinuation<TAntecedentResult, TResult> : BasicCompletes2<TResult>
     {
-        protected internal readonly Optional<TResult> failedOutcomeValue;
         private readonly BasicCompletes2<TAntecedentResult> antecedent;
 
         internal AndThenContinuation(BasicCompletes2<TAntecedentResult> antecedent, Delegate function) : this(antecedent, Optional.Empty<TResult>(), function)

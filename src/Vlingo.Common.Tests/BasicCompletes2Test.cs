@@ -315,9 +315,9 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestThatAwaitTimesOut()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes2<int>(new Scheduler());
 
-            var completed = completes.Await<int>(TimeSpan.FromMilliseconds(10));
+            var completed = completes.Await(TimeSpan.FromMilliseconds(10));
 
             completes.With(5);
 
@@ -328,7 +328,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestThatAwaitCompletes()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes2<int>(new Scheduler());
 
             var thread = new Thread(new ThreadStart(() =>
             {
@@ -337,7 +337,7 @@ namespace Vlingo.Common.Tests
             }));
             thread.Start();
 
-            var completed = completes.Await<int>();
+            var completed = completes.Await();
 
             Assert.Equal(5, completed);
         }

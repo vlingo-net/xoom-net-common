@@ -246,14 +246,18 @@ namespace Vlingo.Common
 
         private void TrySetResult()
         {
-            var lastContinuation = continuations.Last();
-            if (lastContinuation is StandardCompletesContinuation standardCompletesContinuation)
+            if (continuations.Any())
             {
-                if (standardCompletesContinuation.completes is BasicCompletes2<TResult> continuation)
+                var lastContinuation = continuations.Last();
+                if (lastContinuation is StandardCompletesContinuation standardCompletesContinuation)
                 {
-                    this.result = continuation.Outcome;
+                    if (standardCompletesContinuation.completes is BasicCompletes2<TResult> continuation)
+                    {
+                        this.result = continuation.Outcome;
+                    }
                 }
             }
+            
             outcomeKnown.Set();
         }
     }

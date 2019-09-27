@@ -274,7 +274,7 @@ namespace Vlingo.Common.Tests
             Assert.Equal(8, failureValue);
         }
 
-        /*[Fact]
+        [Fact]
         public void TestThatExceptionHandlerDelayRecovers()
         {
             var failureValue = -1;
@@ -293,7 +293,7 @@ namespace Vlingo.Common.Tests
             Assert.Equal(40, failureValue);
         }
 
-        [Fact]
+        /*[Fact]
         public void TestThatAwaitTimesOut()
         {
             var completes = new BasicCompletes<int>(new Scheduler());

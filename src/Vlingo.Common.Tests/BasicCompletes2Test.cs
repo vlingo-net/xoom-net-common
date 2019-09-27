@@ -342,14 +342,14 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, completed);
         }
 
-        /*[Fact]
+        [Fact]
         public void TestAndThenToWithComplexTypes()
         {
             var scheduler = new Scheduler();
-            var completes1 = new BasicCompletes<int>(scheduler);
+            var completes1 = new BasicCompletes2<int>(scheduler);
             completes1.AndThenTo(v => (v * 10).ToString());
             completes1.With(10);
-            var result = completes1.Await<int>();
+            var result = completes1.Await();
 
             Assert.Equal(10, result);
 
@@ -368,7 +368,7 @@ namespace Vlingo.Common.Tests
             var completed = completes.Await<User>();
             
             Assert.Equal("1", completed.Name);
-        }*/
+        }
 
         private class Sender
         {

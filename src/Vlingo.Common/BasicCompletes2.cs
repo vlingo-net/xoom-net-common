@@ -169,6 +169,18 @@ namespace Vlingo.Common
             return continuationCompletes;
         }
 
+        public TNewResult AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function)
+        {
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(this, function);
+            AndThenInternal(continuationCompletes);
+            return default;
+        }
+
         public ICompletes2<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TFailedOutcome> function)
         {
             var continuationCompletes = new OtherwiseContinuation<TFailedOutcome, TFailedOutcome>((BasicCompletes2<TFailedOutcome>)(object)this, function);

@@ -22,11 +22,11 @@ namespace Vlingo.Common
 //        ICompletes2<TResult> AndThenConsume(TimeSpan timeout, Action<TResult> consumer);
 //        ICompletes2<TResult> AndThenConsume(Action<TResult> consumer);
 //
-//        TO AndThenTo<TF, TO>(TimeSpan timeout, TF failedOutcomeValue, Func<TResult, TO> function);
-//        TO AndThenTo<TF, TO>(TF failedOutcomeValue, Func<TResult, TO> function);
-//        TO AndThenTo<TO>(TimeSpan timeout, Func<TResult, TO> function);
-//        TO AndThenTo<TO>(Func<TResult, TO> function);
-//
+        //TO AndThenTo<TF, TO>(TimeSpan timeout, TF failedOutcomeValue, Func<TResult, TO> function);
+        TNewResult AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
+        //TO AndThenTo<TO>(TimeSpan timeout, Func<TResult, TO> function);
+        TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function);
+
         ICompletes2<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TFailedOutcome> function);
 //        ICompletes2<TResult> OtherwiseConsume(Action<TResult> consumer);
         ICompletes2<TResult> RecoverFrom(Func<Exception, TResult> function);

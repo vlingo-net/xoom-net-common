@@ -312,7 +312,7 @@ namespace Vlingo.Common.Tests
             Assert.Equal(40, failureValue);
         }
 
-        /*[Fact]
+        [Fact]
         public void TestThatAwaitTimesOut()
         {
             var completes = new BasicCompletes<int>(new Scheduler());
@@ -322,7 +322,7 @@ namespace Vlingo.Common.Tests
             completes.With(5);
 
             Assert.NotEqual(5, completed);
-            Assert.Equal(default(int), completed);
+            Assert.Equal(default, completed);
         }
 
         [Fact]
@@ -342,7 +342,7 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, completed);
         }
 
-        [Fact]
+        /*[Fact]
         public void TestAndThenToWithComplexTypes()
         {
             var scheduler = new Scheduler();

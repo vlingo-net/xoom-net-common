@@ -260,7 +260,7 @@ namespace Vlingo.Common.Tests
         public void TestThatExceptionOutcomeFails()
         {
             int failureValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes2<int>(new Scheduler());
 
             completes
                 .AndThen(42, value => value * 2)
@@ -268,17 +268,36 @@ namespace Vlingo.Common.Tests
                 .RecoverFrom(e => failureValue = int.Parse(e.Message));
 
             completes.With(2);
-            completes.Await<int>();
+            completes.Await();
 
             Assert.True(completes.HasFailed);
             Assert.Equal(8, failureValue);
+        }
+        
+        [Fact]
+        public void TestThatExceptionOtherwiseFails()
+        {
+            int failureValue = -1;
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes
+                .AndThen(42, value => value * 2)
+                .AndThen<int>(value => throw new ApplicationException((2 * value).ToString()))
+                .Otherwise<int>(v => throw new ApplicationException(v.ToString()))
+                .RecoverFrom(e => failureValue = int.Parse(e.Message));
+
+            completes.With(42);
+            completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(42, failureValue);
         }
 
         [Fact]
         public void TestThatExceptionHandlerDelayRecovers()
         {
             var failureValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes2<int>(new Scheduler());
             completes
                 .AndThen(0, value => value * 2)
                 .AndThen<int>(value => throw new Exception($"{value * 2}"));
@@ -287,7 +306,7 @@ namespace Vlingo.Common.Tests
 
             completes.RecoverFrom(e => failureValue = int.Parse(e.Message));
 
-            completes.Await<int>();
+            completes.Await();
 
             Assert.True(completes.HasFailed);
             Assert.Equal(40, failureValue);

@@ -29,15 +29,14 @@ namespace Vlingo.Common
 //
         ICompletes2<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TFailedOutcome> function);
 //        ICompletes2<TResult> OtherwiseConsume(Action<TResult> consumer);
-//        ICompletes2<TResult> RecoverFrom(Func<Exception, TResult> function);
+        ICompletes2<TResult> RecoverFrom(Func<Exception, TResult> function);
         TResult Await();
         TResult Await(TimeSpan timeout);
 //        bool IsCompleted { get; }
         bool HasFailed { get; }
-//        void Failed();
-//        bool HasOutcome { get; }
+        void Failed();
+        bool HasOutcome { get; }
         TResult Outcome { get; }
 //        ICompletes2<TResult> Repeat();
-//        ICompletes2<TResult> Ready();
     }
 }

@@ -10,6 +10,7 @@ namespace Vlingo.Common
         protected Delegate action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
         internal List<CompletesContinuation> continuations = new List<CompletesContinuation>();
         internal CompletesContinuation failureContinuation;
+        internal CompletesContinuation exceptionContinuation;
         
         public BasicCompletes2(Delegate action)
         {
@@ -36,6 +37,8 @@ namespace Vlingo.Common
         }
 
         internal abstract void HandleFailure();
+
+        internal abstract void HandleException(Exception e);
         
         internal virtual void RegisterContinuation(CompletesContinuation continuation)
         {
@@ -45,6 +48,11 @@ namespace Vlingo.Common
         internal virtual void RegisterFailureContiuation(CompletesContinuation continuationCompletes)
         {
             this.failureContinuation = continuationCompletes;
+        }
+        
+        internal virtual void RegisterExceptionContiuation(CompletesContinuation continuationCompletes)
+        {
+            this.exceptionContinuation = continuationCompletes;
         }
 
         internal virtual void UpdateFailure(object outcome)
@@ -62,13 +70,21 @@ namespace Vlingo.Common
             var continuation = new StandardCompletesContinuation(continuationCompletes);
             RegisterFailureContiuation(continuation);
         }
+
+        protected void RecoverInternal(BasicCompletes2 continuationCompletes)
+        {
+            var continuation = new StandardCompletesContinuation(continuationCompletes);
+            RegisterExceptionContiuation(continuation);
+        }
     }
     
     public class BasicCompletes2<TResult> : BasicCompletes2, ICompletes2<TResult>
     {
         private readonly Scheduler scheduler;
         private ManualResetEventSlim outcomeKnown = new ManualResetEventSlim(false);
-        protected AtomicBoolean isFailed = new AtomicBoolean(false);
+        protected AtomicBoolean hasFailed = new AtomicBoolean(false);
+        protected AtomicBoolean hasException = new AtomicBoolean(false);
+        protected AtomicReference<Exception> exception = new AtomicReference<Exception>();
         protected TResult result;
 
         public BasicCompletes2(TResult outcome) : base(default)
@@ -99,8 +115,18 @@ namespace Vlingo.Common
                         failureContinuation?.Run(continuation.completes);
                         break;
                     }
-                    continuation.Run(continuation.completes.Antecedent);
-                }   
+                    
+                    try
+                    {
+                        continuation.Run(continuation.completes.Antecedent);
+                    }
+                    catch (Exception e)
+                    {
+                        this.HandleException(e);
+                        exceptionContinuation?.Run(continuation.completes);
+                        break;
+                    }
+                }
             }
 
             TrySetResult();
@@ -143,10 +169,10 @@ namespace Vlingo.Common
             return continuationCompletes;
         }
 
-        public ICompletes2<TResult> Otherwise(Func<TResult, TResult> function)
+        public ICompletes2<TResult> RecoverFrom(Func<Exception, TResult> function)
         {
-            var continuationCompletes = new OtherwiseContinuation<TResult, TResult>(this, function);
-            OtherwiseInternal(continuationCompletes);
+            var continuationCompletes = new RecoverContinuation<TResult>(function);
+            RecoverInternal(continuationCompletes);
             return continuationCompletes;
         }
 
@@ -178,7 +204,13 @@ namespace Vlingo.Common
             return result;
         }
 
-        public override bool HasFailed => isFailed.Get();
+        public override bool HasFailed => hasFailed.Get();
+        public void Failed()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool HasOutcome => result != null;
 
         public TResult Outcome => this.result;
 
@@ -189,9 +221,15 @@ namespace Vlingo.Common
 
         internal override void HandleFailure()
         {
-            isFailed.Set(true);
+            hasFailed.Set(true);
         }
-        
+
+        internal override void HandleException(Exception e)
+        {
+            exception.Set(e);
+            hasException.Set(true);
+        }
+
         private void TrySetResult()
         {
             var lastContinuation = continuations.Last();
@@ -223,7 +261,7 @@ namespace Vlingo.Common
 
         internal override void InnerInvoke(BasicCompletes2 completedCompletes)
         {
-            if (isFailed.Get())
+            if (hasFailed.Get())
             {
                 return;
             }
@@ -262,7 +300,7 @@ namespace Vlingo.Common
 
         internal override void UpdateFailure(object outcome)
         {
-            isFailed.Set(isFailed.Get() || outcome.Equals(failedOutcomeValue.Get()));
+            hasFailed.Set(hasFailed.Get() || outcome.Equals(failedOutcomeValue.Get()));
         }
     }
     
@@ -277,6 +315,11 @@ namespace Vlingo.Common
 
         internal override void InnerInvoke(BasicCompletes2 completedCompletes)
         {
+            if (hasException.Get())
+            {
+                return;
+            }
+            
             if (action is Func<ICompletes2<TAntecedentResult>, TResult> funcCompletes)
             {
                 result = funcCompletes(antecedent);
@@ -305,6 +348,34 @@ namespace Vlingo.Common
 
         internal override void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
             antecedent.RegisterFailureContiuation(continuationCompletes);
+    }
+    
+    internal class RecoverContinuation<TResult> : BasicCompletes2<TResult>
+    {
+        internal RecoverContinuation(Delegate function) : base(function)
+        {
+        }
+
+        internal override void InnerInvoke(BasicCompletes2 completedCompletes)
+        {
+//            if (action is Func<ICompletes2<Exception>, TResult> funcCompletes)
+//            {
+//                result = funcCompletes(antecedent);
+//                return;
+//            }
+
+            if (action is Func<Exception, TResult> function)
+            {
+                result = function(exception.Get());
+                return;   
+            }
+
+//            if (action is Func<ICompletes2<TAntecedentResult>, object?, TResult> funcWithState)
+//            {
+//                result = funcWithState(antecedent, m_stateObject);
+//                return;
+//            }
+        }
     }
     
     internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object>

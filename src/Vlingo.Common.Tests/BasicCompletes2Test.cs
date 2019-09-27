@@ -256,7 +256,7 @@ namespace Vlingo.Common.Tests
             Assert.Throws<InvalidCastException>(() => completes.With("-100"));
         }
 
-        /*[Fact]
+        [Fact]
         public void TestThatExceptionOutcomeFails()
         {
             int failureValue = -1;
@@ -274,7 +274,7 @@ namespace Vlingo.Common.Tests
             Assert.Equal(8, failureValue);
         }
 
-        [Fact]
+        /*[Fact]
         public void TestThatExceptionHandlerDelayRecovers()
         {
             var failureValue = -1;

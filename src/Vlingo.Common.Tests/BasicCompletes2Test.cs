@@ -343,16 +343,32 @@ namespace Vlingo.Common.Tests
         }
 
         [Fact]
+        public void TestAndThenToCompletes()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+            completes.AndThenTo(v => (v * 10).ToString());
+            completes.With(10);
+            var result = completes.Await();
+
+            Assert.Equal(10, result);
+        }
+        
+        [Fact]
+        public void TestAndThenToFails()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+            completes.AndThenTo(10, v => v * 10);
+            completes.With(10);
+            var result = completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(10, result);
+        }
+
+        [Fact]
         public void TestAndThenToWithComplexTypes()
         {
             var scheduler = new Scheduler();
-            var completes1 = new BasicCompletes2<int>(scheduler);
-            completes1.AndThenTo(v => (v * 10).ToString());
-            completes1.With(10);
-            var result = completes1.Await();
-
-            Assert.Equal(10, result);
-
             var completes = new BasicCompletes<IUser>(scheduler);
             var nestedCompletes = new BasicCompletes<UserState>(scheduler);
 
@@ -387,50 +403,4 @@ namespace Vlingo.Common.Tests
             }
         }
     }
-    
-    /*public interface IUser
-    {
-        ICompletes<UserState> WithContact(string contact);
-        ICompletes<UserState> WithName(string name);
-    }
-    
-    public class User : IUser
-    {
-        private UserState _userState;
-
-        public string Name => _userState.Name;
-
-        public User()
-        {
-            _userState = new UserState("1", "1", "1");
-        }
-        
-        public ICompletes<UserState> WithContact(string contact)
-        {
-            return Completes.WithSuccess(_userState.WithContact(contact));
-        }
-
-        public ICompletes<UserState> WithName(string name)
-        {
-            return Completes.WithSuccess(_userState.WithName(name));
-        }
-    }
-
-    public class UserState
-    {
-        public string Id { get; }
-        public string Name { get; }
-        public string Contact { get; }
-
-        public UserState WithName(string name) => new UserState(Id, name, Contact);
-        
-        public UserState WithContact(string contact) => new UserState(Id, Name, contact);
-
-        public UserState(string id, string name, string contact)
-        {
-            Id = id;
-            Name = name;
-            Contact = contact;
-        }
-    }*/
 }

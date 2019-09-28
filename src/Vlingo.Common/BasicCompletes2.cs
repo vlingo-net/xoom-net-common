@@ -116,7 +116,7 @@ namespace Vlingo.Common
                         continuation.completes.UpdateFailure(outcome);
                         if (continuation.completes.HasFailed)
                         {
-                            this.HandleFailure();
+                            continuation.completes.HandleFailure();
                             failureContinuation?.Run(continuation.completes);
                             break;
                         }
@@ -171,7 +171,9 @@ namespace Vlingo.Common
 
         public TNewResult AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            throw new NotImplementedException();
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(this, Optional.Of(failedOutcomeValue), function);
+            AndThenInternal(continuationCompletes);
+            return default;
         }
 
         public TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function)
@@ -320,6 +322,7 @@ namespace Vlingo.Common
 
         internal override void HandleFailure()
         {
+            result = failedOutcomeValue.Get();
             base.HandleFailure();
             antecedent.HandleFailure();
         }

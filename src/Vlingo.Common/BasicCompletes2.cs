@@ -11,6 +11,7 @@ namespace Vlingo.Common
         internal List<CompletesContinuation> continuations = new List<CompletesContinuation>();
         internal CompletesContinuation failureContinuation;
         internal CompletesContinuation exceptionContinuation;
+        internal object completesResult;
         
         public BasicCompletes2(Delegate action)
         {
@@ -104,6 +105,19 @@ namespace Vlingo.Common
             this.scheduler = scheduler;
         }
 
+        public BasicCompletes2(TResult outcome, bool succeeded) : base(default)
+        {
+            if (succeeded)
+            {
+                With(outcome);
+            }
+            else
+            {
+                failedOutcomeValue = Optional.Of(outcome);
+                Failed();
+            }
+        }
+
         public ICompletes2<TResult> With(TResult outcome)
         {
             this.result = outcome;
@@ -169,6 +183,26 @@ namespace Vlingo.Common
             return continuationCompletes;
         }
 
+        public ICompletes2<TResult> AndThenConsume(TimeSpan timeout, TResult failedOutcomeValue, Action<TResult> consumer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ICompletes2<TResult> AndThenConsume(TResult failedOutcomeValue, Action<TResult> consumer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ICompletes2<TResult> AndThenConsume(TimeSpan timeout, Action<TResult> consumer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ICompletes2<TResult> AndThenConsume(Action<TResult> consumer)
+        {
+            throw new NotImplementedException();
+        }
+
         public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
             var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(scheduler, this, timeout, Optional.Of(failedOutcomeValue), function);
@@ -197,11 +231,23 @@ namespace Vlingo.Common
             return default;
         }
 
+        public ICompletes2<TNewResult> AndThenTo<TNewResult>(Func<TResult, ICompletes2<TNewResult>> function)
+        {
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(this, function);
+            AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
         public ICompletes2<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TFailedOutcome> function)
         {
             var continuationCompletes = new OtherwiseContinuation<TFailedOutcome, TFailedOutcome>((BasicCompletes2<TFailedOutcome>)(object)this, function);
             OtherwiseInternal(continuationCompletes);
             return continuationCompletes;
+        }
+
+        public ICompletes2<TResult> OtherwiseConsume(Action<TResult> consumer)
+        {
+            throw new NotImplementedException();
         }
 
         public ICompletes2<TResult> RecoverFrom(Func<Exception, TResult> function)
@@ -227,6 +273,30 @@ namespace Vlingo.Common
             }
 
             return result;
+        }
+        
+        public TNewResult Await<TNewResult>()
+        {
+            try
+            {
+                outcomeKnown.Wait();
+            }
+            catch
+            {
+                // should not blow but return actual value
+            }
+
+            if (completesResult is ICompletes2<TNewResult> completes)
+            {
+                if (completes.HasOutcome)
+                {
+                    return completes.Outcome;
+                }
+
+                return completes.Await();
+            }
+
+            return default;
         }
 
         public TResult Await(TimeSpan timeout)
@@ -283,6 +353,12 @@ namespace Vlingo.Common
                     {
                         this.result = continuation.Outcome;
                     }
+                    
+                    if (standardCompletesContinuation.completes is BasicCompletes2 completesContinuation)
+                    {
+                        this.completesResult = completesContinuation.completesResult;
+                        outcomeKnown.Set();
+                    }
                 }
             }
             
@@ -311,9 +387,9 @@ namespace Vlingo.Common
                 return;
             }
             
-            if (action is Func<ICompletes2<TAntecedentResult>, TResult> funcCompletes)
+            if (action is Func<TAntecedentResult, ICompletes2<TResult>> funcCompletes)
             {
-                result = funcCompletes(antecedent);
+                completesResult = funcCompletes(antecedent.Outcome);
                 return;
             }
 

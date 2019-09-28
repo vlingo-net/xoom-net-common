@@ -415,21 +415,34 @@ namespace Vlingo.Common.Tests
         {
             var completes = new BasicCompletes2<int>(new Scheduler());
 
-            completes
-                .AndThenTo(TimeSpan.FromMilliseconds(1000), value => value * 2);
+            completes.AndThenTo(TimeSpan.FromMilliseconds(1000), value => value * 2);
 
             completes.With(5);
             var result = completes.Await(TimeSpan.FromMilliseconds(10));
 
             Assert.Equal(10, result);
         }
-
+        
         [Fact]
+        public void TestAndThenToWithComplexType()
+        {
+            var completes = new BasicCompletes2<IUser>(new Scheduler());
+
+            completes.AndThenTo(user => user.WithName("Tomasz"));
+
+            completes.With(new User());
+
+            var completed = completes.Await<UserState>();
+            
+            Assert.Equal("Tomasz", completed.Name);
+        }
+
+        [Fact(Skip = "Not yet implemented")]
         public void TestAndThenToWithComplexTypes()
         {
             var scheduler = new Scheduler();
-            var completes = new BasicCompletes<IUser>(scheduler);
-            var nestedCompletes = new BasicCompletes<UserState>(scheduler);
+            var completes = new BasicCompletes2<IUser>(scheduler);
+            var nestedCompletes = new BasicCompletes2<UserState>(scheduler);
 
             completes
                 .AndThenTo(user => user.WithName("Tomasz"))
@@ -438,11 +451,11 @@ namespace Vlingo.Common.Tests
                     nestedCompletes.With(userState);
                 });
 
-            completes.With<IUser>(new User());
+            completes.With(new User());
 
-            var completed = completes.Await<User>();
+            var completed = completes.Await();
             
-            Assert.Equal("1", completed.Name);
+            Assert.Equal("1", ((User)completed).Name);
         }
 
         private class Sender
@@ -460,6 +473,52 @@ namespace Vlingo.Common.Tests
             {
                 callback(value);
             }
+        }
+    }
+    
+    public interface IUser
+    {
+        ICompletes2<UserState> WithContact(string contact);
+        ICompletes2<UserState> WithName(string name);
+    }
+    
+    public class User : IUser
+    {
+        private UserState _userState;
+
+        public string Name => _userState.Name;
+
+        public User()
+        {
+            _userState = new UserState("1", "1", "1");
+        }
+        
+        public ICompletes2<UserState> WithContact(string contact)
+        {
+            return Completes2.WithSuccess(_userState.WithContact(contact));
+        }
+
+        public ICompletes2<UserState> WithName(string name)
+        {
+            return Completes2.WithSuccess(_userState.WithName(name));
+        }
+    }
+
+    public class UserState
+    {
+        public string Id { get; }
+        public string Name { get; }
+        public string Contact { get; }
+
+        public UserState WithName(string name) => new UserState(Id, name, Contact);
+        
+        public UserState WithContact(string contact) => new UserState(Id, Name, contact);
+
+        public UserState(string id, string name, string contact)
+        {
+            Id = id;
+            Name = name;
+            Contact = contact;
         }
     }
 }

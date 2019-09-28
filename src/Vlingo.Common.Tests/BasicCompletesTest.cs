@@ -199,34 +199,6 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, completed);
         }
 
-        [Fact]
-        public void TestAndThenToWithComplexTypes()
-        {
-            var scheduler = new Scheduler();
-            var completes1 = new BasicCompletes<int>(scheduler);
-            completes1.AndThenTo(v => (v * 10).ToString());
-            completes1.With(10);
-            var result = completes1.Await<int>();
-
-            Assert.Equal(10, result);
-
-            var completes = new BasicCompletes<IUser>(scheduler);
-            var nestedCompletes = new BasicCompletes<UserState>(scheduler);
-
-            completes
-                .AndThenTo(user => user.WithName("Tomasz"))
-                .OtherwiseConsume(noUser => nestedCompletes.With(new UserState(string.Empty, string.Empty, string.Empty)))
-                .AndThenConsume(userState => {
-                    nestedCompletes.With(userState);
-                });
-
-            completes.With<IUser>(new User());
-
-            var completed = completes.Await<User>();
-            
-            Assert.Equal("1", completed.Name);
-        }
-
         private class Sender
         {
             private readonly Action<int> callback;
@@ -242,52 +214,6 @@ namespace Vlingo.Common.Tests
             {
                 callback(value);
             }
-        }
-    }
-    
-    public interface IUser
-    {
-        ICompletes<UserState> WithContact(string contact);
-        ICompletes<UserState> WithName(string name);
-    }
-    
-    public class User : IUser
-    {
-        private UserState _userState;
-
-        public string Name => _userState.Name;
-
-        public User()
-        {
-            _userState = new UserState("1", "1", "1");
-        }
-        
-        public ICompletes<UserState> WithContact(string contact)
-        {
-            return Completes.WithSuccess(_userState.WithContact(contact));
-        }
-
-        public ICompletes<UserState> WithName(string name)
-        {
-            return Completes.WithSuccess(_userState.WithName(name));
-        }
-    }
-
-    public class UserState
-    {
-        public string Id { get; }
-        public string Name { get; }
-        public string Contact { get; }
-
-        public UserState WithName(string name) => new UserState(Id, name, Contact);
-        
-        public UserState WithContact(string contact) => new UserState(Id, Name, contact);
-
-        public UserState(string id, string name, string contact)
-        {
-            Id = id;
-            Name = name;
-            Contact = contact;
         }
     }
 }

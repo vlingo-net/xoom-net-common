@@ -22,7 +22,7 @@ namespace Vlingo.Common
 //        ICompletes2<TResult> AndThenConsume(TimeSpan timeout, Action<TResult> consumer);
 //        ICompletes2<TResult> AndThenConsume(Action<TResult> consumer);
 //
-        //TO AndThenTo<TF, TO>(TimeSpan timeout, TF failedOutcomeValue, Func<TResult, TO> function);
+        TNewResult AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
         TNewResult AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
         //TO AndThenTo<TO>(TimeSpan timeout, Func<TResult, TO> function);
         TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function);

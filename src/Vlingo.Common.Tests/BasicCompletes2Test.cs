@@ -200,6 +200,31 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestThatFailureOutcomeFailsWhenScheduledTimesOutWithOneAndThen()
+        {
+            int andThenValue = 0;
+            int failedValue = -1;
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes
+                .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
+                .Otherwise<int>(failedOutcome => failedValue = failedOutcome);
+
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(5);
+            }));
+            thread.Start();
+
+            completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(0, andThenValue);
+            Assert.Equal(-10, failedValue);
+        }
+        
+        [Fact]
         public void TestThatFailureOutcomeFailsWhenScheduledInMiddle()
         {
             int andThenValue = 0;
@@ -360,6 +385,26 @@ namespace Vlingo.Common.Tests
             completes.AndThenTo(10, v => v * 10);
             completes.With(10);
             var result = completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(10, result);
+        }
+        
+        [Fact]
+        public void TestAndThenToFailsWhenScheduledTimesOut()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+            completes.AndThenTo(TimeSpan.FromMilliseconds(1), 10, v => v * 10);
+
+            var result = -1;
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(5);
+            }));
+            thread.Start();
+            
+            result = completes.Await();
 
             Assert.True(completes.HasFailed);
             Assert.Equal(10, result);

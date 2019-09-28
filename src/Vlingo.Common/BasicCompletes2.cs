@@ -64,19 +64,19 @@ namespace Vlingo.Common
         protected void AndThenInternal(BasicCompletes2 continuationCompletes)
         {
             var continuation = new StandardCompletesContinuation(continuationCompletes);
-            RegisterContinuation(continuation);
+            continuationCompletes.RegisterContinuation(continuation);
         }
 
         protected void OtherwiseInternal(BasicCompletes2 continuationCompletes)
         {
             var continuation = new StandardCompletesContinuation(continuationCompletes);
-            RegisterFailureContiuation(continuation);
+            continuationCompletes.RegisterFailureContiuation(continuation);
         }
 
         protected void RecoverInternal(BasicCompletes2 continuationCompletes)
         {
             var continuation = new StandardCompletesContinuation(continuationCompletes);
-            RegisterExceptionContiuation(continuation);
+            continuationCompletes.RegisterExceptionContiuation(continuation);
         }
     }
     
@@ -167,6 +167,13 @@ namespace Vlingo.Common
             var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(this, function);
             AndThenInternal(continuationCompletes);
             return continuationCompletes;
+        }
+
+        public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
+        {
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(scheduler, this, timeout, Optional.Of(failedOutcomeValue), function);
+            AndThenInternal(continuationCompletes);
+            return default;
         }
 
         public TNewResult AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)

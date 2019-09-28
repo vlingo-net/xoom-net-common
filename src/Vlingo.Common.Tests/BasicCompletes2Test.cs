@@ -409,6 +409,20 @@ namespace Vlingo.Common.Tests
             Assert.True(completes.HasFailed);
             Assert.Equal(10, result);
         }
+        
+        [Fact]
+        public void TestAndThenToOutcomeBeforeTimeout()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes
+                .AndThenTo(TimeSpan.FromMilliseconds(1000), value => value * 2);
+
+            completes.With(5);
+            var result = completes.Await(TimeSpan.FromMilliseconds(10));
+
+            Assert.Equal(10, result);
+        }
 
         [Fact]
         public void TestAndThenToWithComplexTypes()

@@ -183,6 +183,13 @@ namespace Vlingo.Common
             return default;
         }
 
+        public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function)
+        {
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(scheduler, this, timeout, function);
+            AndThenInternal(continuationCompletes);
+            return default;
+        }
+
         public TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function)
         {
             var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(this, function);

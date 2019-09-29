@@ -200,6 +200,13 @@ namespace Vlingo.Common
             return default;
         }
 
+        public ICompletes2<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, ICompletes2<TNewResult>> function)
+        {
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(scheduler, this, timeout, Optional.Of(failedOutcomeValue), function);
+            AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
         public TNewResult AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
             var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(this, Optional.Of(failedOutcomeValue), function);
@@ -219,6 +226,13 @@ namespace Vlingo.Common
             var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(scheduler, this, timeout, function);
             AndThenInternal(continuationCompletes);
             return default;
+        }
+
+        public ICompletes2<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, ICompletes2<TNewResult>> function)
+        {
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(scheduler, this, timeout, function);
+            AndThenInternal(continuationCompletes);
+            return continuationCompletes;
         }
 
         public TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function)
@@ -271,7 +285,7 @@ namespace Vlingo.Common
                 // should not blow but return actual value
             }
 
-            return result;
+            return AwaitInternal<TResult>();
         }
         
         public TNewResult Await<TNewResult>()
@@ -299,7 +313,7 @@ namespace Vlingo.Common
                 // should not blow but return actual value
             }
 
-            return result;
+            return AwaitInternal<TResult>();
         }
 
         public TNewResult Await<TNewResult>(TimeSpan timeout)

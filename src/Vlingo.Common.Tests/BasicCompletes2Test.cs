@@ -368,14 +368,25 @@ namespace Vlingo.Common.Tests
         }
 
         [Fact]
-        public void TestAndThenToCompletes()
+        public void TestAndThenToCompletesCastingOutput()
         {
             var completes = new BasicCompletes2<int>(new Scheduler());
             completes.AndThenTo(v => (v * 10).ToString());
             completes.With(10);
             var result = completes.Await();
 
-            Assert.Equal(10, result);
+            Assert.Equal(100, result);
+        }
+        
+        [Fact]
+        public void TestAndThenToCompletes()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+            completes.AndThenTo(v => (v * 10).ToString());
+            completes.With(10);
+            var result = completes.Await<string>();
+
+            Assert.Equal("100", result);
         }
         
         [Fact]
@@ -452,6 +463,49 @@ namespace Vlingo.Common.Tests
             
             Assert.Equal(5, failedResult);
             Assert.Equal(5, completed);
+        }
+        
+        [Fact]
+        public void TestOtherwiseConsumeAfterTimeout()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+            var failedResult = -1;
+            
+            completes
+                .AndThenTo(TimeSpan.FromMilliseconds(1), 5, v => Completes2.WithSuccess(v * 2))
+                .OtherwiseConsume(failedValue => failedResult = failedValue);
+            
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(10);
+            }));
+            thread.Start();
+            
+            var completed = completes.Await();
+            
+            Assert.Equal(5, failedResult);
+            Assert.Equal(5, completed);
+        }
+        
+        [Fact]
+        public void TestConsumeBeforeTimeout()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes
+                .AndThenTo(TimeSpan.FromMilliseconds(1000000), v => Completes2.WithSuccess(v * 2));
+            
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(10);
+            }));
+            thread.Start();
+            
+            var completed = completes.Await();
+            
+            Assert.Equal(20, completed);
         }
         
         [Fact]

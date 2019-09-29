@@ -23,8 +23,11 @@ namespace Vlingo.Common
         ICompletes2<TResult> AndThenConsume(Action<TResult> consumer);
 
         TNewResult AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
+        ICompletes2<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, ICompletes2<TNewResult>> function);
         TNewResult AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
+        ICompletes2<TNewResult> AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, ICompletes2<TNewResult>> function);
         TNewResult AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function);
+        ICompletes2<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, ICompletes2<TNewResult>> function);
         TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function);
         ICompletes2<TNewResult> AndThenTo<TNewResult>(Func<TResult, ICompletes2<TNewResult>> function);
 

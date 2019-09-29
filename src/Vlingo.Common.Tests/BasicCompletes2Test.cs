@@ -509,6 +509,25 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestAndThenConsumeCalled()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+            var consumedResult = -1;
+            
+            completes
+                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenConsume(v => consumedResult = v);
+            
+            completes.With(5);
+
+            var completed = completes.Await();
+            
+            Assert.Equal(10, consumedResult);
+            // This is normal because last action in pipeline is consumer not function
+            Assert.Equal(0, completed);
+        }
+        
+        [Fact]
         public void TestAndThenToWithComplexType()
         {
             var completes = new BasicCompletes2<IUser>(new Scheduler());

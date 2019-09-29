@@ -190,7 +190,9 @@ namespace Vlingo.Common
 
         public ICompletes2<TResult> AndThenConsume(Action<TResult> consumer)
         {
-            throw new NotImplementedException();
+            var continuationCompletes = new AndThenContinuation<TResult, TResult>(this, consumer);
+            AndThenInternal(continuationCompletes);
+            return continuationCompletes;
         }
 
         public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
@@ -436,6 +438,38 @@ namespace Vlingo.Common
                 return;
             }
             
+            if (action is Action invokableAction)
+            {
+                invokableAction();
+                return;
+            }
+            
+            if (action is Action<TResult> invokableActionInput)
+            {
+                if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
+                {
+                    if (andThenContinuation.completesResult != null)
+                    {
+                        if (andThenContinuation.completesResult is ICompletes2<TResult> completesContinuation)
+                        {
+                            if (completesContinuation.HasOutcome)
+                            {
+                                invokableActionInput(completesContinuation.Outcome);
+                            }
+                            else
+                            {
+                                completesContinuation.AndThenConsume(v => invokableActionInput(v));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        invokableActionInput(andThenContinuation.Outcome);
+                    }
+                    return;   
+                }
+            }
+
             if (action is Func<TAntecedentResult, ICompletes2<TResult>> funcCompletes)
             {
                 completesResult = funcCompletes(antecedent.Outcome);

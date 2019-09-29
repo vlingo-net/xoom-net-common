@@ -12,6 +12,7 @@ namespace Vlingo.Common
         internal CompletesContinuation failureContinuation;
         internal CompletesContinuation exceptionContinuation;
         internal object completesResult;
+        internal object transformedResult;
         
         public BasicCompletes2(Delegate action)
         {
@@ -286,17 +287,7 @@ namespace Vlingo.Common
                 // should not blow but return actual value
             }
 
-            if (completesResult is ICompletes2<TNewResult> completes)
-            {
-                if (completes.HasOutcome)
-                {
-                    return completes.Outcome;
-                }
-
-                return completes.Await();
-            }
-
-            return default;
+            return AwaitInternal<TNewResult>();
         }
 
         public TResult Await(TimeSpan timeout)
@@ -311,6 +302,51 @@ namespace Vlingo.Common
             }
 
             return result;
+        }
+
+        public TNewResult Await<TNewResult>(TimeSpan timeout)
+        {
+            try
+            {
+                outcomeKnown.Wait(timeout);
+            }
+            catch
+            {
+                // should not blow but return actual value
+            }
+
+            return AwaitInternal<TNewResult>();
+        }
+
+        private TNewResult AwaitInternal<TNewResult>()
+        {
+            if (completesResult is ICompletes2<TNewResult> completes)
+            {
+                if (completes.HasOutcome)
+                {
+                    return completes.Outcome;
+                }
+
+                return completes.Await();
+            }
+
+            if (HasOutcome)
+            {
+                try
+                {
+                    if (transformedResult != null)
+                    {
+                        return (TNewResult) Convert.ChangeType(transformedResult, typeof(TNewResult));
+                    }
+                    return (TNewResult) Convert.ChangeType(result, typeof(TNewResult));
+                }
+                catch
+                {
+                    // should not blow but return actual value
+                }
+            }
+
+            return default;
         }
 
         public override bool HasFailed => hasFailed.Get();
@@ -357,6 +393,7 @@ namespace Vlingo.Common
                     if (standardCompletesContinuation.completes is BasicCompletes2 completesContinuation)
                     {
                         this.completesResult = completesContinuation.completesResult;
+                        this.transformedResult = completesContinuation.transformedResult;
                         outcomeKnown.Set();
                     }
                 }
@@ -396,6 +433,7 @@ namespace Vlingo.Common
             if (action is Func<TAntecedentResult, TResult> function)
             {
                 result = function(antecedent.Outcome);
+                transformedResult = result;
                 return;
             }
 

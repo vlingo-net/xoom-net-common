@@ -424,6 +424,19 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestAndThenToOutcomeBeforeTimeoutWithResult()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes.AndThenTo(TimeSpan.FromMilliseconds(1000), value => (value * 2).ToString());
+
+            completes.With(5);
+            var result = completes.Await<string>(TimeSpan.FromMilliseconds(10));
+
+            Assert.Equal("10", result);
+        }
+        
+        [Fact]
         public void TestAndThenToWithComplexType()
         {
             var completes = new BasicCompletes2<IUser>(new Scheduler());

@@ -437,6 +437,24 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestOtherwiseConsume()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+            var failedResult = -1;
+            
+            completes
+                .AndThenTo(5, v => Completes2.WithSuccess(v * 2))
+                .OtherwiseConsume(failedValue => failedResult = failedValue);
+            
+            completes.With(5);
+
+            var completed = completes.Await();
+            
+            Assert.Equal(5, failedResult);
+            Assert.Equal(5, completed);
+        }
+        
+        [Fact]
         public void TestAndThenToWithComplexType()
         {
             var completes = new BasicCompletes2<IUser>(new Scheduler());

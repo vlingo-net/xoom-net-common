@@ -25,17 +25,6 @@ namespace Vlingo.Common
 
         internal virtual void InnerInvoke(BasicCompletes2 completedCompletes)
         {
-            if (action is Action invokableAction)
-            {
-                invokableAction();
-                return;
-            }
-
-//            if (action is Action<object?> actionWithState)
-//            {
-//                actionWithState(m_stateObject);
-//                return;
-//            }
         }
 
         internal abstract void HandleFailure();
@@ -217,6 +206,13 @@ namespace Vlingo.Common
             AndThenInternal(continuationCompletes);
             return default;
         }
+        
+        public ICompletes2<TNewResult> AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, ICompletes2<TNewResult>> function)
+        {
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(this, Optional.Of(failedOutcomeValue), function);
+            AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
 
         public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function)
         {
@@ -248,7 +244,9 @@ namespace Vlingo.Common
 
         public ICompletes2<TResult> OtherwiseConsume(Action<TResult> consumer)
         {
-            throw new NotImplementedException();
+            var continuationCompletes = new OtherwiseContinuation<TResult, TResult>(this, consumer);
+            OtherwiseInternal(continuationCompletes);
+            return continuationCompletes;
         }
 
         public ICompletes2<TResult> RecoverFrom(Func<Exception, TResult> function)
@@ -485,6 +483,21 @@ namespace Vlingo.Common
                 return;
             }
             
+            if (action is Action invokableAction)
+            {
+                invokableAction();
+                return;
+            }
+            
+            if (action is Action<TResult> invokableActionInput)
+            {
+                if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
+                {
+                    invokableActionInput(andThenContinuation.failedOutcomeValue.Get());
+                    return;   
+                }
+            }
+            
             if (action is Func<ICompletes2<TAntecedentResult>, TResult> funcCompletes)
             {
                 result = funcCompletes(antecedent);
@@ -499,6 +512,8 @@ namespace Vlingo.Common
                     return;   
                 }
             }
+            
+            base.InnerInvoke(completedCompletes);
 
 //            if (action is Func<ICompletes2<TAntecedentResult>, object?, TResult> funcWithState)
 //            {

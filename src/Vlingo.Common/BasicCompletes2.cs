@@ -118,12 +118,17 @@ namespace Vlingo.Common
         public ICompletes2<TResult> With(TResult outcome)
         {
             this.result = outcome;
+            BasicCompletes2 lastRunContinuation = null;
             foreach (var completesContinuation in continuations)
             {
                 if (completesContinuation is StandardCompletesContinuation continuation)
                 {
                     try
                     {
+                        if (lastRunContinuation == null)
+                        {
+                            lastRunContinuation = continuation.completes.Antecedent;
+                        }
                         continuation.completes.UpdateFailure(outcome);
                         if (continuation.completes.HasFailed)
                         {
@@ -132,7 +137,8 @@ namespace Vlingo.Common
                             break;
                         }
 
-                        continuation.Run(continuation.completes.Antecedent);
+                        continuation.Run(lastRunContinuation);
+                        lastRunContinuation = continuation.completes;
                     }
                     catch (InvalidCastException)
                     {
@@ -459,28 +465,31 @@ namespace Vlingo.Common
             
             if (action is Action<TResult> invokableActionInput)
             {
-                if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
+                //if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
+                //{
+                if (completedCompletes.completesResult != null)
                 {
-                    if (andThenContinuation.completesResult != null)
+                    if (completedCompletes.completesResult is ICompletes2<TResult> completesContinuation)
                     {
-                        if (andThenContinuation.completesResult is ICompletes2<TResult> completesContinuation)
+                        if (completesContinuation.HasOutcome)
                         {
-                            if (completesContinuation.HasOutcome)
-                            {
-                                invokableActionInput(completesContinuation.Outcome);
-                            }
-                            else
-                            {
-                                completesContinuation.AndThenConsume(v => invokableActionInput(v));
-                            }
+                            invokableActionInput(completesContinuation.Outcome);
+                        }
+                        else
+                        {
+                            completesContinuation.AndThenConsume(v => invokableActionInput(v));
                         }
                     }
-                    else
+                }
+                else
+                {
+                    if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
                     {
                         invokableActionInput(andThenContinuation.Outcome);
                     }
-                    return;   
                 }
+                return;   
+                //}
             }
 
             if (action is Func<TAntecedentResult, ICompletes2<TResult>> funcCompletes)
@@ -588,6 +597,8 @@ namespace Vlingo.Common
         internal override BasicCompletes2 Antecedent => antecedent;
 
         internal override Exception Exception => antecedent.Exception;
+        
+        internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.RegisterContinuation(continuation);
 
         internal override void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
             antecedent.RegisterFailureContiuation(continuationCompletes);

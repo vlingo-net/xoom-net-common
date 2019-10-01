@@ -8,22 +8,22 @@ namespace Vlingo.Common
     public abstract class BasicCompletes2
     {
         private readonly Scheduler scheduler;
-        protected Delegate action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
-        internal List<CompletesContinuation> continuations = new List<CompletesContinuation>();
-        internal CompletesContinuation failureContinuation;
-        internal CompletesContinuation exceptionContinuation;
-        internal object completesResult;
-        internal object transformedResult;
-        
-        public BasicCompletes2(Delegate action)
+        protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
+        internal readonly List<CompletesContinuation> Continuations = new List<CompletesContinuation>();
+        internal CompletesContinuation FailureContinuation;
+        internal CompletesContinuation ExceptionContinuation;
+        internal object CompletesResult;
+        internal object TransformedResult;
+
+        protected BasicCompletes2(Delegate action)
         {
-            this.action = action;
+            Action = action;
         }
-        
-        public BasicCompletes2(Scheduler scheduler, Delegate action)
+
+        protected BasicCompletes2(Scheduler scheduler, Delegate action)
         {
             this.scheduler = scheduler;
-            this.action = action;
+            Action = action;
         }
 
         public virtual bool HasFailed { get; }
@@ -44,17 +44,17 @@ namespace Vlingo.Common
         
         internal virtual void RegisterContinuation(CompletesContinuation continuation)
         {
-            continuations.Add(continuation);
+            Continuations.Add(continuation);
         }
 
         internal virtual void RegisterFailureContiuation(CompletesContinuation continuationCompletes)
         {
-            this.failureContinuation = continuationCompletes;
+            this.FailureContinuation = continuationCompletes;
         }
         
         internal virtual void RegisterExceptionContiuation(CompletesContinuation continuationCompletes)
         {
-            this.exceptionContinuation = continuationCompletes;
+            this.ExceptionContinuation = continuationCompletes;
         }
 
         internal virtual void UpdateFailure(object outcome)
@@ -119,7 +119,7 @@ namespace Vlingo.Common
         {
             this.result = outcome;
             BasicCompletes2 lastRunContinuation = null;
-            foreach (var completesContinuation in continuations)
+            foreach (var completesContinuation in Continuations)
             {
                 if (completesContinuation is StandardCompletesContinuation continuation)
                 {
@@ -133,7 +133,7 @@ namespace Vlingo.Common
                         if (continuation.completes.HasFailed)
                         {
                             continuation.completes.HandleFailure();
-                            failureContinuation?.Run(continuation.completes);
+                            FailureContinuation?.Run(continuation.completes);
                             break;
                         }
 
@@ -147,7 +147,7 @@ namespace Vlingo.Common
                     catch (Exception e)
                     {
                         this.HandleException(e);
-                        exceptionContinuation?.Run(continuation.completes);
+                        ExceptionContinuation?.Run(continuation.completes);
                         break;
                     }
                 }
@@ -355,7 +355,7 @@ namespace Vlingo.Common
 
         private TNewResult AwaitInternal<TNewResult>()
         {
-            if (completesResult is ICompletes2<TNewResult> completes)
+            if (CompletesResult is ICompletes2<TNewResult> completes)
             {
                 if (completes.HasOutcome)
                 {
@@ -369,9 +369,9 @@ namespace Vlingo.Common
             {
                 try
                 {
-                    if (transformedResult != null)
+                    if (TransformedResult != null)
                     {
-                        return (TNewResult) Convert.ChangeType(transformedResult, typeof(TNewResult));
+                        return (TNewResult) Convert.ChangeType(TransformedResult, typeof(TNewResult));
                     }
                     return (TNewResult) Convert.ChangeType(result, typeof(TNewResult));
                 }
@@ -415,9 +415,9 @@ namespace Vlingo.Common
 
         private void TrySetResult()
         {
-            if (continuations.Any())
+            if (Continuations.Any())
             {
-                var lastContinuation = continuations.Last();
+                var lastContinuation = Continuations.Last();
                 if (lastContinuation is StandardCompletesContinuation standardCompletesContinuation)
                 {
                     if (standardCompletesContinuation.completes is BasicCompletes2<TResult> continuation)
@@ -427,8 +427,8 @@ namespace Vlingo.Common
                     
                     if (standardCompletesContinuation.completes is BasicCompletes2 completesContinuation)
                     {
-                        this.completesResult = completesContinuation.completesResult;
-                        this.transformedResult = completesContinuation.transformedResult;
+                        this.CompletesResult = completesContinuation.CompletesResult;
+                        this.TransformedResult = completesContinuation.TransformedResult;
                         outcomeKnown.Set();
                     }
                 }
@@ -459,19 +459,19 @@ namespace Vlingo.Common
                 return;
             }
             
-            if (action is Action invokableAction)
+            if (Action is Action invokableAction)
             {
                 invokableAction();
                 return;
             }
             
-            if (action is Action<TResult> invokableActionInput)
+            if (Action is Action<TResult> invokableActionInput)
             {
                 //if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
                 //{
-                if (completedCompletes.completesResult != null)
+                if (completedCompletes.CompletesResult != null)
                 {
-                    if (completedCompletes.completesResult is ICompletes2<TResult> completesContinuation)
+                    if (completedCompletes.CompletesResult is ICompletes2<TResult> completesContinuation)
                     {
                         if (completesContinuation.HasOutcome)
                         {
@@ -494,16 +494,16 @@ namespace Vlingo.Common
                 //}
             }
 
-            if (action is Func<TAntecedentResult, ICompletes2<TResult>> funcCompletes)
+            if (Action is Func<TAntecedentResult, ICompletes2<TResult>> funcCompletes)
             {
-                completesResult = funcCompletes(antecedent.Outcome);
+                CompletesResult = funcCompletes(antecedent.Outcome);
                 return;
             }
 
-            if (action is Func<TAntecedentResult, TResult> function)
+            if (Action is Func<TAntecedentResult, TResult> function)
             {
                 result = function(antecedent.Outcome);
-                transformedResult = result;
+                TransformedResult = result;
                 return;
             }
 
@@ -555,13 +555,13 @@ namespace Vlingo.Common
                 return;
             }
             
-            if (action is Action invokableAction)
+            if (Action is Action invokableAction)
             {
                 invokableAction();
                 return;
             }
             
-            if (action is Action<TResult> invokableActionInput)
+            if (Action is Action<TResult> invokableActionInput)
             {
                 if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
                 {
@@ -570,13 +570,13 @@ namespace Vlingo.Common
                 }
             }
             
-            if (action is Func<ICompletes2<TAntecedentResult>, TResult> funcCompletes)
+            if (Action is Func<ICompletes2<TAntecedentResult>, TResult> funcCompletes)
             {
                 result = funcCompletes(antecedent);
                 return;
             }
 
-            if (action is Func<TAntecedentResult, TResult> function)
+            if (Action is Func<TAntecedentResult, TResult> function)
             {
                 if (completedCompletes is AndThenContinuation<TResult, TAntecedentResult> andThenContinuation)
                 {
@@ -626,7 +626,7 @@ namespace Vlingo.Common
 //                return;
 //            }
 
-            if (action is Func<Exception, TResult> function)
+            if (Action is Func<Exception, TResult> function)
             {
                 if (completedCompletes is BasicCompletes2<TResult> basicCompletes)
                 {

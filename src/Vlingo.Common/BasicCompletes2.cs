@@ -351,6 +351,8 @@ namespace Vlingo.Common
             return AwaitInternal<TNewResult>();
         }
 
+        public bool IsCompleted => outcomeKnown.IsSet;
+
         private TNewResult AwaitInternal<TNewResult>()
         {
             if (completesResult is ICompletes2<TNewResult> completes)

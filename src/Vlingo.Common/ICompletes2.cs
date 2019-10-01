@@ -38,7 +38,7 @@ namespace Vlingo.Common
         TNewResult Await<TNewResult>();
         TResult Await(TimeSpan timeout);
         TNewResult Await<TNewResult>(TimeSpan timeout);
-//        bool IsCompleted { get; }
+        bool IsCompleted { get; }
         bool HasFailed { get; }
         void Failed();
         bool HasOutcome { get; }

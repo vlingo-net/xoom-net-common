@@ -182,12 +182,16 @@ namespace Vlingo.Common
 
         public ICompletes2<TResult> AndThenConsume(TimeSpan timeout, TResult failedOutcomeValue, Action<TResult> consumer)
         {
-            throw new NotImplementedException();
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(Antecedent.Scheduler, this, timeout, Optional.Of(failedOutcomeValue), consumer);
+            AndThenInternal(continuationCompletes);
+            return continuationCompletes;
         }
 
         public ICompletes2<TResult> AndThenConsume(TResult failedOutcomeValue, Action<TResult> consumer)
         {
-            throw new NotImplementedException();
+            var continuationCompletes = new AndThenContinuation<TResult, TResult>(this, Optional.Of(failedOutcomeValue), consumer);
+            AndThenInternal(continuationCompletes);
+            return continuationCompletes;
         }
 
         public ICompletes2<TResult> AndThenConsume(TimeSpan timeout, Action<TResult> consumer)

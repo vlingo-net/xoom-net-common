@@ -577,6 +577,96 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestAndThenConsumeFails()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+            var consumedResult = -1;
+            
+            completes
+                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenConsume(5, v => consumedResult = v);
+            
+            completes.With(5);
+
+            var completed = completes.Await();
+            
+            Assert.Equal(-1, consumedResult);
+            Assert.Equal(5, completed);
+        }
+        
+        [Fact]
+        public void TestAndThenConsumeTimeoutBeforeOutcome()
+        {
+            int andThenValue = 0;
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes
+                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenConsume(TimeSpan.FromMilliseconds(1), -10, x => andThenValue = x);
+
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(5);
+            }));
+            thread.Start();
+
+            var completed = completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(0, andThenValue);
+            Assert.Equal(-10, completed);
+        }
+        
+        [Fact]
+        public void TestAndThenConsumeOutcomesBeforeTiemout()
+        {
+            int andThenValue = 0;
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes
+                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenConsume(TimeSpan.FromMilliseconds(1000), -10, x => andThenValue = x);
+
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(5);
+            }));
+            thread.Start();
+
+            var completed = completes.Await();
+
+            Assert.False(completes.HasFailed);
+            Assert.Equal(10, andThenValue);
+            Assert.Equal(0, completed);
+        }
+
+        [Fact]
+        public void TestAndThenConsumeFailsBeforeTimeoutWithFailedOutcome()
+        {
+            int andThenValue = 0;
+            var completes = new BasicCompletes2<int>(new Scheduler());
+
+            completes
+                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenConsume(TimeSpan.FromMilliseconds(1000), -10, x => andThenValue = x);
+
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(-10);
+            }));
+            thread.Start();
+
+            var completed = completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(0, andThenValue);
+            Assert.Equal(-10, completed);
+        }
+        
+        [Fact]
         public void TestAndThenToWithComplexType()
         {
             var completes = new BasicCompletes2<IUser>(new Scheduler());
@@ -589,26 +679,25 @@ namespace Vlingo.Common.Tests
             
             Assert.Equal("Tomasz", completed.Name);
         }
-
-        [Fact(Skip = "Not yet implemented")]
+        
+        [Fact(Skip = "Fails")]
         public void TestAndThenToWithComplexTypes()
         {
-            var scheduler = new Scheduler();
-            var completes = new BasicCompletes2<IUser>(scheduler);
-            var nestedCompletes = new BasicCompletes2<UserState>(scheduler);
-
+            var completes = new BasicCompletes2<IUser>(new Scheduler());
+            UserState expectedUserState = null;
             completes
                 .AndThenTo(user => user.WithName("Tomasz"))
-                .OtherwiseConsume(noUser => nestedCompletes.With(new UserState(string.Empty, string.Empty, string.Empty)))
+                .OtherwiseConsume(noUser => Completes2.WithSuccess(new UserState(string.Empty, string.Empty, string.Empty)))
                 .AndThenConsume(userState => {
-                    nestedCompletes.With(userState);
+                    expectedUserState = userState;
                 });
 
             completes.With(new User());
 
-            var completed = completes.Await();
+            var completed = completes.Await<UserState>();
             
-            Assert.Equal("1", ((User)completed).Name);
+            Assert.Equal("Tomasz", completed?.Name);
+            Assert.Equal("Tomasz", expectedUserState?.Name);
         }
 
         private class Sender

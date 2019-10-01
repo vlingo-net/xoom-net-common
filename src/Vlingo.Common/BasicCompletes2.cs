@@ -7,8 +7,8 @@ namespace Vlingo.Common
 {
     public abstract class BasicCompletes2
     {
-        private readonly Scheduler scheduler;
         protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
+        internal readonly Scheduler Scheduler;
         internal readonly List<CompletesContinuation> Continuations = new List<CompletesContinuation>();
         internal CompletesContinuation FailureContinuation;
         internal CompletesContinuation ExceptionContinuation;
@@ -22,13 +22,13 @@ namespace Vlingo.Common
 
         protected BasicCompletes2(Scheduler scheduler, Delegate action)
         {
-            this.scheduler = scheduler;
+            Scheduler = scheduler;
             Action = action;
         }
 
-        public virtual bool HasFailed { get; }
-        
-        internal virtual BasicCompletes2 Antecedent { get; }
+        public virtual bool HasFailed { get; } = false;
+
+        internal virtual BasicCompletes2 Antecedent { get; } = null;
 
         internal virtual void InnerInvoke(BasicCompletes2 completedCompletes)
         {
@@ -39,8 +39,6 @@ namespace Vlingo.Common
         internal abstract void HandleException(Exception e);
         
         internal abstract Exception Exception { get; }
-
-        internal Scheduler Scheduler => scheduler;
         
         internal virtual void RegisterContinuation(CompletesContinuation continuation)
         {
@@ -49,12 +47,12 @@ namespace Vlingo.Common
 
         internal virtual void RegisterFailureContiuation(CompletesContinuation continuationCompletes)
         {
-            this.FailureContinuation = continuationCompletes;
+            FailureContinuation = continuationCompletes;
         }
         
         internal virtual void RegisterExceptionContiuation(CompletesContinuation continuationCompletes)
         {
-            this.ExceptionContinuation = continuationCompletes;
+            ExceptionContinuation = continuationCompletes;
         }
 
         internal virtual void UpdateFailure(object outcome)
@@ -82,16 +80,16 @@ namespace Vlingo.Common
     
     public class BasicCompletes2<TResult> : BasicCompletes2, ICompletes2<TResult>
     {
-        private ManualResetEventSlim outcomeKnown = new ManualResetEventSlim(false);
-        protected AtomicBoolean hasFailed = new AtomicBoolean(false);
-        protected AtomicBoolean hasException = new AtomicBoolean(false);
-        protected internal Optional<TResult> failedOutcomeValue;
-        protected internal AtomicReference<Exception> exception = new AtomicReference<Exception>();
-        protected TResult result;
+        private readonly ManualResetEventSlim outcomeKnown = new ManualResetEventSlim(false);
+        private readonly AtomicReference<Exception> exception = new AtomicReference<Exception>();
+        protected readonly AtomicBoolean HasFailedValue = new AtomicBoolean(false);
+        protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
+        protected internal Optional<TResult> FailedOutcomeValue;
+        protected TResult Result;
 
         public BasicCompletes2(TResult outcome) : base(default)
         {
-            this.result = outcome;
+            Result = outcome;
         }
 
         internal BasicCompletes2(Delegate valueSelector) : base(valueSelector)
@@ -110,14 +108,14 @@ namespace Vlingo.Common
             }
             else
             {
-                failedOutcomeValue = Optional.Of(outcome);
+                FailedOutcomeValue = Optional.Of(outcome);
                 Failed();
             }
         }
 
         public ICompletes2<TResult> With(TResult outcome)
         {
-            this.result = outcome;
+            this.Result = outcome;
             BasicCompletes2 lastRunContinuation = null;
             foreach (var completesContinuation in Continuations)
             {
@@ -286,7 +284,7 @@ namespace Vlingo.Common
 
         public ICompletes2<TResult> RecoverFrom(Func<Exception, TResult> function)
         {
-            if (hasException.Get())
+            if (HasException.Get())
             {
                 function(exception.Get());
             }
@@ -373,7 +371,7 @@ namespace Vlingo.Common
                     {
                         return (TNewResult) Convert.ChangeType(TransformedResult, typeof(TNewResult));
                     }
-                    return (TNewResult) Convert.ChangeType(result, typeof(TNewResult));
+                    return (TNewResult) Convert.ChangeType(Result, typeof(TNewResult));
                 }
                 catch
                 {
@@ -384,15 +382,15 @@ namespace Vlingo.Common
             return default;
         }
 
-        public override bool HasFailed => hasFailed.Get();
+        public override bool HasFailed => HasFailedValue.Get();
         public void Failed()
         {
-            With(failedOutcomeValue.Get());
+            With(FailedOutcomeValue.Get());
         }
 
-        public bool HasOutcome => result != null;
+        public bool HasOutcome => Result != null;
 
-        public TResult Outcome => this.result;
+        public TResult Outcome => this.Result;
 
 //        internal override void RegisterContinuation(CompletesContinuation continuation)
 //        {
@@ -401,14 +399,14 @@ namespace Vlingo.Common
 
         internal override void HandleFailure()
         {
-            hasFailed.Set(true);
+            HasFailedValue.Set(true);
         }
 
         internal override void HandleException(Exception e)
         {
             exception.Set(e);
-            hasException.Set(true);
-            hasFailed.Set(true);
+            HasException.Set(true);
+            HasFailedValue.Set(true);
         }
 
         internal override Exception Exception => exception.Get();
@@ -422,7 +420,7 @@ namespace Vlingo.Common
                 {
                     if (standardCompletesContinuation.completes is BasicCompletes2<TResult> continuation)
                     {
-                        this.result = continuation.Outcome;
+                        this.Result = continuation.Outcome;
                     }
                     
                     if (standardCompletesContinuation.completes is BasicCompletes2 completesContinuation)
@@ -449,12 +447,12 @@ namespace Vlingo.Common
         internal AndThenContinuation(BasicCompletes2<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function)
         {
             this.antecedent = antecedent;
-            this.failedOutcomeValue = failedOutcomeValue;
+            this.FailedOutcomeValue = failedOutcomeValue;
         }
 
         internal override void InnerInvoke(BasicCompletes2 completedCompletes)
         {
-            if (hasFailed.Get())
+            if (HasFailedValue.Get())
             {
                 return;
             }
@@ -502,8 +500,8 @@ namespace Vlingo.Common
 
             if (Action is Func<TAntecedentResult, TResult> function)
             {
-                result = function(antecedent.Outcome);
-                TransformedResult = result;
+                Result = function(antecedent.Outcome);
+                TransformedResult = Result;
                 return;
             }
 
@@ -520,7 +518,7 @@ namespace Vlingo.Common
 
         internal override void HandleFailure()
         {
-            result = failedOutcomeValue.Get();
+            Result = FailedOutcomeValue.Get();
             base.HandleFailure();
             antecedent.HandleFailure();
         }
@@ -535,7 +533,7 @@ namespace Vlingo.Common
 
         internal override void UpdateFailure(object outcome)
         {
-            hasFailed.Set(hasFailed.Get() || outcome.Equals(failedOutcomeValue.Get()));
+            HasFailedValue.Set(HasFailedValue.Get() || outcome.Equals(FailedOutcomeValue.Get()));
         }
     }
     
@@ -550,7 +548,7 @@ namespace Vlingo.Common
 
         internal override void InnerInvoke(BasicCompletes2 completedCompletes)
         {
-            if (hasException.Get())
+            if (HasException.Get())
             {
                 return;
             }
@@ -565,14 +563,14 @@ namespace Vlingo.Common
             {
                 if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
                 {
-                    invokableActionInput(andThenContinuation.failedOutcomeValue.Get());
+                    invokableActionInput(andThenContinuation.FailedOutcomeValue.Get());
                     return;   
                 }
             }
             
             if (Action is Func<ICompletes2<TAntecedentResult>, TResult> funcCompletes)
             {
-                result = funcCompletes(antecedent);
+                Result = funcCompletes(antecedent);
                 return;
             }
 
@@ -580,7 +578,7 @@ namespace Vlingo.Common
             {
                 if (completedCompletes is AndThenContinuation<TResult, TAntecedentResult> andThenContinuation)
                 {
-                    result = function(andThenContinuation.failedOutcomeValue.Get());
+                    Result = function(andThenContinuation.FailedOutcomeValue.Get());
                     return;   
                 }
             }
@@ -630,7 +628,7 @@ namespace Vlingo.Common
             {
                 if (completedCompletes is BasicCompletes2<TResult> basicCompletes)
                 {
-                    result = function(basicCompletes.Exception);
+                    Result = function(basicCompletes.Exception);
                     return;   
                 }
             }

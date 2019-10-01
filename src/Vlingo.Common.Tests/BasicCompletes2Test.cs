@@ -528,6 +528,55 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestAndThenConsumeBeforeTimeout()
+        {
+            var completes = new BasicCompletes2<int>(new Scheduler());
+            var consumedResult = -1;
+            
+            completes
+                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenConsume(TimeSpan.FromMilliseconds(1000), v => consumedResult = v);
+            
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(5);
+            }));
+            thread.Start();
+            
+            var completed = completes.Await();
+            
+            Assert.Equal(10, consumedResult);
+            // This is normal because last action in pipeline is consumer not function
+            Assert.Equal(0, completed);
+        }
+        
+        [Fact]
+        public void TestAndThenConsumeNotRunAfterTimeout()
+        {
+            var scheduler = new Scheduler();
+            var completes = new BasicCompletes2<int>(scheduler);
+            var consumedResult = -1;
+            
+            completes
+                .AndThenTo(v => Completes2.Using<int>(scheduler))
+                .AndThenConsume(TimeSpan.FromMilliseconds(1), v => consumedResult = v);
+            
+            var thread = new Thread(new ThreadStart(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(5);
+            }));
+            thread.Start();
+            
+            var completed = completes.Await();
+            
+            Assert.Equal(-1, consumedResult);
+            // This is normal because last action in pipeline is consumer not function
+            Assert.Equal(0, completed);
+        }
+        
+        [Fact]
         public void TestAndThenToWithComplexType()
         {
             var completes = new BasicCompletes2<IUser>(new Scheduler());

@@ -33,7 +33,7 @@ namespace Vlingo.Common
             return Failure.Of<TNextFailure, TNextSuccess>((TNextFailure)(Exception)cause);
         }
 
-        public virtual ICompletes2<TValue> AsCompletes()
+        public virtual ICompletes<TValue> AsCompletes()
         {
             return Completes2.WithFailure<TValue>();
         }

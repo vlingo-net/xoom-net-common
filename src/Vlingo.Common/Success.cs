@@ -34,7 +34,7 @@ namespace Vlingo.Common
             return action.Invoke(value);
         }
 
-        public virtual ICompletes2<TValue> AsCompletes()
+        public virtual ICompletes<TValue> AsCompletes()
         {
             return Completes2.WithSuccess(value);
         }

@@ -1,82 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Copyright (c) 2012-2019 Vaughn Vernon. All rights reserved.
+//
+// This Source Code Form is subject to the terms of the
+// Mozilla Public License, v. 2.0. If a copy of the MPL
+// was not distributed with this file, You can obtain
+// one at https://mozilla.org/MPL/2.0/.
+
+using System;
 using System.Linq;
 using System.Threading;
+using Vlingo.Common.Completion.Continuations;
 
-namespace Vlingo.Common
+namespace Vlingo.Common.Completion
 {
-    public abstract class BasicCompletes2
-    {
-        protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
-        internal readonly Scheduler Scheduler;
-        internal readonly List<CompletesContinuation> Continuations = new List<CompletesContinuation>();
-        internal CompletesContinuation FailureContinuation;
-        internal CompletesContinuation ExceptionContinuation;
-        internal object CompletesResult;
-        internal object TransformedResult;
-
-        protected BasicCompletes2(Delegate action)
-        {
-            Action = action;
-        }
-
-        protected BasicCompletes2(Scheduler scheduler, Delegate action)
-        {
-            Scheduler = scheduler;
-            Action = action;
-        }
-
-        public virtual bool HasFailed { get; } = false;
-
-        internal virtual BasicCompletes2 Antecedent { get; } = null;
-        
-        internal abstract void InnerInvoke(BasicCompletes2 completedCompletes);
-
-        internal abstract void HandleFailure();
-
-        internal abstract void HandleException(Exception e);
-        
-        internal abstract Exception Exception { get; }
-        
-        internal virtual void RegisterContinuation(CompletesContinuation continuation)
-        {
-            Continuations.Add(continuation);
-        }
-
-        internal virtual void RegisterFailureContiuation(CompletesContinuation continuationCompletes)
-        {
-            FailureContinuation = continuationCompletes;
-        }
-        
-        internal virtual void RegisterExceptionContiuation(CompletesContinuation continuationCompletes)
-        {
-            ExceptionContinuation = continuationCompletes;
-        }
-
-        internal virtual void UpdateFailure(object outcome)
-        {
-        }
-
-        protected void AndThenInternal(BasicCompletes2 continuationCompletes)
-        {
-            var continuation = new CompletesContinuation(continuationCompletes);
-            continuationCompletes.RegisterContinuation(continuation);
-        }
-
-        protected void OtherwiseInternal(BasicCompletes2 continuationCompletes)
-        {
-            var continuation = new CompletesContinuation(continuationCompletes);
-            continuationCompletes.RegisterFailureContiuation(continuation);
-        }
-
-        protected void RecoverInternal(BasicCompletes2 continuationCompletes)
-        {
-            var continuation = new CompletesContinuation(continuationCompletes);
-            continuationCompletes.RegisterExceptionContiuation(continuation);
-        }
-    }
-    
-    public class BasicCompletes<TResult> : BasicCompletes2, ICompletes<TResult>
+    public class BasicCompletes<TResult> : BasicCompletes, ICompletes<TResult>
     {
         private readonly ManualResetEventSlim outcomeKnown = new ManualResetEventSlim(false);
         private readonly AtomicReference<Exception> exception = new AtomicReference<Exception>();
@@ -354,7 +290,7 @@ namespace Vlingo.Common
 
         public TResult Outcome => Result;
         
-        internal override void InnerInvoke(BasicCompletes2 completedCompletes)
+        internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
             if (Action is Action invokableAction)
             {
@@ -439,7 +375,7 @@ namespace Vlingo.Common
                     Result = continuation.Outcome;
                 }
                 
-                if (lastContinuation.Completes is BasicCompletes2 completesContinuation)
+                if (lastContinuation.Completes is BasicCompletes completesContinuation)
                 {
                     CompletesResult = completesContinuation.CompletesResult;
                     TransformedResult = completesContinuation.TransformedResult;
@@ -468,249 +404,6 @@ namespace Vlingo.Common
             }
 
             return handle;
-        }
-    }
-    
-    internal class AndThenContinuation<TAntecedentResult, TResult> : BasicCompletes<TResult>
-    {
-        private readonly BasicCompletes<TAntecedentResult> antecedent;
-
-        internal AndThenContinuation(BasicCompletes<TAntecedentResult> antecedent, Delegate function) : this(antecedent, Optional.Empty<TResult>(), function)
-        {
-        }
-        
-        internal AndThenContinuation(BasicCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function)
-        {
-            this.antecedent = antecedent;
-            FailedOutcomeValue = failedOutcomeValue;
-        }
-
-        internal override void InnerInvoke(BasicCompletes2 completedCompletes)
-        {
-            if (HasFailedValue.Get())
-            {
-                return;
-            }
-            
-            base.InnerInvoke(completedCompletes);
-
-            if (Action is Func<TAntecedentResult, ICompletes<TResult>> funcCompletes)
-            {
-                CompletesResult = funcCompletes(antecedent.Outcome);
-                return;
-            }
-
-            if (Action is Func<TAntecedentResult, TResult> function)
-            {
-                Result = function(antecedent.Outcome);
-                TransformedResult = Result;
-            }
-        }
-
-        internal override BasicCompletes2 Antecedent => antecedent;
-
-        internal override Exception Exception => antecedent.Exception;
-
-        internal override void HandleFailure()
-        {
-            Result = FailedOutcomeValue.Get();
-            base.HandleFailure();
-            antecedent.HandleFailure();
-        }
-
-        internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.RegisterContinuation(continuation);
-        
-        internal override void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.RegisterFailureContiuation(continuationCompletes);
-
-        internal override void RegisterExceptionContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.RegisterExceptionContiuation(continuationCompletes);
-
-        internal override void UpdateFailure(object outcome)
-        {
-            HasFailedValue.Set(HasFailedValue.Get() || outcome.Equals(FailedOutcomeValue.Get()));
-        }
-    }
-    
-    internal class OtherwiseContinuation<TAntecedentResult, TResult> : BasicCompletes<TResult>
-    {
-        private readonly BasicCompletes<TAntecedentResult> antecedent;
-
-        internal OtherwiseContinuation(BasicCompletes<TAntecedentResult> antecedent, Delegate function) : base(function)
-        {
-            this.antecedent = antecedent;
-        }
-
-        internal override void InnerInvoke(BasicCompletes2 completedCompletes)
-        {
-            if (HasException.Get())
-            {
-                return;
-            }
-            
-            if (Action is Action invokableAction)
-            {
-                invokableAction();
-                return;
-            }
-            
-            if (Action is Action<TResult> invokableActionInput)
-            {
-                if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
-                {
-                    invokableActionInput(andThenContinuation.FailedOutcomeValue.Get());
-                    return;   
-                }
-            }
-            
-            if (Action is Func<ICompletes<TAntecedentResult>, TResult> funcCompletes)
-            {
-                Result = funcCompletes(antecedent);
-                return;
-            }
-
-            if (Action is Func<TAntecedentResult, TResult> function)
-            {
-                if (completedCompletes is AndThenContinuation<TResult, TAntecedentResult> andThenContinuation)
-                {
-                    Result = function(andThenContinuation.FailedOutcomeValue.Get());
-                    return;   
-                }
-            }
-            
-            base.InnerInvoke(completedCompletes);
-
-            throw new InvalidCastException("Cannot run 'Otherwise' function. Make sure that expecting type is the same as failedOutcomeValue type");
-        }
-
-        internal override BasicCompletes2 Antecedent => antecedent;
-
-        internal override Exception Exception => antecedent.Exception;
-        
-        internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.RegisterContinuation(continuation);
-
-        internal override void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.RegisterFailureContiuation(continuationCompletes);
-        
-        internal override void RegisterExceptionContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.RegisterExceptionContiuation(continuationCompletes);
-    }
-    
-    internal class RecoverContinuation<TResult> : BasicCompletes<TResult>
-    {
-        private readonly BasicCompletes<TResult> antecedent;
-        
-        internal RecoverContinuation(BasicCompletes<TResult> antecedent, Delegate function) : base(function)
-        {
-            this.antecedent = antecedent;
-        }
-
-        internal override void InnerInvoke(BasicCompletes2 completedCompletes)
-        {
-            if (Action is Func<Exception, TResult> function)
-            {
-                if (completedCompletes is BasicCompletes<TResult> basicCompletes)
-                {
-                    Result = function(basicCompletes.Exception);
-                }
-            }
-        }
-        
-        internal override BasicCompletes2 Antecedent => antecedent;
-
-        internal override void RegisterExceptionContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.RegisterExceptionContiuation(continuationCompletes);
-    }
-    
-    internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object>
-    {
-        private readonly Scheduler scheduler;
-        private readonly TimeSpan timeout;
-        private ICancellable cancellable;
-        private readonly AtomicBoolean executed = new AtomicBoolean(false);
-        private readonly AtomicBoolean timedOut = new AtomicBoolean(false);
-
-        internal AndThenScheduledContinuation(
-            Scheduler scheduler,
-            BasicCompletes<TAntecedentResult> antecedent,
-            TimeSpan timeout,
-            Delegate function)
-            : base(antecedent, function)
-        {
-            this.scheduler = scheduler;
-            this.timeout = timeout;
-        }
-        
-        internal AndThenScheduledContinuation(
-            Scheduler scheduler,
-            BasicCompletes<TAntecedentResult> antecedent,
-            TimeSpan timeout,
-            Optional<TResult> failedOutcomeValue,
-            Delegate function)
-            : base(antecedent, failedOutcomeValue, function)
-        {
-            this.scheduler = scheduler;
-            this.timeout = timeout;
-        }
-
-        internal override void RegisterContinuation(CompletesContinuation continuation)
-        {
-            ClearTimer();
-            StartTimer();
-            base.RegisterContinuation(continuation);
-        }
-
-        internal override void InnerInvoke(BasicCompletes2 completedCompletes)
-        {
-            if (timedOut.Get())
-            {
-                return;
-            }
-            
-            base.InnerInvoke(completedCompletes);
-            executed.Set(true);
-        }
-
-        public void IntervalSignal(IScheduled<object> scheduled, object data)
-        {
-            if (!executed.Get())
-            {
-                timedOut.Set(true);
-                HandleFailure();
-            }
-        }
-
-        private void StartTimer()
-        {
-            if (timeout.TotalMilliseconds > 0 && scheduler != null)
-            {
-                // 2ms delayBefore prevents timeout until after return from here
-                cancellable = scheduler.ScheduleOnce(this, null, TimeSpan.FromMilliseconds(2), timeout);
-            }
-        }
-
-        private void ClearTimer()
-        {
-            if (cancellable != null)
-            {
-                cancellable.Cancel();
-                cancellable = null;
-            }
-        }
-    }
-
-    internal class CompletesContinuation
-    {
-        internal readonly BasicCompletes2 Completes;
-
-        public CompletesContinuation(BasicCompletes2 completes)
-        {
-            Completes = completes;
-        }
-
-        internal void Run(BasicCompletes2 antecedentCompletes)
-        {
-            Completes.InnerInvoke(antecedentCompletes);
         }
     }
 }

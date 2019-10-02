@@ -7,6 +7,7 @@
 
 using System;
 using System.Threading;
+using Vlingo.Common.Completion;
 using Xunit;
 
 namespace Vlingo.Common.Tests
@@ -271,12 +272,12 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestThatExceptionOutcomeInvalidCast()
         {
-            int andThenValue = -1, failureValue = 999;
+            int andThenValue = -1;
             var completes = new BasicCompletes<string>(new Scheduler());
             completes
                 .AndThen("-100", value => (2 * int.Parse(value)).ToString())
                 .AndThen(x => andThenValue = int.Parse(x))
-                .Otherwise<int>(x => failureValue = 1000);
+                .Otherwise<int>(x => 1000);
 
             Assert.Throws<InvalidCastException>(() => completes.With("-100"));
         }

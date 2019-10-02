@@ -344,7 +344,10 @@ namespace Vlingo.Common
         public override bool HasFailed => HasFailedValue.Get();
         public void Failed()
         {
-            With(FailedOutcomeValue.Get());
+            if (!HandleFailureInternal(FailedOutcomeValue))
+            {
+                With(FailedOutcomeValue.Get());   
+            }
         }
 
         public bool HasOutcome => Result != null;
@@ -445,6 +448,26 @@ namespace Vlingo.Common
             }
             
             outcomeKnown.Set();
+        }
+        
+        private bool HandleFailureInternal(Optional<TResult> outcome)
+        {
+            if (outcomeKnown.IsSet && HasFailed)
+            {
+                return true; // already reached below
+            }
+
+            bool handle = outcome.Equals(FailedOutcomeValue);
+
+            if (handle)
+            {
+                HasFailedValue.Set(true);
+                //TrySetResult(FailedOutcomeValue.Get());
+                outcomeKnown.Set();
+                HandleFailure();
+            }
+
+            return handle;
         }
     }
     

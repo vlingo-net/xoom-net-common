@@ -33,9 +33,9 @@ namespace Vlingo.Common
             return Failure.Of<TNextFailure, TNextSuccess>((TNextFailure)(Exception)cause);
         }
 
-        public virtual ICompletes<TValue> AsCompletes()
+        public virtual ICompletes2<TValue> AsCompletes()
         {
-            return Completes.WithFailure<TValue>();
+            return Completes2.WithFailure<TValue>();
         }
 
         public virtual Optional<TValue> AsOptional()

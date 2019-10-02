@@ -114,7 +114,7 @@ namespace Vlingo.Common
         /// A Vlingo Completes with the success value, or a failed Completes in case of failure.
         /// </summary>
         /// <returns></returns>
-        ICompletes<TSuccess> AsCompletes();
+        ICompletes2<TSuccess> AsCompletes();
 
         /// <summary>
         /// Applies a filter predicate to the success value, or returns a failed Outcome in case

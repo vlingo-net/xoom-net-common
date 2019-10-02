@@ -9,7 +9,7 @@ using System.Collections.Concurrent;
 
 namespace Vlingo.Common
 {
-    public class RepeatableCompletes<T> : BasicCompletes<T>
+    public class RepeatableCompletes<T> : BasicCompletesOLD<T>
     {
         public RepeatableCompletes(Scheduler scheduler) : base(new RepeatableActiveState<T>(scheduler))
         {
@@ -23,7 +23,7 @@ namespace Vlingo.Common
         {
         }
 
-        public override ICompletes<T> Repeat()
+        public override ICompletesOLD<T> Repeat()
         {
             if (state.IsOutcomeKnown)
             {
@@ -32,11 +32,11 @@ namespace Vlingo.Common
             return this;
         }
 
-        public override ICompletes<TO> With<TO>(TO outcome)
+        public override ICompletesOLD<TO> With<TO>(TO outcome)
         {
             base.With(outcome);
             state.Repeat();
-            return (ICompletes<TO>)this;
+            return (ICompletesOLD<TO>)this;
         }
 
         protected internal class RepeatableActiveState<TRActSt> : BasicActiveState<TRActSt>

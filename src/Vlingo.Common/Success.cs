@@ -34,9 +34,9 @@ namespace Vlingo.Common
             return action.Invoke(value);
         }
 
-        public virtual ICompletes<TValue> AsCompletes()
+        public virtual ICompletes2<TValue> AsCompletes()
         {
-            return Completes.WithSuccess(value);
+            return Completes2.WithSuccess(value);
         }
 
         public virtual Optional<TValue> AsOptional()

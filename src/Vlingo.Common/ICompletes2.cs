@@ -65,7 +65,7 @@ namespace Vlingo.Common
 
         public static ICompletes2<T> WithFailure<T>()
         {
-            return new BasicCompletes2<T>(default(T), false);
+            return new BasicCompletes2<T>(default, false);
         }
 
 //        public static ICompletes2<T> RepeatableUsing<T>(Scheduler scheduler)

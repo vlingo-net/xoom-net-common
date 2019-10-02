@@ -47,7 +47,7 @@ namespace Vlingo.Common
 //        ICompletes2<TResult> Repeat();
     }
     
-    public static class Completes2
+    public static class Completes
     {
         public static ICompletes<T> Using<T>(Scheduler scheduler)
         {

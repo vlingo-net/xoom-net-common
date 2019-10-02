@@ -455,7 +455,7 @@ namespace Vlingo.Common.Tests
             var failedResult = -1;
             
             completes
-                .AndThenTo(5, v => Completes2.WithSuccess(v * 2))
+                .AndThenTo(5, v => Completes.WithSuccess(v * 2))
                 .OtherwiseConsume(failedValue => failedResult = failedValue);
             
             completes.With(5);
@@ -474,7 +474,7 @@ namespace Vlingo.Common.Tests
             var failedResult = -1;
             
             completes
-                .AndThenTo(TimeSpan.FromMilliseconds(1), 5, v => Completes2.WithSuccess(v * 2))
+                .AndThenTo(TimeSpan.FromMilliseconds(1), 5, v => Completes.WithSuccess(v * 2))
                 .OtherwiseConsume(failedValue => failedResult = failedValue);
             
             var thread = new Thread(new ThreadStart(() =>
@@ -496,7 +496,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThenTo(TimeSpan.FromMilliseconds(1000000), v => Completes2.WithSuccess(v * 2));
+                .AndThenTo(TimeSpan.FromMilliseconds(1000000), v => Completes.WithSuccess(v * 2));
             
             var thread = new Thread(new ThreadStart(() =>
             {
@@ -517,7 +517,7 @@ namespace Vlingo.Common.Tests
             var consumedResult = -1;
             
             completes
-                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenTo(v => Completes.WithSuccess(v * 2))
                 .AndThenConsume(v => consumedResult = v);
             
             completes.With(5);
@@ -536,7 +536,7 @@ namespace Vlingo.Common.Tests
             var consumedResult = -1;
             
             completes
-                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenTo(v => Completes.WithSuccess(v * 2))
                 .AndThenConsume(TimeSpan.FromMilliseconds(1000), v => consumedResult = v);
             
             var thread = new Thread(new ThreadStart(() =>
@@ -561,7 +561,7 @@ namespace Vlingo.Common.Tests
             var consumedResult = -1;
             
             completes
-                .AndThenTo(v => Completes2.Using<int>(scheduler))
+                .AndThenTo(v => Completes.Using<int>(scheduler))
                 .AndThenConsume(TimeSpan.FromMilliseconds(1), v => consumedResult = v);
             
             var thread = new Thread(new ThreadStart(() =>
@@ -585,7 +585,7 @@ namespace Vlingo.Common.Tests
             var consumedResult = -1;
             
             completes
-                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenTo(v => Completes.WithSuccess(v * 2))
                 .AndThenConsume(5, v => consumedResult = v);
             
             completes.With(5);
@@ -603,7 +603,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenTo(v => Completes.WithSuccess(v * 2))
                 .AndThenConsume(TimeSpan.FromMilliseconds(1), -10, x => andThenValue = x);
 
             var thread = new Thread(new ThreadStart(() =>
@@ -627,7 +627,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenTo(v => Completes.WithSuccess(v * 2))
                 .AndThenConsume(TimeSpan.FromMilliseconds(1000), -10, x => andThenValue = x);
 
             var thread = new Thread(new ThreadStart(() =>
@@ -651,7 +651,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThenTo(v => Completes2.WithSuccess(v * 2))
+                .AndThenTo(v => Completes.WithSuccess(v * 2))
                 .AndThenConsume(TimeSpan.FromMilliseconds(1000), -10, x => andThenValue = x);
 
             var thread = new Thread(new ThreadStart(() =>
@@ -689,7 +689,7 @@ namespace Vlingo.Common.Tests
             UserState expectedUserState = null;
             completes
                 .AndThenTo(user => user.WithName("Tomasz"))
-                .OtherwiseConsume(noUser => Completes2.WithSuccess(new UserState(string.Empty, string.Empty, string.Empty)))
+                .OtherwiseConsume(noUser => Completes.WithSuccess(new UserState(string.Empty, string.Empty, string.Empty)))
                 .AndThenConsume(userState => {
                     expectedUserState = userState;
                 });
@@ -738,12 +738,12 @@ namespace Vlingo.Common.Tests
         
         public ICompletes<UserState> WithContact(string contact)
         {
-            return Completes2.WithSuccess(_userState.WithContact(contact));
+            return Completes.WithSuccess(_userState.WithContact(contact));
         }
 
         public ICompletes<UserState> WithName(string name)
         {
-            return Completes2.WithSuccess(_userState.WithName(name));
+            return Completes.WithSuccess(_userState.WithName(name));
         }
     }
 

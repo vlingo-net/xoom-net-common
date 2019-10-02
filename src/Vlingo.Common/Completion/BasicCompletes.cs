@@ -53,9 +53,10 @@ namespace Vlingo.Common.Completion
             for (var i = 0; i < Continuations.Count; i++)
             {
                 var continuation = Continuations[i];
+                var previousCompletes = i == 0 ? continuation.Completes.Antecedent : Continuations[i - 1].Completes; 
                 try
                 {
-                    continuation.Completes.UpdateFailure(outcome);
+                    continuation.Completes.UpdateFailure(previousCompletes);
                     if (continuation.Completes.HasFailed)
                     {
                         continuation.Completes.HandleFailure();
@@ -63,7 +64,7 @@ namespace Vlingo.Common.Completion
                         break;
                     }
 
-                    continuation.Run(i == 0 ? continuation.Completes.Antecedent : Continuations[i - 1].Completes);
+                    continuation.Run(previousCompletes);
                 }
                 catch (InvalidCastException)
                 {
@@ -320,6 +321,14 @@ namespace Vlingo.Common.Completion
             }
         }
 
+        internal override void UpdateFailure(BasicCompletes previousContinuation)
+        {
+            if (previousContinuation is BasicCompletes<TResult> completes)
+            {
+                HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));
+            }
+        }
+
         internal override void HandleFailure()
         {
             HasFailedValue.Set(true);
@@ -398,7 +407,6 @@ namespace Vlingo.Common.Completion
             if (handle)
             {
                 HasFailedValue.Set(true);
-                //TrySetResult(FailedOutcomeValue.Get());
                 outcomeKnown.Set();
                 HandleFailure();
             }

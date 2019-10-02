@@ -37,6 +37,8 @@ namespace Vlingo.Common.Completion
         internal virtual BasicCompletes Antecedent { get; } = null;
         
         internal abstract void InnerInvoke(BasicCompletes completedCompletes);
+        
+        internal abstract void UpdateFailure(BasicCompletes previousContinuation);
 
         internal abstract void HandleFailure();
 
@@ -57,10 +59,6 @@ namespace Vlingo.Common.Completion
         internal virtual void RegisterExceptionContiuation(CompletesContinuation continuationCompletes)
         {
             ExceptionContinuation = continuationCompletes;
-        }
-
-        internal virtual void UpdateFailure(object outcome)
-        {
         }
 
         protected void AndThenInternal(BasicCompletes continuationCompletes)

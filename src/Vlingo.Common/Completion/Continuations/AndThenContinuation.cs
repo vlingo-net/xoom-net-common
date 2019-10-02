@@ -64,9 +64,28 @@ namespace Vlingo.Common.Completion.Continuations
         internal override void RegisterExceptionContiuation(CompletesContinuation continuationCompletes) =>
             antecedent.RegisterExceptionContiuation(continuationCompletes);
 
-        internal override void UpdateFailure(object outcome)
+        internal override void UpdateFailure(BasicCompletes previousContinuation)
         {
-            HasFailedValue.Set(HasFailedValue.Get() || outcome.Equals(FailedOutcomeValue.Get()));
+            if (previousContinuation.HasFailed)
+            {
+                HasFailedValue.Set(true);
+                return;
+            }
+            
+            if (previousContinuation is BasicCompletes<TAntecedentResult> completes)
+            {
+                if (completes.CompletesResult != null)
+                {
+                    if (completes.CompletesResult is BasicCompletes<TAntecedentResult> basicCompletes)
+                    {
+                        HasFailedValue.Set(basicCompletes.Outcome.Equals(FailedOutcomeValue.Get()));
+                    }
+                }
+                else
+                {
+                    HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));   
+                }
+            }
         }
     }
 }

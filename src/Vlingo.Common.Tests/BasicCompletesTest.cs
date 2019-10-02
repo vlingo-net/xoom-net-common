@@ -114,6 +114,7 @@ namespace Vlingo.Common.Tests
         }
 
         [Fact]
+        // TODO: Inspect random CI failures
         public void TestTimeoutBeforeOutcome()
         {
             var andThenValue = 0;
@@ -211,6 +212,7 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        // TODO: Insepct random CI failures
         public void TestThatFailureOutcomeFailsWhenScheduledTimesOutWithOneAndThen()
         {
             var andThenValue = 0;
@@ -431,6 +433,7 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        // TODO: Inspect random CI failures
         public void TestAndThenToFailsWhenScheduledTimesOut()
         {
             var completes = new BasicCompletes<int>(new Scheduler());
@@ -496,7 +499,7 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
-        // TODO: Fails randomly on CI. Check the implementation
+        // TODO: Inspect random CI failures
         public void TestOtherwiseConsumeAfterTimeout()
         {
             var completes = new BasicCompletes<int>(new Scheduler());

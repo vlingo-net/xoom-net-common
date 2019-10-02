@@ -29,10 +29,8 @@ namespace Vlingo.Common
         public virtual bool HasFailed { get; } = false;
 
         internal virtual BasicCompletes2 Antecedent { get; } = null;
-
-        internal virtual void InnerInvoke(BasicCompletes2 completedCompletes)
-        {
-        }
+        
+        internal abstract void InnerInvoke(BasicCompletes2 completedCompletes);
 
         internal abstract void HandleFailure();
 
@@ -121,15 +119,15 @@ namespace Vlingo.Common
                 var continuation = Continuations[i];
                 try
                 {
-                    continuation.completes.UpdateFailure(outcome);
-                    if (continuation.completes.HasFailed)
+                    continuation.Completes.UpdateFailure(outcome);
+                    if (continuation.Completes.HasFailed)
                     {
-                        continuation.completes.HandleFailure();
-                        FailureContinuation?.Run(continuation.completes);
+                        continuation.Completes.HandleFailure();
+                        FailureContinuation?.Run(continuation.Completes);
                         break;
                     }
 
-                    continuation.Run(i == 0 ? continuation.completes.Antecedent : Continuations[i - 1].completes);
+                    continuation.Run(i == 0 ? continuation.Completes.Antecedent : Continuations[i - 1].Completes);
                 }
                 catch (InvalidCastException)
                 {
@@ -138,7 +136,7 @@ namespace Vlingo.Common
                 catch (Exception e)
                 {
                     HandleException(e);
-                    ExceptionContinuation?.Run(continuation.completes);
+                    ExceptionContinuation?.Run(continuation.Completes);
                     break;
                 }
             }
@@ -343,6 +341,60 @@ namespace Vlingo.Common
 
         public bool IsCompleted => outcomeKnown.IsSet;
 
+        public override bool HasFailed => HasFailedValue.Get();
+        public void Failed()
+        {
+            With(FailedOutcomeValue.Get());
+        }
+
+        public bool HasOutcome => Result != null;
+
+        public TResult Outcome => Result;
+        
+        internal override void InnerInvoke(BasicCompletes2 completedCompletes)
+        {
+            if (Action is Action invokableAction)
+            {
+                invokableAction();
+            }
+            
+            if (Action is Action<TResult> invokableActionInput)
+            {
+                if (completedCompletes.CompletesResult is ICompletes2<TResult> completesContinuation)
+                {
+                    if (completesContinuation.HasOutcome)
+                    {
+                        invokableActionInput(completesContinuation.Outcome);
+                    }
+                    else
+                    {
+                        completesContinuation.AndThenConsume(v => invokableActionInput(v));
+                    }
+                }
+                else
+                {
+                    if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
+                    {
+                        invokableActionInput(andThenContinuation.Outcome);
+                    }
+                }
+            }
+        }
+
+        internal override void HandleFailure()
+        {
+            HasFailedValue.Set(true);
+        }
+
+        internal override void HandleException(Exception e)
+        {
+            exception.Set(e);
+            HasException.Set(true);
+            HasFailedValue.Set(true);
+        }
+
+        internal override Exception Exception => exception.Get();
+        
         private TNewResult AwaitInternal<TNewResult>()
         {
             if (CompletesResult is ICompletes2<TNewResult> completes)
@@ -374,49 +426,20 @@ namespace Vlingo.Common
             return default;
         }
 
-        public override bool HasFailed => HasFailedValue.Get();
-        public void Failed()
-        {
-            With(FailedOutcomeValue.Get());
-        }
-
-        public bool HasOutcome => Result != null;
-
-        public TResult Outcome => this.Result;
-
-//        internal override void RegisterContinuation(CompletesContinuation continuation)
-//        {
-//            continuations.Add(continuation);
-//        }
-
-        internal override void HandleFailure()
-        {
-            HasFailedValue.Set(true);
-        }
-
-        internal override void HandleException(Exception e)
-        {
-            exception.Set(e);
-            HasException.Set(true);
-            HasFailedValue.Set(true);
-        }
-
-        internal override Exception Exception => exception.Get();
-
         private void TrySetResult()
         {
             if (Continuations.Any())
             {
                 var lastContinuation = Continuations.Last();
-                if (lastContinuation.completes is BasicCompletes2<TResult> continuation)
+                if (lastContinuation.Completes is BasicCompletes2<TResult> continuation)
                 {
-                    this.Result = continuation.Outcome;
+                    Result = continuation.Outcome;
                 }
                 
-                if (lastContinuation.completes is BasicCompletes2 completesContinuation)
+                if (lastContinuation.Completes is BasicCompletes2 completesContinuation)
                 {
-                    this.CompletesResult = completesContinuation.CompletesResult;
-                    this.TransformedResult = completesContinuation.TransformedResult;
+                    CompletesResult = completesContinuation.CompletesResult;
+                    TransformedResult = completesContinuation.TransformedResult;
                     outcomeKnown.Set();
                 }
             }
@@ -436,7 +459,7 @@ namespace Vlingo.Common
         internal AndThenContinuation(BasicCompletes2<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function)
         {
             this.antecedent = antecedent;
-            this.FailedOutcomeValue = failedOutcomeValue;
+            FailedOutcomeValue = failedOutcomeValue;
         }
 
         internal override void InnerInvoke(BasicCompletes2 completedCompletes)
@@ -446,40 +469,7 @@ namespace Vlingo.Common
                 return;
             }
             
-            if (Action is Action invokableAction)
-            {
-                invokableAction();
-                return;
-            }
-            
-            if (Action is Action<TResult> invokableActionInput)
-            {
-                //if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
-                //{
-                if (completedCompletes.CompletesResult != null)
-                {
-                    if (completedCompletes.CompletesResult is ICompletes2<TResult> completesContinuation)
-                    {
-                        if (completesContinuation.HasOutcome)
-                        {
-                            invokableActionInput(completesContinuation.Outcome);
-                        }
-                        else
-                        {
-                            completesContinuation.AndThenConsume(v => invokableActionInput(v));
-                        }
-                    }
-                }
-                else
-                {
-                    if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
-                    {
-                        invokableActionInput(andThenContinuation.Outcome);
-                    }
-                }
-                return;   
-                //}
-            }
+            base.InnerInvoke(completedCompletes);
 
             if (Action is Func<TAntecedentResult, ICompletes2<TResult>> funcCompletes)
             {
@@ -491,14 +481,7 @@ namespace Vlingo.Common
             {
                 Result = function(antecedent.Outcome);
                 TransformedResult = Result;
-                return;
             }
-
-//            if (action is Func<ICompletes2<TAntecedentResult>, object?, TResult> funcWithState)
-//            {
-//                result = funcWithState(antecedent, m_stateObject);
-//                return;
-//            }
         }
 
         internal override BasicCompletes2 Antecedent => antecedent;
@@ -574,12 +557,6 @@ namespace Vlingo.Common
             
             base.InnerInvoke(completedCompletes);
 
-//            if (action is Func<ICompletes2<TAntecedentResult>, object?, TResult> funcWithState)
-//            {
-//                result = funcWithState(antecedent, m_stateObject);
-//                return;
-//            }
-
             throw new InvalidCastException("Cannot run 'Otherwise' function. Make sure that expecting type is the same as failedOutcomeValue type");
         }
 
@@ -607,26 +584,13 @@ namespace Vlingo.Common
 
         internal override void InnerInvoke(BasicCompletes2 completedCompletes)
         {
-//            if (action is Func<ICompletes2<Exception>, TResult> funcCompletes)
-//            {
-//                result = funcCompletes(antecedent);
-//                return;
-//            }
-
             if (Action is Func<Exception, TResult> function)
             {
                 if (completedCompletes is BasicCompletes2<TResult> basicCompletes)
                 {
                     Result = function(basicCompletes.Exception);
-                    return;   
                 }
             }
-
-//            if (action is Func<ICompletes2<TAntecedentResult>, object?, TResult> funcWithState)
-//            {
-//                result = funcWithState(antecedent, m_stateObject);
-//                return;
-//            }
         }
         
         internal override BasicCompletes2 Antecedent => antecedent;
@@ -640,8 +604,8 @@ namespace Vlingo.Common
         private readonly Scheduler scheduler;
         private readonly TimeSpan timeout;
         private ICancellable cancellable;
-        private AtomicBoolean executed = new AtomicBoolean(false);
-        private AtomicBoolean timedOut = new AtomicBoolean(false);
+        private readonly AtomicBoolean executed = new AtomicBoolean(false);
+        private readonly AtomicBoolean timedOut = new AtomicBoolean(false);
 
         internal AndThenScheduledContinuation(
             Scheduler scheduler,
@@ -714,16 +678,16 @@ namespace Vlingo.Common
 
     internal class CompletesContinuation
     {
-        internal readonly BasicCompletes2 completes;
+        internal readonly BasicCompletes2 Completes;
 
         public CompletesContinuation(BasicCompletes2 completes)
         {
-            this.completes = completes;
+            Completes = completes;
         }
 
         internal void Run(BasicCompletes2 antecedentCompletes)
         {
-            this.completes.InnerInvoke(antecedentCompletes);
+            Completes.InnerInvoke(antecedentCompletes);
         }
     }
 }

@@ -629,7 +629,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenConsumeTimeoutBeforeOutcome()
         {
-            int andThenValue = 0;
+            var andThenValue = 0;
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
@@ -653,7 +653,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenConsumeOutcomesBeforeTiemout()
         {
-            int andThenValue = 0;
+            var andThenValue = 0;
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
@@ -677,7 +677,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenConsumeFailsBeforeTimeoutWithFailedOutcome()
         {
-            int andThenValue = 0;
+            var andThenValue = 0;
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
@@ -696,6 +696,29 @@ namespace Vlingo.Common.Tests
             Assert.True(completes.HasFailed);
             Assert.Equal(0, andThenValue);
             Assert.Equal(10, completed);
+        }
+        
+        [Fact]
+        public void TestOtherwiseConsumeIsHandled()
+        {
+            var andThenValue = 0;
+            var failedValue = 0;
+            var completes = new BasicCompletes<int>(new Scheduler());
+
+            completes
+                .AndThenTo(v => Completes.WithSuccess(v * 2))
+                .AndThenConsume(10, x => andThenValue = x)
+                .OtherwiseConsume(v => failedValue = v);
+            
+            Thread.Sleep(100);
+            completes.With(5);
+
+            var completed = completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(0, andThenValue);
+            Assert.Equal(10, completed);
+            Assert.Equal(10, failedValue);
         }
         
         [Fact]

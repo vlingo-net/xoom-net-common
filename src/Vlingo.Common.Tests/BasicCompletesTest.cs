@@ -731,7 +731,7 @@ namespace Vlingo.Common.Tests
 
             completes.AndThenTo(user => user.WithName("Tomasz"));
 
-            completes.With(new User());
+            completes.With<IUser>(new User());
 
             var completed = completes.Await<UserState>();
             
@@ -750,7 +750,7 @@ namespace Vlingo.Common.Tests
                     expectedUserState = userState;
                 });
 
-             completes.With(new User());
+             completes.With<IUser>(new User());
 
             completes.Await();
             

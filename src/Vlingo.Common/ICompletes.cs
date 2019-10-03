@@ -10,7 +10,12 @@ using Vlingo.Common.Completion;
 
 namespace Vlingo.Common
 {
-    public interface ICompletes<TResult>
+    public interface ICompletes
+    {
+        ICompletes<TO> With<TO>(TO outcome);
+    }
+    
+    public interface ICompletes<TResult> : ICompletes
     {
         ICompletes<TResult> With(TResult outcome);
         ICompletes<TNewResult> AndThen<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);

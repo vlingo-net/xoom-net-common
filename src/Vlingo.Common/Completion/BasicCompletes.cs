@@ -46,8 +46,13 @@ namespace Vlingo.Common.Completion
                 Failed();
             }
         }
+        
+        public virtual ICompletes<TO> With<TO>(TO outcome)
+        {
+            return (ICompletes<TO>)With((TResult)(object)outcome);
+        }
 
-        public ICompletes<TResult> With(TResult outcome)
+        public virtual ICompletes<TResult> With(TResult outcome)
         {
             Result = outcome;
             for (var i = 0; i < Continuations.Count; i++)
@@ -289,7 +294,7 @@ namespace Vlingo.Common.Completion
 
         public bool HasOutcome => Result != null;
 
-        public TResult Outcome => Result;
+        public virtual TResult Outcome => Result;
         
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {

@@ -21,10 +21,7 @@ namespace Vlingo.Common.Completion
         internal object CompletesResult;
         internal object TransformedResult;
 
-        protected BasicCompletes(Delegate action)
-        {
-            Action = action;
-        }
+        protected BasicCompletes(Delegate action) => Action = action;
 
         protected BasicCompletes(Scheduler scheduler, Delegate action)
         {
@@ -46,20 +43,13 @@ namespace Vlingo.Common.Completion
         
         internal abstract Exception Exception { get; }
         
-        internal virtual void RegisterContinuation(CompletesContinuation continuation)
-        {
-            Continuations.Add(continuation);
-        }
+        internal virtual void RegisterContinuation(CompletesContinuation continuation) => Continuations.Add(continuation);
 
-        internal virtual void RegisterFailureContiuation(CompletesContinuation continuationCompletes)
-        {
+        internal virtual void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
             FailureContinuation = continuationCompletes;
-        }
-        
-        internal virtual void RegisterExceptionContiuation(CompletesContinuation continuationCompletes)
-        {
+
+        internal virtual void RegisterExceptionContiuation(CompletesContinuation continuationCompletes) =>
             ExceptionContinuation = continuationCompletes;
-        }
 
         protected void AndThenInternal(BasicCompletes continuationCompletes)
         {

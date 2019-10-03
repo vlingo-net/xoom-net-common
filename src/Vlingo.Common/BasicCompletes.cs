@@ -20,12 +20,9 @@ namespace Vlingo.Common
         protected readonly AtomicBoolean HasFailedValue = new AtomicBoolean(false);
         protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
         protected internal Optional<TResult> FailedOutcomeValue;
-        protected TResult Result;
+        protected AtomicRefValue<TResult> Result = new AtomicRefValue<TResult>(default);
 
-        public BasicCompletes(TResult outcome) : base(default)
-        {
-            Result = outcome;
-        }
+        public BasicCompletes(TResult outcome) : base(default) => Result.Set(outcome);
 
         internal BasicCompletes(Delegate valueSelector) : base(valueSelector)
         {
@@ -48,14 +45,11 @@ namespace Vlingo.Common
             }
         }
         
-        public virtual ICompletes<TO> With<TO>(TO outcome)
-        {
-            return (ICompletes<TO>)With((TResult)(object)outcome);
-        }
+        public virtual ICompletes<TO> With<TO>(TO outcome) => (ICompletes<TO>)With((TResult)(object)outcome);
 
-        public virtual ICompletes<TResult> With(TResult outcome)
+        public ICompletes<TResult> With(TResult outcome)
         {
-            Result = outcome;
+            Result.Set(outcome);
             for (var i = 0; i < Continuations.Count; i++)
             {
                 var continuation = Continuations[i];
@@ -293,9 +287,9 @@ namespace Vlingo.Common
             }
         }
 
-        public bool HasOutcome => Result != null;
+        public bool HasOutcome => !Result.Get().Equals(default);
 
-        public virtual TResult Outcome => Result;
+        public virtual TResult Outcome => Result.Get();
         
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
@@ -335,10 +329,7 @@ namespace Vlingo.Common
             }
         }
 
-        internal override void HandleFailure()
-        {
-            HasFailedValue.Set(true);
-        }
+        internal override void HandleFailure() => HasFailedValue.Set(true);
 
         internal override void HandleException(Exception e)
         {
@@ -369,7 +360,7 @@ namespace Vlingo.Common
                     {
                         return (TNewResult) Convert.ChangeType(TransformedResult, typeof(TNewResult));
                     }
-                    return (TNewResult) Convert.ChangeType(Result, typeof(TNewResult));
+                    return (TNewResult) Convert.ChangeType(Result.Get(), typeof(TNewResult));
                 }
                 catch
                 {
@@ -387,7 +378,7 @@ namespace Vlingo.Common
                 var lastContinuation = Continuations.Last();
                 if (lastContinuation.Completes is BasicCompletes<TResult> continuation)
                 {
-                    Result = continuation.Outcome;
+                    Result.Set(continuation.Outcome);
                 }
                 
                 if (lastContinuation.Completes is BasicCompletes completesContinuation)

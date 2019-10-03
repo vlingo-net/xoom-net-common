@@ -8,9 +8,10 @@
 using System;
 using System.Linq;
 using System.Threading;
+using Vlingo.Common.Completion;
 using Vlingo.Common.Completion.Continuations;
 
-namespace Vlingo.Common.Completion
+namespace Vlingo.Common
 {
     public class BasicCompletes<TResult> : BasicCompletes, ICompletes<TResult>
     {

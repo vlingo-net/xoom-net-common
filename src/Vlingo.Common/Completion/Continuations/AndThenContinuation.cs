@@ -11,7 +11,7 @@ namespace Vlingo.Common.Completion.Continuations
 {
     internal class AndThenContinuation<TAntecedentResult, TResult> : BasicCompletes<TResult>
     {
-        private readonly BasicCompletes<TAntecedentResult> antecedent;
+        private readonly AtomicReference<BasicCompletes<TAntecedentResult>> antecedent = new AtomicReference<BasicCompletes<TAntecedentResult>>(default);
 
         internal AndThenContinuation(BasicCompletes<TAntecedentResult> antecedent, Delegate function) : this(antecedent, Optional.Empty<TResult>(), function)
         {
@@ -19,7 +19,7 @@ namespace Vlingo.Common.Completion.Continuations
         
         internal AndThenContinuation(BasicCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function)
         {
-            this.antecedent = antecedent;
+            this.antecedent.Set(antecedent);
             FailedOutcomeValue = failedOutcomeValue;
         }
 
@@ -34,35 +34,35 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, ICompletes<TResult>> funcCompletes)
             {
-                CompletesResult = funcCompletes(antecedent.Outcome);
+                CompletesResult = funcCompletes(antecedent.Get().Outcome);
                 return;
             }
 
             if (Action is Func<TAntecedentResult, TResult> function)
             {
-                Result.Set(function(antecedent.Outcome));
+                Result.Set(function(antecedent.Get().Outcome));
                 TransformedResult = Result.Get();
             }
         }
 
-        internal override BasicCompletes Antecedent => antecedent;
+        internal override BasicCompletes Antecedent => antecedent.Get();
 
-        internal override Exception Exception => antecedent.Exception;
+        internal override Exception Exception => antecedent.Get().Exception;
 
         internal override void HandleFailure()
         {
             Result.Set(FailedOutcomeValue.Get());
             base.HandleFailure();
-            antecedent.HandleFailure();
+            antecedent.Get().HandleFailure();
         }
 
-        internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.RegisterContinuation(continuation);
+        internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.Get().RegisterContinuation(continuation);
         
         internal override void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.RegisterFailureContiuation(continuationCompletes);
+            antecedent.Get().RegisterFailureContiuation(continuationCompletes);
 
         internal override void RegisterExceptionContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.RegisterExceptionContiuation(continuationCompletes);
+            antecedent.Get().RegisterExceptionContiuation(continuationCompletes);
 
         internal override void UpdateFailure(BasicCompletes previousContinuation)
         {

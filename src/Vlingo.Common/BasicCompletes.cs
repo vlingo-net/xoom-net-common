@@ -6,7 +6,7 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading;
 using Vlingo.Common.Completion;
 using Vlingo.Common.Completion.Continuations;
@@ -50,21 +50,27 @@ namespace Vlingo.Common
         public ICompletes<TResult> With(TResult outcome)
         {
             Result.Set(outcome);
-            for (var i = 0; i < Continuations.Count; i++)
+            var alreadyRunContinuations = new Stack<BasicCompletes>();
+            while (Continuations.TryDequeue(out var continuation))
             {
-                var continuation = Continuations[i];
-                var previousCompletes = i == 0 ? continuation.Completes.Antecedent : Continuations[i - 1].Completes; 
+                if (alreadyRunContinuations.Count == 0)
+                {
+                    alreadyRunContinuations.Push(continuation.Completes.Antecedent);
+                }
                 try
                 {
+                    var previousCompletes = alreadyRunContinuations.Peek();
                     continuation.Completes.UpdateFailure(previousCompletes);
                     if (continuation.Completes.HasFailed)
                     {
                         continuation.Completes.HandleFailure();
                         FailureContinuation?.Run(continuation.Completes);
+                        alreadyRunContinuations.Push(continuation.Completes);
                         break;
                     }
 
                     continuation.Run(previousCompletes);
+                    alreadyRunContinuations.Push(continuation.Completes);
                 }
                 catch (InvalidCastException)
                 {
@@ -78,7 +84,9 @@ namespace Vlingo.Common
                 }
             }
 
-            TrySetResult();
+            TrySetResult(alreadyRunContinuations);
+            
+            alreadyRunContinuations.Clear();
             
             return this;
         }
@@ -339,7 +347,7 @@ namespace Vlingo.Common
         }
 
         internal override Exception Exception => exception.Get();
-        
+
         private TNewResult AwaitInternal<TNewResult>()
         {
             if (CompletesResult is ICompletes<TNewResult> completes)
@@ -371,17 +379,17 @@ namespace Vlingo.Common
             return default;
         }
 
-        private void TrySetResult()
+        private void TrySetResult(Stack<BasicCompletes> alreadyRunContinuations)
         {
-            if (Continuations.Any())
+            if (alreadyRunContinuations.Count > 0)
             {
-                var lastContinuation = Continuations.Last();
-                if (lastContinuation.Completes is BasicCompletes<TResult> continuation)
+                var lastCompletes = alreadyRunContinuations.Peek();
+                if (lastCompletes is BasicCompletes<TResult> continuation)
                 {
                     Result.Set(continuation.Outcome);
                 }
                 
-                if (lastContinuation.Completes is BasicCompletes completesContinuation)
+                if (lastCompletes is BasicCompletes completesContinuation)
                 {
                     CompletesResult = completesContinuation.CompletesResult;
                     TransformedResult = completesContinuation.TransformedResult;

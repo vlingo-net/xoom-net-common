@@ -6,7 +6,7 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using Vlingo.Common.Completion.Continuations;
 
 namespace Vlingo.Common.Completion
@@ -15,7 +15,7 @@ namespace Vlingo.Common.Completion
     {
         protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
         internal readonly Scheduler Scheduler;
-        internal readonly List<CompletesContinuation> Continuations = new List<CompletesContinuation>();
+        internal readonly ConcurrentQueue<CompletesContinuation> Continuations = new ConcurrentQueue<CompletesContinuation>();
         internal CompletesContinuation FailureContinuation;
         internal CompletesContinuation ExceptionContinuation;
         internal object CompletesResult;
@@ -43,7 +43,7 @@ namespace Vlingo.Common.Completion
         
         internal abstract Exception Exception { get; }
         
-        internal virtual void RegisterContinuation(CompletesContinuation continuation) => Continuations.Add(continuation);
+        internal virtual void RegisterContinuation(CompletesContinuation continuation) => Continuations.Enqueue(continuation);
 
         internal virtual void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
             FailureContinuation = continuationCompletes;

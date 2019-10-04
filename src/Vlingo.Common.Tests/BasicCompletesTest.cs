@@ -7,7 +7,6 @@
 
 using System;
 using System.Threading;
-using Vlingo.Common.Completion;
 using Xunit;
 
 namespace Vlingo.Common.Tests
@@ -136,7 +135,7 @@ namespace Vlingo.Common.Tests
             Assert.True(completes.HasFailed);
             Assert.NotEqual(10, andThenValue);
             Assert.Equal(0, andThenValue);
-            Assert.Equal(0, completed);
+            Assert.Equal(-10, completed);
         }
 
         [Fact]
@@ -155,7 +154,7 @@ namespace Vlingo.Common.Tests
             Assert.True(completes.HasFailed);
             Assert.Equal(-1, andThenValue);
             Assert.Equal(1000, failureValue);
-            Assert.Equal(0, completed);
+            Assert.Equal(-100, completed);
         }
         
         [Fact]
@@ -182,7 +181,7 @@ namespace Vlingo.Common.Tests
             Assert.True(completes.HasFailed);
             Assert.Equal(0, andThenValue);
             Assert.Equal(-10, failedValue);
-            Assert.Equal(0, completed);
+            Assert.Equal(-10, completed);
         }
         
         [Fact]
@@ -212,7 +211,7 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
-        // TODO: Insepct random CI failures
+        // TODO: Inspect random CI failures
         public void TestThatFailureOutcomeFailsWhenScheduledTimesOutWithOneAndThen()
         {
             var andThenValue = 0;

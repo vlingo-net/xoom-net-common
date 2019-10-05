@@ -6,7 +6,6 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using Vlingo.Common.Completion;
@@ -21,9 +20,9 @@ namespace Vlingo.Common
         protected readonly AtomicBoolean HasFailedValue = new AtomicBoolean(false);
         protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
         protected internal Optional<TResult> FailedOutcomeValue;
-        protected AtomicRefValue<TResult> Result = new AtomicRefValue<TResult>(default);
+        protected TResult Result;
 
-        public BasicCompletes(TResult outcome) : base(default) => Result.Set(outcome);
+        public BasicCompletes(TResult outcome) : base(default) => Result = outcome;
 
         internal BasicCompletes(Delegate valueSelector) : base(valueSelector)
         {
@@ -50,7 +49,7 @@ namespace Vlingo.Common
 
         public ICompletes<TResult> With(TResult outcome)
         {
-            Result.Set(outcome);
+            Result = outcome;
 
             var alreadyRunContinuations = RunContinuations();
 
@@ -265,9 +264,9 @@ namespace Vlingo.Common
             }
         }
 
-        public bool HasOutcome => !Result.Get().Equals(default);
+        public bool HasOutcome => !Result.Equals(default);
 
-        public virtual TResult Outcome => Result.Get();
+        public virtual TResult Outcome => Result;
         
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
@@ -338,7 +337,7 @@ namespace Vlingo.Common
                     {
                         return (TNewResult) Convert.ChangeType(TransformedResult, typeof(TNewResult));
                     }
-                    return (TNewResult) Convert.ChangeType(Result.Get(), typeof(TNewResult));
+                    return (TNewResult) Convert.ChangeType(Result, typeof(TNewResult));
                 }
                 catch
                 {
@@ -400,7 +399,7 @@ namespace Vlingo.Common
                 var lastCompletes = alreadyRunContinuations.Peek();
                 if (lastCompletes is BasicCompletes<TResult> continuation)
                 {
-                    Result.Set(continuation.Outcome);
+                    Result = continuation.Outcome;
                 }
             
                 if (lastCompletes is BasicCompletes completesContinuation)

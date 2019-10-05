@@ -40,8 +40,8 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, TResult> function)
             {
-                Result.Set(function(antecedent.Get().Outcome));
-                TransformedResult = Result.Get();
+                Result = function(antecedent.Get().Outcome);
+                TransformedResult = Result;
             }
         }
 
@@ -51,7 +51,7 @@ namespace Vlingo.Common.Completion.Continuations
 
         internal override void HandleFailure()
         {
-            Result.Set(FailedOutcomeValue.Get());
+            Result = FailedOutcomeValue.Get();
             base.HandleFailure();
             antecedent.Get().HandleFailure();
         }

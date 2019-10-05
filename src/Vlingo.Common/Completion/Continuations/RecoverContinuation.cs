@@ -22,7 +22,7 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 if (completedCompletes is BasicCompletes<TResult> basicCompletes)
                 {
-                    Result.Set(function(basicCompletes.Exception));
+                    Result = function(basicCompletes.Exception);
                 }
             }
         }

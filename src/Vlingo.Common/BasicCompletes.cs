@@ -6,6 +6,7 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using Vlingo.Common.Completion;
@@ -348,9 +349,9 @@ namespace Vlingo.Common
             return default;
         }
 
-        private Stack<BasicCompletes> RunContinuations()
+        private ConcurrentStack<BasicCompletes> RunContinuations()
         {
-            var alreadyRunContinuations = new Stack<BasicCompletes>();
+            var alreadyRunContinuations = new ConcurrentStack<BasicCompletes>();
             while (Continuations.TryDequeue(out var continuation))
             {
                 if (alreadyRunContinuations.Count == 0)
@@ -360,20 +361,23 @@ namespace Vlingo.Common
 
                 try
                 {
-                    var previousCompletes = alreadyRunContinuations.Peek();
-                    continuation.Completes.UpdateFailure(previousCompletes);
-                    if (continuation.Completes.HasFailed)
+                    if (alreadyRunContinuations.TryPeek(out var previousCompletes))
                     {
-                        continuation.Completes.HandleFailure();
-                        if (FailureContinuation != null)
+                        continuation.Completes.UpdateFailure(previousCompletes);
+                        if (continuation.Completes.HasFailed)
                         {
-                            FailureContinuation.Run(continuation.Completes);
-                            alreadyRunContinuations.Push(FailureContinuation.Completes);   
+                            continuation.Completes.HandleFailure();
+                            if (FailureContinuation != null)
+                            {
+                                FailureContinuation.Run(continuation.Completes);
+                                alreadyRunContinuations.Push(FailureContinuation.Completes);   
+                            }
+                            break;
                         }
-                        break;
-                    }
 
-                    continuation.Run(previousCompletes);
+                        continuation.Run(previousCompletes);
+                    }
+                    
                     alreadyRunContinuations.Push(continuation.Completes);
                 }
                 catch (InvalidCastException)
@@ -391,21 +395,23 @@ namespace Vlingo.Common
             return alreadyRunContinuations;
         } 
 
-        private void TrySetResult(Stack<BasicCompletes> alreadyRunContinuations)
+        private void TrySetResult(ConcurrentStack<BasicCompletes> alreadyRunContinuations)
         {
             if (alreadyRunContinuations.Count > 0)
             {
-                var lastCompletes = alreadyRunContinuations.Peek();
-                if (lastCompletes is BasicCompletes<TResult> continuation)
+                if (alreadyRunContinuations.TryPeek(out var lastCompletes))
                 {
-                    Result.Set(continuation.Outcome);
-                }
+                    if (lastCompletes is BasicCompletes<TResult> continuation)
+                    {
+                        Result.Set(continuation.Outcome);
+                    }
                 
-                if (lastCompletes is BasicCompletes completesContinuation)
-                {
-                    CompletesResult = completesContinuation.CompletesResult;
-                    TransformedResult = completesContinuation.TransformedResult;
-                    outcomeKnown.Set();
+                    if (lastCompletes is BasicCompletes completesContinuation)
+                    {
+                        CompletesResult = completesContinuation.CompletesResult;
+                        TransformedResult = completesContinuation.TransformedResult;
+                        outcomeKnown.Set();
+                    }   
                 }
             }
             

@@ -349,9 +349,9 @@ namespace Vlingo.Common
             return default;
         }
 
-        private ConcurrentStack<BasicCompletes> RunContinuations()
+        private Stack<BasicCompletes> RunContinuations()
         {
-            var alreadyRunContinuations = new ConcurrentStack<BasicCompletes>();
+            var alreadyRunContinuations = new Stack<BasicCompletes>();
             while (Continuations.TryDequeue(out var continuation))
             {
                 if (alreadyRunContinuations.Count == 0)
@@ -361,22 +361,20 @@ namespace Vlingo.Common
 
                 try
                 {
-                    if (alreadyRunContinuations.TryPeek(out var previousCompletes))
+                    var previousCompletes = alreadyRunContinuations.Peek();
+                    continuation.Completes.UpdateFailure(previousCompletes);
+                    if (continuation.Completes.HasFailed)
                     {
-                        continuation.Completes.UpdateFailure(previousCompletes);
-                        if (continuation.Completes.HasFailed)
+                        continuation.Completes.HandleFailure();
+                        if (FailureContinuation != null)
                         {
-                            continuation.Completes.HandleFailure();
-                            if (FailureContinuation != null)
-                            {
-                                FailureContinuation.Run(continuation.Completes);
-                                alreadyRunContinuations.Push(FailureContinuation.Completes);   
-                            }
-                            break;
+                            FailureContinuation.Run(continuation.Completes);
+                            alreadyRunContinuations.Push(FailureContinuation.Completes);   
                         }
-
-                        continuation.Run(previousCompletes);
+                        break;
                     }
+
+                    continuation.Run(previousCompletes);
                     
                     alreadyRunContinuations.Push(continuation.Completes);
                 }
@@ -395,23 +393,21 @@ namespace Vlingo.Common
             return alreadyRunContinuations;
         } 
 
-        private void TrySetResult(ConcurrentStack<BasicCompletes> alreadyRunContinuations)
+        private void TrySetResult(Stack<BasicCompletes> alreadyRunContinuations)
         {
             if (alreadyRunContinuations.Count > 0)
             {
-                if (alreadyRunContinuations.TryPeek(out var lastCompletes))
+                var lastCompletes = alreadyRunContinuations.Peek();
+                if (lastCompletes is BasicCompletes<TResult> continuation)
                 {
-                    if (lastCompletes is BasicCompletes<TResult> continuation)
-                    {
-                        Result.Set(continuation.Outcome);
-                    }
-                
-                    if (lastCompletes is BasicCompletes completesContinuation)
-                    {
-                        CompletesResult = completesContinuation.CompletesResult;
-                        TransformedResult = completesContinuation.TransformedResult;
-                    }   
+                    Result.Set(continuation.Outcome);
                 }
+            
+                if (lastCompletes is BasicCompletes completesContinuation)
+                {
+                    CompletesResult = completesContinuation.CompletesResult;
+                    TransformedResult = completesContinuation.TransformedResult;
+                }   
             }
             
             outcomeKnown.Set();

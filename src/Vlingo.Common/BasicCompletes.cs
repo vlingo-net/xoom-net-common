@@ -51,7 +51,7 @@ namespace Vlingo.Common
         public ICompletes<TResult> With(TResult outcome)
         {
             Result.Set(outcome);
-            
+
             var alreadyRunContinuations = RunContinuations();
 
             TrySetResult(alreadyRunContinuations);
@@ -410,7 +410,6 @@ namespace Vlingo.Common
                     {
                         CompletesResult = completesContinuation.CompletesResult;
                         TransformedResult = completesContinuation.TransformedResult;
-                        outcomeKnown.Set();
                     }   
                 }
             }

@@ -128,6 +128,7 @@ namespace Vlingo.Common.Tests
                 completes.With(5);
             });
             thread.Start();
+            thread.Join();
 
             var completed = completes.Await();
 
@@ -201,6 +202,7 @@ namespace Vlingo.Common.Tests
                 completes.With(5);
             });
             thread.Start();
+            thread.Join();
 
             completes.Await();
 
@@ -226,6 +228,7 @@ namespace Vlingo.Common.Tests
                 completes.With(5);
             });
             thread.Start();
+            thread.Join();
 
             completes.Await();
 
@@ -442,6 +445,7 @@ namespace Vlingo.Common.Tests
                 completes.With(5);
             });
             thread.Start();
+            thread.Join();
             
             result = completes.Await();
 
@@ -509,6 +513,7 @@ namespace Vlingo.Common.Tests
                 completes.With(10);
             });
             thread.Start();
+            thread.Join();
             
             completes.Await();
             

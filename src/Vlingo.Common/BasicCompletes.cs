@@ -50,39 +50,8 @@ namespace Vlingo.Common
         public ICompletes<TResult> With(TResult outcome)
         {
             Result.Set(outcome);
-            var alreadyRunContinuations = new Stack<BasicCompletes>();
-            while (Continuations.TryDequeue(out var continuation))
-            {
-                if (alreadyRunContinuations.Count == 0)
-                {
-                    alreadyRunContinuations.Push(continuation.Completes.Antecedent);
-                }
-                try
-                {
-                    var previousCompletes = alreadyRunContinuations.Peek();
-                    continuation.Completes.UpdateFailure(previousCompletes);
-                    if (continuation.Completes.HasFailed)
-                    {
-                        continuation.Completes.HandleFailure();
-                        FailureContinuation?.Run(continuation.Completes);
-                        alreadyRunContinuations.Push(continuation.Completes);
-                        break;
-                    }
-
-                    continuation.Run(previousCompletes);
-                    alreadyRunContinuations.Push(continuation.Completes);
-                }
-                catch (InvalidCastException)
-                {
-                    throw; // raised by failure continuation
-                }
-                catch (Exception e)
-                {
-                    HandleException(e);
-                    ExceptionContinuation?.Run(continuation.Completes);
-                    break;
-                }
-            }
+            
+            var alreadyRunContinuations = RunContinuations();
 
             TrySetResult(alreadyRunContinuations);
             
@@ -378,6 +347,49 @@ namespace Vlingo.Common
 
             return default;
         }
+
+        private Stack<BasicCompletes> RunContinuations()
+        {
+            var alreadyRunContinuations = new Stack<BasicCompletes>();
+            while (Continuations.TryDequeue(out var continuation))
+            {
+                if (alreadyRunContinuations.Count == 0)
+                {
+                    alreadyRunContinuations.Push(continuation.Completes.Antecedent);
+                }
+
+                try
+                {
+                    var previousCompletes = alreadyRunContinuations.Peek();
+                    continuation.Completes.UpdateFailure(previousCompletes);
+                    if (continuation.Completes.HasFailed)
+                    {
+                        continuation.Completes.HandleFailure();
+                        if (FailureContinuation != null)
+                        {
+                            FailureContinuation.Run(continuation.Completes);
+                            alreadyRunContinuations.Push(FailureContinuation.Completes);   
+                        }
+                        break;
+                    }
+
+                    continuation.Run(previousCompletes);
+                    alreadyRunContinuations.Push(continuation.Completes);
+                }
+                catch (InvalidCastException)
+                {
+                    throw; // raised by failure continuation
+                }
+                catch (Exception e)
+                {
+                    HandleException(e);
+                    ExceptionContinuation?.Run(continuation.Completes);
+                    break;
+                }
+            }
+
+            return alreadyRunContinuations;
+        } 
 
         private void TrySetResult(Stack<BasicCompletes> alreadyRunContinuations)
         {

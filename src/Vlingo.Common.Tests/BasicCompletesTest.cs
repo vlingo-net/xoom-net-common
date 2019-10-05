@@ -113,7 +113,6 @@ namespace Vlingo.Common.Tests
         }
 
         [Fact]
-        // TODO: Inspect random CI failures
         public void TestTimeoutBeforeOutcome()
         {
             var andThenValue = 0;
@@ -135,7 +134,7 @@ namespace Vlingo.Common.Tests
             Assert.True(completes.HasFailed);
             Assert.NotEqual(10, andThenValue);
             Assert.Equal(0, andThenValue);
-            Assert.Equal(-10, completed);
+            Assert.Equal(5, completed);
         }
 
         [Fact]
@@ -154,7 +153,7 @@ namespace Vlingo.Common.Tests
             Assert.True(completes.HasFailed);
             Assert.Equal(-1, andThenValue);
             Assert.Equal(1000, failureValue);
-            Assert.Equal(-100, completed);
+            Assert.Equal(1000, completed);
         }
         
         [Fact]
@@ -211,7 +210,6 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
-        // TODO: Inspect random CI failures
         public void TestThatFailureOutcomeFailsWhenScheduledTimesOutWithOneAndThen()
         {
             var andThenValue = 0;
@@ -432,7 +430,6 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
-        // TODO: Inspect random CI failures
         public void TestAndThenToFailsWhenScheduledTimesOut()
         {
             var completes = new BasicCompletes<int>(new Scheduler());
@@ -449,7 +446,7 @@ namespace Vlingo.Common.Tests
             result = completes.Await();
 
             Assert.True(completes.HasFailed);
-            Assert.Equal(10, result);
+            Assert.Equal(5, result);
         }
         
         [Fact]
@@ -491,14 +488,12 @@ namespace Vlingo.Common.Tests
             
             completes.With(5);
 
-            var completed = completes.Await();
+            completes.Await();
             
             Assert.Equal(5, failedResult);
-            Assert.Equal(5, completed);
         }
         
         [Fact]
-        // TODO: Inspect random CI failures
         public void TestOtherwiseConsumeAfterTimeout()
         {
             var completes = new BasicCompletes<int>(new Scheduler());
@@ -515,10 +510,9 @@ namespace Vlingo.Common.Tests
             });
             thread.Start();
             
-            var completed = completes.Await();
+            completes.Await();
             
             Assert.Equal(5, failedResult);
-            Assert.Equal(5, completed);
         }
         
         [Fact]
@@ -715,11 +709,10 @@ namespace Vlingo.Common.Tests
             Thread.Sleep(100);
             completes.With(5);
 
-            var completed = completes.Await();
+            completes.Await();
 
             Assert.True(completes.HasFailed);
             Assert.Equal(0, andThenValue);
-            Assert.Equal(10, completed);
             Assert.Equal(10, failedValue);
         }
         

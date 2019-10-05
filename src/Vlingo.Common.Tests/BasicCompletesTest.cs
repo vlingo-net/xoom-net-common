@@ -119,7 +119,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThen(TimeSpan.FromMilliseconds(10), -10, value => value * 2)
+                .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
                 .AndThen(x => andThenValue = x);
 
             var thread = new Thread(() =>
@@ -191,7 +191,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThen(TimeSpan.FromMilliseconds(10), -10, value => value * 2)
+                .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
                 .AndThen(x => andThenValue = 100)
                 .Otherwise<int>(failedOutcome => failedValue = failedOutcome);
 
@@ -217,7 +217,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThen(TimeSpan.FromMilliseconds(10), -10, value => value * 2)
+                .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
                 .Otherwise<int>(failedOutcome => failedValue = failedOutcome);
 
             var thread = new Thread(() =>
@@ -433,7 +433,7 @@ namespace Vlingo.Common.Tests
         public void TestAndThenToFailsWhenScheduledTimesOut()
         {
             var completes = new BasicCompletes<int>(new Scheduler());
-            completes.AndThenTo(TimeSpan.FromMilliseconds(10), 10, v => v * 10);
+            completes.AndThenTo(TimeSpan.FromMilliseconds(1), 10, v => v * 10);
 
             int result;
             var thread = new Thread(() =>
@@ -500,7 +500,7 @@ namespace Vlingo.Common.Tests
             var failedResult = -1;
             
             completes
-                .AndThenTo(TimeSpan.FromMilliseconds(10), 5, v => Completes.WithSuccess(v * 2))
+                .AndThenTo(TimeSpan.FromMilliseconds(1), 5, v => Completes.WithSuccess(v * 2))
                 .OtherwiseConsume(failedValue => failedResult = failedValue);
             
             var thread = new Thread(() =>
@@ -587,7 +587,7 @@ namespace Vlingo.Common.Tests
             
             completes
                 .AndThenTo(v => Completes.Using<int>(scheduler))
-                .AndThenConsume(TimeSpan.FromMilliseconds(10), v => consumedResult = v);
+                .AndThenConsume(TimeSpan.FromMilliseconds(1), v => consumedResult = v);
             
             var thread = new Thread(() =>
             {
@@ -630,7 +630,7 @@ namespace Vlingo.Common.Tests
 
             completes
                 .AndThenTo(v => Completes.WithSuccess(v * 2))
-                .AndThenConsume(TimeSpan.FromMilliseconds(10), 10, x => andThenValue = x);
+                .AndThenConsume(TimeSpan.FromMilliseconds(1), 10, x => andThenValue = x);
 
             var thread = new Thread(() =>
             {

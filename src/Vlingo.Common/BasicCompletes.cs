@@ -400,16 +400,23 @@ namespace Vlingo.Common
                 if (lastCompletes is BasicCompletes<TResult> continuation)
                 {
                     Result = continuation.Outcome;
+                    outcomeKnown.Set();
+                    ReadyToExectue.Set(true);
                 }
             
                 if (lastCompletes is BasicCompletes completesContinuation)
                 {
                     CompletesResult = completesContinuation.CompletesResult;
                     TransformedResult = completesContinuation.TransformedResult;
+                    outcomeKnown.Set();
+                    ReadyToExectue.Set(true);
                 }   
             }
-            
-            outcomeKnown.Set();
+            else
+            {
+                outcomeKnown.Set();
+                ReadyToExectue.Set(true);
+            }
         }
         
         private bool HandleFailureInternal(Optional<TResult> outcome)

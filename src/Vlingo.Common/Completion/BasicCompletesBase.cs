@@ -14,6 +14,8 @@ namespace Vlingo.Common.Completion
     public abstract class BasicCompletes
     {
         protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
+        protected readonly AtomicBoolean ReadyToExectue = new AtomicBoolean(false);
+        protected readonly AtomicBoolean Accessible = new AtomicBoolean(false);
         internal readonly Scheduler Scheduler;
         internal readonly ConcurrentQueue<CompletesContinuation> Continuations = new ConcurrentQueue<CompletesContinuation>();
         internal CompletesContinuation FailureContinuation;
@@ -55,6 +57,10 @@ namespace Vlingo.Common.Completion
         {
             var continuation = new CompletesContinuation(continuationCompletes);
             continuationCompletes.RegisterContinuation(continuation);
+            if (ReadyToExectue.Get())
+            {
+                continuation.Run(continuationCompletes.Antecedent);
+            }
         }
 
         protected void OtherwiseInternal(BasicCompletes continuationCompletes)

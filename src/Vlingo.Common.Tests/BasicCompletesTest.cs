@@ -446,7 +446,7 @@ namespace Vlingo.Common.Tests
             result = completes.Await();
 
             Assert.True(completes.HasFailed);
-            Assert.Equal(5, result);
+            Assert.Equal(10, result);
         }
         
         [Fact]

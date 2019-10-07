@@ -46,13 +46,6 @@ namespace Vlingo.Common.Completion.Continuations
             }
         }
 
-        /*internal override void HandleFailure()
-        {
-            Result = FailedOutcomeValue.Get();
-            base.HandleFailure();
-            antecedent.Get().HandleFailure();
-        }
-
         internal override void UpdateFailure(BasicCompletes previousContinuation)
         {
             if (previousContinuation.HasFailedValue.Get())
@@ -75,6 +68,6 @@ namespace Vlingo.Common.Completion.Continuations
                     HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));   
                 }
             }
-        }*/
+        }
     }
 }

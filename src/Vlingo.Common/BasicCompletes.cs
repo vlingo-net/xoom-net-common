@@ -292,13 +292,6 @@ namespace Vlingo.Common
             }
         }
 
-        internal void HandleException(Exception e)
-        {
-            ExceptionValue.Set(e);
-            HasException.Set(true);
-            HasFailedValue.Set(true);
-        }
-
         private TNewResult AwaitInternal<TNewResult>()
         {
             if (CompletesResult is ICompletes<TNewResult> completes)
@@ -346,15 +339,16 @@ namespace Vlingo.Common
                 try
                 {
                     continuation.Completes.UpdateFailure(lastRunContinuation);
+                    HasFailedValue.Set(continuation.Completes.HasFailedValue.Get());
                     if (continuation.Completes.HasFailedValue.Get())
                     {
-                        HasFailedValue.Set(continuation.Completes.HasFailedValue.Get());
                         if (FailureContinuation != null)
                         {
                             FailureContinuation.Run(continuation.Completes);
-                            return FailureContinuation.Completes;
+                            return FailureContinuation.Completes;   
                         }
-                        break;
+
+                        return continuation.Completes;
                     }
 
                     continuation.Run(lastRunContinuation);
@@ -396,9 +390,21 @@ namespace Vlingo.Common
             }
             else
             {
+                if (lastCompletes is BasicCompletes<TResult> continuation && Continuations.IsEmpty)
+                {
+                    Result = continuation.FailedOutcomeValue.Get();
+                }
+                
                 outcomeKnown.Set();
                 ReadyToExectue.Set(true);
             }
+        }
+        
+        private void HandleException(Exception e)
+        {
+            ExceptionValue.Set(e);
+            HasException.Set(true);
+            HasFailedValue.Set(true);
         }
         
         private bool HandleFailureInternal(Optional<TResult> outcome)

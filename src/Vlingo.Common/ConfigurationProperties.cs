@@ -12,10 +12,10 @@ using System.Linq;
 
 namespace Vlingo.Common
 {
-    public sealed class Properties
+    public abstract class ConfigurationProperties
     {
         private readonly IDictionary<string, string> dictionary;
-        public Properties()
+        public ConfigurationProperties()
         {
             dictionary = new Dictionary<string, string>();
         }
@@ -28,7 +28,7 @@ namespace Vlingo.Common
 
         public string GetProperty(string key, string defaultValue)
         {
-            if(dictionary.TryGetValue(key, out string value))
+            if (dictionary.TryGetValue(key, out string value))
             {
                 return value;
             }
@@ -49,9 +49,9 @@ namespace Vlingo.Common
 
             var configurations = config.AsEnumerable().Where(c => c.Value != null);
 
-            foreach(var configuration in configurations)
+            foreach (var configuration in configurations)
             {
-                var k = configuration.Key.Replace(":",".");
+                var k = configuration.Key.Replace(":", ".");
                 var v = configuration.Value;
                 SetProperty(k, v);
             }

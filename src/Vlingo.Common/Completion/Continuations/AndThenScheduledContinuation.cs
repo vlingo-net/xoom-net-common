@@ -19,32 +19,31 @@ namespace Vlingo.Common.Completion.Continuations
 
         internal AndThenScheduledContinuation(
             Scheduler scheduler,
+            BasicCompletes parent,
             BasicCompletes<TAntecedentResult> antecedent,
             TimeSpan timeout,
             Delegate function)
-            : base(antecedent, function)
+            : base(parent, antecedent, function)
         {
             this.scheduler = scheduler;
             this.timeout = timeout;
+            ClearTimer();
+            StartTimer();
         }
         
         internal AndThenScheduledContinuation(
             Scheduler scheduler,
+            BasicCompletes parent,
             BasicCompletes<TAntecedentResult> antecedent,
             TimeSpan timeout,
             Optional<TResult> failedOutcomeValue,
             Delegate function)
-            : base(antecedent, failedOutcomeValue, function)
+            : base(parent, antecedent, failedOutcomeValue, function)
         {
             this.scheduler = scheduler;
             this.timeout = timeout;
-        }
-
-        internal override void RegisterContinuation(CompletesContinuation continuation)
-        {
             ClearTimer();
             StartTimer();
-            base.RegisterContinuation(continuation);
         }
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)

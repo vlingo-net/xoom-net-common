@@ -13,12 +13,13 @@ namespace Vlingo.Common.Completion.Continuations
     {
         private readonly AtomicReference<BasicCompletes<TAntecedentResult>> antecedent = new AtomicReference<BasicCompletes<TAntecedentResult>>(default);
 
-        internal AndThenContinuation(BasicCompletes<TAntecedentResult> antecedent, Delegate function) : this(antecedent, Optional.Empty<TResult>(), function)
+        internal AndThenContinuation(BasicCompletes parent, BasicCompletes<TAntecedentResult> antecedent, Delegate function) : this(parent, antecedent, Optional.Empty<TResult>(), function)
         {
         }
         
-        internal AndThenContinuation(BasicCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function)
+        internal AndThenContinuation(BasicCompletes parent, BasicCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function)
         {
+            Parent = parent;
             this.antecedent.Set(antecedent);
             FailedOutcomeValue = failedOutcomeValue;
         }
@@ -45,28 +46,16 @@ namespace Vlingo.Common.Completion.Continuations
             }
         }
 
-        internal override BasicCompletes Antecedent => antecedent.Get();
-
-        internal override Exception Exception => antecedent.Get().Exception;
-
-        internal override void HandleFailure()
+        /*internal override void HandleFailure()
         {
             Result = FailedOutcomeValue.Get();
             base.HandleFailure();
             antecedent.Get().HandleFailure();
         }
 
-        internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.Get().RegisterContinuation(continuation);
-        
-        internal override void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.Get().RegisterFailureContiuation(continuationCompletes);
-
-        internal override void RegisterExceptionContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.Get().RegisterExceptionContiuation(continuationCompletes);
-
         internal override void UpdateFailure(BasicCompletes previousContinuation)
         {
-            if (previousContinuation.HasFailed)
+            if (previousContinuation.HasFailedValue.Get())
             {
                 HasFailedValue.Set(true);
                 return;
@@ -86,6 +75,6 @@ namespace Vlingo.Common.Completion.Continuations
                     HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));   
                 }
             }
-        }
+        }*/
     }
 }

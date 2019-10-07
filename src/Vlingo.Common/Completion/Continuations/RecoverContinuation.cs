@@ -26,10 +26,5 @@ namespace Vlingo.Common.Completion.Continuations
                 }
             }
         }
-        
-        internal override BasicCompletes Antecedent => antecedent;
-
-        internal override void RegisterExceptionContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.RegisterExceptionContiuation(continuationCompletes);
     }
 }

@@ -13,8 +13,12 @@ namespace Vlingo.Common.Completion.Continuations
     {
         private readonly BasicCompletes<TAntecedentResult> antecedent;
 
-        internal OtherwiseContinuation(BasicCompletes<TAntecedentResult> antecedent, Delegate function) :
-            base(function) => this.antecedent = antecedent;
+        internal OtherwiseContinuation(BasicCompletes parent, BasicCompletes<TAntecedentResult> antecedent, Delegate function) :
+            base(function)
+        {
+            this.antecedent = antecedent;
+            Parent = parent;
+        }
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
@@ -57,17 +61,5 @@ namespace Vlingo.Common.Completion.Continuations
 
             throw new InvalidCastException("Cannot run 'Otherwise' function. Make sure that expecting type is the same as failedOutcomeValue type");
         }
-
-        internal override BasicCompletes Antecedent => antecedent;
-
-        internal override Exception Exception => antecedent.Exception;
-        
-        internal override void RegisterContinuation(CompletesContinuation continuation) => antecedent.RegisterContinuation(continuation);
-
-        internal override void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.RegisterFailureContiuation(continuationCompletes);
-        
-        internal override void RegisterExceptionContiuation(CompletesContinuation continuationCompletes) =>
-            antecedent.RegisterExceptionContiuation(continuationCompletes);
     }
 }

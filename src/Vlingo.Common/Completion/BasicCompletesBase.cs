@@ -14,8 +14,11 @@ namespace Vlingo.Common.Completion
     public abstract class BasicCompletes
     {
         protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
+        protected BasicCompletes Parent;
         protected readonly AtomicBoolean ReadyToExectue = new AtomicBoolean(false);
         protected readonly AtomicBoolean Accessible = new AtomicBoolean(false);
+        internal readonly AtomicBoolean HasFailedValue = new AtomicBoolean(false);
+        protected readonly AtomicReference<Exception> ExceptionValue = new AtomicReference<Exception>();
         internal readonly Scheduler Scheduler;
         internal readonly ConcurrentQueue<CompletesContinuation> Continuations = new ConcurrentQueue<CompletesContinuation>();
         internal CompletesContinuation FailureContinuation;
@@ -23,7 +26,9 @@ namespace Vlingo.Common.Completion
         internal object CompletesResult;
         internal object TransformedResult;
 
-        protected BasicCompletes(Delegate action) => Action = action;
+        protected BasicCompletes(Delegate action) : this(null, action)
+        {
+        }
 
         protected BasicCompletes(Scheduler scheduler, Delegate action)
         {
@@ -31,48 +36,41 @@ namespace Vlingo.Common.Completion
             Action = action;
         }
 
-        public virtual bool HasFailed { get; } = false;
-
-        internal virtual BasicCompletes Antecedent { get; } = null;
-        
         internal abstract void InnerInvoke(BasicCompletes completedCompletes);
         
         internal abstract void UpdateFailure(BasicCompletes previousContinuation);
 
-        internal abstract void HandleFailure();
+        internal Exception Exception => ExceptionValue.Get();
 
-        internal abstract void HandleException(Exception e);
+        private void RegisterContinuation(CompletesContinuation continuationCompletes) =>
+            Continuations.Enqueue(continuationCompletes);
         
-        internal abstract Exception Exception { get; }
-        
-        internal virtual void RegisterContinuation(CompletesContinuation continuation) => Continuations.Enqueue(continuation);
-
-        internal virtual void RegisterFailureContiuation(CompletesContinuation continuationCompletes) =>
+        private void RegisterFailureContinuation(CompletesContinuation continuationCompletes) =>
             FailureContinuation = continuationCompletes;
 
-        internal virtual void RegisterExceptionContiuation(CompletesContinuation continuationCompletes) =>
+        private void RegisterExceptionContinuation(CompletesContinuation continuationCompletes) =>
             ExceptionContinuation = continuationCompletes;
 
-        protected void AndThenInternal(BasicCompletes continuationCompletes)
+        internal void AndThenInternal(BasicCompletes continuationCompletes)
         {
             var continuation = new CompletesContinuation(continuationCompletes);
-            continuationCompletes.RegisterContinuation(continuation);
-            if (ReadyToExectue.Get())
+            RegisterContinuation(continuation);
+            /*if (ReadyToExectue.Get())
             {
                 continuation.Run(continuationCompletes.Antecedent);
-            }
+            }*/
         }
 
-        protected void OtherwiseInternal(BasicCompletes continuationCompletes)
+        internal void OtherwiseInternal(BasicCompletes continuationCompletes)
         {
             var continuation = new CompletesContinuation(continuationCompletes);
-            continuationCompletes.RegisterFailureContiuation(continuation);
+            RegisterFailureContinuation(continuation);
         }
 
-        protected void RecoverInternal(BasicCompletes continuationCompletes)
+        internal void RecoverInternal(BasicCompletes continuationCompletes)
         {
             var continuation = new CompletesContinuation(continuationCompletes);
-            continuationCompletes.RegisterExceptionContiuation(continuation);
+            RegisterExceptionContinuation(continuation);
         }
     }
 }

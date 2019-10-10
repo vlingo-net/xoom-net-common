@@ -331,6 +331,12 @@ namespace Vlingo.Common
             }
         }
 
+        internal override void RunContinuationsWhenReady()
+        {
+            var lastCompletes = RunContinuations();
+            TrySetResult(lastCompletes);
+        }
+
         private BasicCompletes RunContinuations()
         {
             BasicCompletes lastRunContinuation = this;
@@ -377,7 +383,7 @@ namespace Vlingo.Common
                 {
                     Result = continuation.Outcome;
                     outcomeKnown.Set();
-                    ReadyToExectue.Set(true);
+                    ReadyToExectue.Set(HasOutcome);
                 }
             
                 if (lastCompletes is BasicCompletes completesContinuation)
@@ -385,7 +391,7 @@ namespace Vlingo.Common
                     CompletesResult = completesContinuation.CompletesResult;
                     TransformedResult = completesContinuation.TransformedResult;
                     outcomeKnown.Set();
-                    ReadyToExectue.Set(true);
+                    ReadyToExectue.Set(HasOutcome);
                 }   
             }
             else
@@ -396,7 +402,7 @@ namespace Vlingo.Common
                 }
                 
                 outcomeKnown.Set();
-                ReadyToExectue.Set(true);
+                ReadyToExectue.Set(HasOutcome);
             }
         }
         

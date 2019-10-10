@@ -40,6 +40,8 @@ namespace Vlingo.Common.Completion
         
         internal abstract void UpdateFailure(BasicCompletes previousContinuation);
 
+        internal abstract void RunContinuationsWhenReady();
+
         internal Exception Exception => ExceptionValue.Get();
 
         private void RegisterContinuation(CompletesContinuation continuationCompletes) =>
@@ -55,10 +57,10 @@ namespace Vlingo.Common.Completion
         {
             var continuation = new CompletesContinuation(continuationCompletes);
             RegisterContinuation(continuation);
-            /*if (ReadyToExectue.Get())
+            if (ReadyToExectue.Get())
             {
-                continuation.Run(continuationCompletes.Antecedent);
-            }*/
+                RunContinuationsWhenReady();
+            }
         }
 
         internal void OtherwiseInternal(BasicCompletes continuationCompletes)

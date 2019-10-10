@@ -65,7 +65,10 @@ namespace Vlingo.Common.Completion.Continuations
                 }
                 else
                 {
-                    HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));   
+                    if (completes.HasOutcome)
+                    {
+                        HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));  
+                    }
                 }
             }
         }

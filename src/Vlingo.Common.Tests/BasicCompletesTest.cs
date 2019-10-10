@@ -550,8 +550,7 @@ namespace Vlingo.Common.Tests
             var completed = completes.Await();
             
             Assert.Equal(10, consumedResult);
-            // This is normal because last action in pipeline is consumer not function
-            Assert.Equal(0, completed);
+            Assert.Equal(10, completed);
         }
         
         [Fact]
@@ -574,8 +573,7 @@ namespace Vlingo.Common.Tests
             var completed = completes.Await();
             
             Assert.Equal(10, consumedResult);
-            // This is normal because last action in pipeline is consumer not function
-            Assert.Equal(0, completed);
+            Assert.Equal(10, completed);
         }
         
         [Fact]
@@ -667,7 +665,7 @@ namespace Vlingo.Common.Tests
 
             Assert.False(completes.HasFailed);
             Assert.Equal(10, andThenValue);
-            Assert.Equal(0, completed);
+            Assert.Equal(10, completed);
         }
 
         [Fact]

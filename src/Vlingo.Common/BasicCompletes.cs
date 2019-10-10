@@ -258,7 +258,7 @@ namespace Vlingo.Common
             }
         }
 
-        public bool HasOutcome => !Result.Equals(default(TResult));
+        public bool HasOutcome => Result != null && !Result.Equals(default(TResult));
 
         public virtual TResult Outcome => Result;
         
@@ -276,6 +276,7 @@ namespace Vlingo.Common
                     if (completesContinuation.HasOutcome)
                     {
                         invokableActionInput(completesContinuation.Outcome);
+                        Result = completesContinuation.Outcome;
                     }
                     else
                     {
@@ -287,6 +288,13 @@ namespace Vlingo.Common
                     if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
                     {
                         invokableActionInput(andThenContinuation.Outcome);
+                        Result = andThenContinuation.Outcome;
+                    }
+                    
+                    if (completedCompletes is BasicCompletes<TResult> basicCompletes)
+                    {
+                        invokableActionInput(basicCompletes.Outcome);
+                        Result = basicCompletes.Outcome;
                     }
                 }
             }
@@ -379,7 +387,7 @@ namespace Vlingo.Common
         {
             if (!lastCompletes.HasFailedValue.Get())
             {
-                if (lastCompletes is BasicCompletes<TResult> continuation)
+                if (lastCompletes is BasicCompletes<TResult> continuation && continuation.HasOutcome)
                 {
                     Result = continuation.Outcome;
                     outcomeKnown.Set();

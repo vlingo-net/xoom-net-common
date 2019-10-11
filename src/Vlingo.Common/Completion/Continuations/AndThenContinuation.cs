@@ -60,19 +60,9 @@ namespace Vlingo.Common.Completion.Continuations
             
             if (previousContinuation is BasicCompletes<TAntecedentResult> completes)
             {
-//                if (completes.CompletesResult != null)
-//                {
-//                    if (completes.CompletesResult is BasicCompletes<TAntecedentResult> basicCompletes)
-//                    {
-//                        HasFailedValue.Set(basicCompletes.Outcome.Equals(FailedOutcomeValue.Get()));
-//                    }
-//                }
-//                else
+                if (completes.HasOutcome)
                 {
-                    if (completes.HasOutcome)
-                    {
-                        HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));  
-                    }
+                    HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));  
                 }
             }
         }

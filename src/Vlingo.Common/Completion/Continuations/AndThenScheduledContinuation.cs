@@ -62,7 +62,6 @@ namespace Vlingo.Common.Completion.Continuations
             if (!executed.Get())
             {
                 timedOut.Set(true);
-                Result = FailedOutcomeValue.Get();
                 HasFailedValue.Set(true);
             }
         }

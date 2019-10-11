@@ -18,6 +18,7 @@ namespace Vlingo.Common
         protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
         protected internal Optional<TResult> FailedOutcomeValue;
         protected TResult Result;
+        protected readonly AtomicBoolean TimedOut = new AtomicBoolean(false);
 
         public BasicCompletes(TResult outcome) : this(outcome, true)
         {
@@ -32,6 +33,7 @@ namespace Vlingo.Common
             Parent = this;
             if (succeeded)
             {
+                CompletedWith(outcome);
                 With(outcome);
             }
             else
@@ -45,12 +47,11 @@ namespace Vlingo.Common
 
         public ICompletes<TResult> With(TResult outcome)
         {
-            Result = outcome;
+            if (!HandleFailureInternal(Optional.Of(outcome)))
+            {
+                CompletedWith(outcome);
+            }
 
-            var lastRunContinuation = RunContinuations();
-
-            TrySetResult(lastRunContinuation);
-            
             return this;
         }
 
@@ -271,47 +272,22 @@ namespace Vlingo.Common
             
             if (Action is Action<TResult> invokableActionInput)
             {
-//                if (completedCompletes.CompletesResult is ICompletes<TResult> completesContinuation)
-//                {
-//                    if (completesContinuation.HasOutcome)
-//                    {
-//                        invokableActionInput(completesContinuation.Outcome);
-//                        Result = completesContinuation.Outcome;
-//                    }
-//                    else
-//                    {
-//                        completesContinuation.AndThenConsume(v => invokableActionInput(v));
-//                    }
-//                }
-//                else
+                if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
                 {
-                    if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
-                    {
-                        invokableActionInput(andThenContinuation.Outcome);
-                        Result = andThenContinuation.Outcome;
-                    }
-                    
-                    if (completedCompletes is BasicCompletes<TResult> basicCompletes)
-                    {
-                        invokableActionInput(basicCompletes.Outcome);
-                        Result = basicCompletes.Outcome;
-                    }
+                    invokableActionInput(andThenContinuation.Outcome);
+                    Result = andThenContinuation.Outcome;
+                }
+                
+                if (completedCompletes is BasicCompletes<TResult> basicCompletes)
+                {
+                    invokableActionInput(basicCompletes.Outcome);
+                    Result = basicCompletes.Outcome;
                 }
             }
         }
 
         private TNewResult AwaitInternal<TNewResult>()
         {
-//            if (CompletesResult is ICompletes<TNewResult> completes)
-//            {
-//                if (completes.HasOutcome)
-//                {
-//                    return completes.Outcome;
-//                }
-//
-//                return completes.Await();
-//            }
-
             if (HasOutcome)
             {
                 try
@@ -390,16 +366,11 @@ namespace Vlingo.Common
                 if (lastCompletes is BasicCompletes<TResult> continuation && continuation.HasOutcome)
                 {
                     Result = continuation.Outcome;
-                    outcomeKnown.Set();
-                    ReadyToExectue.Set(HasOutcome);
                 }
             
                 if (lastCompletes is BasicCompletes completesContinuation)
                 {
-                    //CompletesResult = completesContinuation.CompletesResult;
                     TransformedResult = completesContinuation.TransformedResult;
-                    outcomeKnown.Set();
-                    ReadyToExectue.Set(HasOutcome);
                 }   
             }
             else
@@ -408,9 +379,6 @@ namespace Vlingo.Common
                 {
                     Result = continuation.FailedOutcomeValue.Get();
                 }
-                
-                outcomeKnown.Set();
-                ReadyToExectue.Set(HasOutcome);
             }
         }
         
@@ -433,10 +401,24 @@ namespace Vlingo.Common
             if (handle)
             {
                 HasFailedValue.Set(true);
-                outcomeKnown.Set();
             }
 
             return handle;
+        }
+
+        private void CompletedWith(TResult outcome)
+        {
+            if (!TimedOut.Get())
+            {
+                Result = outcome;
+            }
+            
+            var lastRunContinuation = RunContinuations();
+
+            TrySetResult(lastRunContinuation);
+            
+            outcomeKnown.Set();
+            ReadyToExectue.Set(HasOutcome);
         }
     }
 }

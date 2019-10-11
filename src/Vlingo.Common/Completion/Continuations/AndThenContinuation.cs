@@ -35,7 +35,11 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, ICompletes<TResult>> funcCompletes)
             {
-                CompletesResult = funcCompletes(antecedent.Get().Outcome);
+                funcCompletes(antecedent.Get().Outcome).AndThenConsume(t =>
+                {
+                    Result = t;
+                    TransformedResult = t;
+                });
                 return;
             }
 
@@ -56,14 +60,14 @@ namespace Vlingo.Common.Completion.Continuations
             
             if (previousContinuation is BasicCompletes<TAntecedentResult> completes)
             {
-                if (completes.CompletesResult != null)
-                {
-                    if (completes.CompletesResult is BasicCompletes<TAntecedentResult> basicCompletes)
-                    {
-                        HasFailedValue.Set(basicCompletes.Outcome.Equals(FailedOutcomeValue.Get()));
-                    }
-                }
-                else
+//                if (completes.CompletesResult != null)
+//                {
+//                    if (completes.CompletesResult is BasicCompletes<TAntecedentResult> basicCompletes)
+//                    {
+//                        HasFailedValue.Set(basicCompletes.Outcome.Equals(FailedOutcomeValue.Get()));
+//                    }
+//                }
+//                else
                 {
                     if (completes.HasOutcome)
                     {

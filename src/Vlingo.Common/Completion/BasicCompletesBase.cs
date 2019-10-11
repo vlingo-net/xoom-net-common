@@ -23,7 +23,7 @@ namespace Vlingo.Common.Completion
         internal readonly ConcurrentQueue<CompletesContinuation> Continuations = new ConcurrentQueue<CompletesContinuation>();
         internal CompletesContinuation FailureContinuation;
         internal CompletesContinuation ExceptionContinuation;
-        internal object CompletesResult;
+        //internal object CompletesResult;
         internal object TransformedResult;
 
         protected BasicCompletes(Delegate action) : this(null, action)

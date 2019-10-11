@@ -271,19 +271,19 @@ namespace Vlingo.Common
             
             if (Action is Action<TResult> invokableActionInput)
             {
-                if (completedCompletes.CompletesResult is ICompletes<TResult> completesContinuation)
-                {
-                    if (completesContinuation.HasOutcome)
-                    {
-                        invokableActionInput(completesContinuation.Outcome);
-                        Result = completesContinuation.Outcome;
-                    }
-                    else
-                    {
-                        completesContinuation.AndThenConsume(v => invokableActionInput(v));
-                    }
-                }
-                else
+//                if (completedCompletes.CompletesResult is ICompletes<TResult> completesContinuation)
+//                {
+//                    if (completesContinuation.HasOutcome)
+//                    {
+//                        invokableActionInput(completesContinuation.Outcome);
+//                        Result = completesContinuation.Outcome;
+//                    }
+//                    else
+//                    {
+//                        completesContinuation.AndThenConsume(v => invokableActionInput(v));
+//                    }
+//                }
+//                else
                 {
                     if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
                     {
@@ -302,15 +302,15 @@ namespace Vlingo.Common
 
         private TNewResult AwaitInternal<TNewResult>()
         {
-            if (CompletesResult is ICompletes<TNewResult> completes)
-            {
-                if (completes.HasOutcome)
-                {
-                    return completes.Outcome;
-                }
-
-                return completes.Await();
-            }
+//            if (CompletesResult is ICompletes<TNewResult> completes)
+//            {
+//                if (completes.HasOutcome)
+//                {
+//                    return completes.Outcome;
+//                }
+//
+//                return completes.Await();
+//            }
 
             if (HasOutcome)
             {
@@ -396,7 +396,7 @@ namespace Vlingo.Common
             
                 if (lastCompletes is BasicCompletes completesContinuation)
                 {
-                    CompletesResult = completesContinuation.CompletesResult;
+                    //CompletesResult = completesContinuation.CompletesResult;
                     TransformedResult = completesContinuation.TransformedResult;
                     outcomeKnown.Set();
                     ReadyToExectue.Set(HasOutcome);

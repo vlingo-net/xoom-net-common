@@ -272,12 +272,6 @@ namespace Vlingo.Common
             
             if (Action is Action<TResult> invokableActionInput)
             {
-                if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
-                {
-                    invokableActionInput(andThenContinuation.Outcome);
-                    Result = andThenContinuation.Outcome;
-                }
-                
                 if (completedCompletes is BasicCompletes<TResult> basicCompletes)
                 {
                     invokableActionInput(basicCompletes.Outcome);

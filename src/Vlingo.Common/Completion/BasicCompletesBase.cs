@@ -16,8 +16,8 @@ namespace Vlingo.Common.Completion
         protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
         protected BasicCompletes Parent;
         protected readonly AtomicBoolean ReadyToExectue = new AtomicBoolean(false);
-        protected readonly AtomicBoolean Accessible = new AtomicBoolean(false);
         protected readonly AtomicReference<Exception> ExceptionValue = new AtomicReference<Exception>();
+        internal readonly AtomicBoolean Accessible = new AtomicBoolean(false);
         internal readonly AtomicBoolean HasFailedValue = new AtomicBoolean(false);
         internal readonly Scheduler Scheduler;
         internal readonly ConcurrentQueue<CompletesContinuation> Continuations = new ConcurrentQueue<CompletesContinuation>();

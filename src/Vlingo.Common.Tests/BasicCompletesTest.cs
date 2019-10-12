@@ -119,7 +119,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThen(TimeSpan.FromMilliseconds(10), -10, value => value * 2)
+                .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
                 .AndThen(x => andThenValue = x);
 
             var thread = new Thread(() =>
@@ -191,7 +191,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThen(TimeSpan.FromMilliseconds(10), -10, value => value * 2)
+                .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
                 .AndThen(x => andThenValue = 100)
                 .Otherwise<int>(failedOutcome => failedValue = failedOutcome);
 
@@ -217,7 +217,7 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new Scheduler());
 
             completes
-                .AndThen(TimeSpan.FromMilliseconds(10), -10, value => value * 2)
+                .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
                 .Otherwise<int>(failedOutcome => failedValue = failedOutcome);
 
             var thread = new Thread(() =>
@@ -585,7 +585,7 @@ namespace Vlingo.Common.Tests
             
             completes
                 .AndThenTo(v => Completes.Using<int>(scheduler))
-                .AndThenConsume(TimeSpan.FromMilliseconds(10), v => consumedResult = v);
+                .AndThenConsume(TimeSpan.FromMilliseconds(1), v => consumedResult = v);
             
             var thread = new Thread(() =>
             {

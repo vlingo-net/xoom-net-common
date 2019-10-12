@@ -16,7 +16,7 @@ namespace Vlingo.Common
         protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
         protected internal Optional<TResult> FailedOutcomeValue;
         protected TResult Result;
-        private readonly AtomicBoolean timedOut = new AtomicBoolean(false);
+        protected readonly AtomicBoolean TimedOut = new AtomicBoolean(false);
 
         public BasicCompletes(TResult outcome) : this(outcome, true)
         {
@@ -418,7 +418,7 @@ namespace Vlingo.Common
 
         private void CompletedWith(TResult outcome)
         {
-            if (!timedOut.Get())
+            if (!TimedOut.Get())
             {
                 Result = outcome;
             }

@@ -15,7 +15,6 @@ namespace Vlingo.Common.Completion.Continuations
         private readonly TimeSpan timeout;
         private ICancellable cancellable;
         private readonly AtomicBoolean executed = new AtomicBoolean(false);
-        private readonly AtomicBoolean timedOut = new AtomicBoolean(false);
 
         internal AndThenScheduledContinuation(
             Scheduler scheduler,
@@ -48,7 +47,7 @@ namespace Vlingo.Common.Completion.Continuations
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
-            if (timedOut.Get())
+            if (TimedOut.Get())
             {
                 return;
             }
@@ -61,7 +60,7 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (!executed.Get())
             {
-                timedOut.Set(true);
+                TimedOut.Set(true);
                 HasFailedValue.Set(true);
             }
         }

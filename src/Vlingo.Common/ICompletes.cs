@@ -49,7 +49,7 @@ namespace Vlingo.Common
         void Failed();
         bool HasOutcome { get; }
         TResult Outcome { get; }
-//        ICompletes2<TResult> Repeat();
+        ICompletes<TResult> Repeat();
     }
     
     public static class Completes
@@ -74,24 +74,24 @@ namespace Vlingo.Common
             return new BasicCompletes<T>(default, false);
         }
 
-//        public static ICompletes2<T> RepeatableUsing<T>(Scheduler scheduler)
-//        {
-//            return new RepeatableCompletes<T>(scheduler);
-//        }
-//
-//        public static ICompletes<T> RepeatableWithSuccess<T>(T outcome)
-//        {
-//            return new RepeatableCompletes<T>(outcome, true);
-//        }
-//
-//        public static ICompletes<T> RepeatableWithFailure<T>(T outcome)
-//        {
-//            return new RepeatableCompletes<T>(outcome, false);
-//        }
-//
-//        public static ICompletes<T> RepeatableWithFailure<T>()
-//        {
-//            return new RepeatableCompletes<T>(default(T), false);
-//        }
+        public static ICompletes<T> RepeatableUsing<T>(Scheduler scheduler)
+        {
+            return new RepeatableCompletes<T>(scheduler);
+        }
+
+        public static ICompletes<T> RepeatableWithSuccess<T>(T outcome)
+        {
+            return new RepeatableCompletes<T>(outcome, true);
+        }
+
+        public static ICompletes<T> RepeatableWithFailure<T>(T outcome)
+        {
+            return new RepeatableCompletes<T>(outcome, false);
+        }
+
+        public static ICompletes<T> RepeatableWithFailure<T>()
+        {
+            return new RepeatableCompletes<T>(default(T), false);
+        }
     }
 }

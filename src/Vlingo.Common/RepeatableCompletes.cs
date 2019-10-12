@@ -1,87 +1,87 @@
-﻿/*// Copyright (c) 2012-2019 Vaughn Vernon. All rights reserved.
+﻿// Copyright (c) 2012-2019 Vaughn Vernon. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the
 // Mozilla Public License, v. 2.0. If a copy of the MPL
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
+using System;
 using System.Collections.Concurrent;
+using Vlingo.Common.Completion.Continuations;
 
 namespace Vlingo.Common
 {
-    public class RepeatableCompletes<T> : BasicCompletesOLD<T>
+    public class RepeatableCompletes<TResult> : BasicCompletes<TResult>
     {
-        public RepeatableCompletes(Scheduler scheduler) : base(new RepeatableActiveState<T>(scheduler))
+        private readonly ConcurrentQueue<CompletesContinuation> continuationsBackup = new ConcurrentQueue<CompletesContinuation>();
+        private readonly AtomicBoolean repeating = new AtomicBoolean(false);
+        
+        public RepeatableCompletes(Scheduler scheduler) : base(scheduler)
         {
         }
 
-        public RepeatableCompletes(T outcome, bool succeeded) : base(new RepeatableActiveState<T>(), outcome, succeeded)
+        public RepeatableCompletes(TResult outcome, bool succeeded) : base(outcome, succeeded)
         {
         }
 
-        public RepeatableCompletes(T outcome) : base(new RepeatableActiveState<T>(), outcome)
+        public RepeatableCompletes(TResult outcome) : base(outcome)
         {
         }
-
-        public override ICompletesOLD<T> Repeat()
+        
+        protected RepeatableCompletes(Delegate valueSelector) : base(valueSelector) => Parent = this;
+        
+        public override ICompletes<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function)
         {
-            if (state.IsOutcomeKnown)
+            var continuationCompletes = new RepeatableAndThenContinuation<TResult, TNewResult>(Parent, this, function);
+            Parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public override ICompletes<TResult> Repeat()
+        {
+            if (OutcomeKnown.IsSet)
             {
-                state.Repeat();
+                RepeatInternal();
             }
+            
             return this;
         }
 
-        public override ICompletesOLD<TO> With<TO>(TO outcome)
+        public override ICompletes<TResult> With(TResult outcome)
         {
             base.With(outcome);
-            state.Repeat();
-            return (ICompletesOLD<TO>)this;
+            ReadyToExectue.Set(false);
+            RepeatInternal();
+            return this;   
         }
 
-        protected internal class RepeatableActiveState<TRActSt> : BasicActiveState<TRActSt>
+        internal override void BackUp(CompletesContinuation continuation)
         {
-            private readonly ConcurrentQueue<Action<TRActSt>> actionsBackup;
-            private readonly AtomicBoolean repeating;
-
-            protected internal RepeatableActiveState(Scheduler scheduler) : base(scheduler)
+            if (continuation != null)
             {
-                actionsBackup = new ConcurrentQueue<Action<TRActSt>>();
-                repeating = new AtomicBoolean(false);
+                continuationsBackup.Enqueue(continuation);
             }
+        }
 
-            protected internal RepeatableActiveState() : this(null)
+        protected override void Restore()
+        {
+            while (!continuationsBackup.IsEmpty)
             {
-            }
-
-            public override void BackUp(Action<TRActSt> action)
-            {
-                if(action != null)
+                if (continuationsBackup.TryDequeue(out var continuation))
                 {
-                    actionsBackup.Enqueue(action);
+                    Restore(continuation);
                 }
             }
+        }
 
-            public override void Repeat()
+        private void RepeatInternal()
+        {
+            if (repeating.CompareAndSet(false, true))
             {
-                if (repeating.CompareAndSet(false, true))
-                {
-                    Restore();
-                    IsOutcomeKnown = false;
-                    repeating.Set(false);
-                }
-            }
-
-            public override void Restore()
-            {
-                while (!actionsBackup.IsEmpty)
-                {
-                    if (actionsBackup.TryDequeue(out var action))
-                    {
-                        Restore(action);
-                    }
-                }
+                Restore();
+                OutcomeKnown.Reset();
+                repeating.Set(false);
             }
         }
     }
-}*/
+}

@@ -14,23 +14,23 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestThatCompletesRepeats()
         {
-//            var andThenValue = -1;
-//
-//            var completes = new RepeatableCompletes<int>(0);
-//
-//            completes
-//                .AndThen(val => val * 2)
-//                .AndThen(val => andThenValue = val)
-//                .Repeat();
-//
-//            completes.With(5);
-//            Assert.Equal(10, andThenValue);
-//
-//            completes.With(10);
-//            Assert.Equal(20, andThenValue);
-//
-//            completes.With(21);
-//            Assert.Equal(42, andThenValue);
+            var andThenValue = -1;
+
+            var completes = new RepeatableCompletes<int>(0);
+
+            completes
+                .AndThen(val => val * 2)
+                .AndThen(val => andThenValue = val)
+                .Repeat();
+
+            completes.With(5);
+            Assert.Equal(10, andThenValue);
+
+            completes.With(10);
+            Assert.Equal(20, andThenValue);
+
+            completes.With(21);
+            Assert.Equal(42, andThenValue);
         }
     }
 }

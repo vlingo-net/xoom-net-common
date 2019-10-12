@@ -6,7 +6,6 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using System.Threading;
 using Vlingo.Common.Completion;
 using Vlingo.Common.Completion.Continuations;
 
@@ -14,11 +13,10 @@ namespace Vlingo.Common
 {
     public class BasicCompletes<TResult> : BasicCompletes, ICompletes<TResult>
     {
-        private readonly ManualResetEventSlim outcomeKnown = new ManualResetEventSlim(false);
         protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
         protected internal Optional<TResult> FailedOutcomeValue;
         protected TResult Result;
-        protected readonly AtomicBoolean TimedOut = new AtomicBoolean(false);
+        private readonly AtomicBoolean timedOut = new AtomicBoolean(false);
 
         public BasicCompletes(TResult outcome) : this(outcome, true)
         {
@@ -34,7 +32,6 @@ namespace Vlingo.Common
             if (succeeded)
             {
                 CompletedWith(outcome);
-                With(outcome);
             }
             else
             {
@@ -45,7 +42,7 @@ namespace Vlingo.Common
         
         public virtual ICompletes<TO> With<TO>(TO outcome) => (ICompletes<TO>)With((TResult)(object)outcome);
 
-        public ICompletes<TResult> With(TResult outcome)
+        public virtual ICompletes<TResult> With(TResult outcome)
         {
             if (!HandleFailureInternal(Optional.Of(outcome)))
             {
@@ -76,7 +73,7 @@ namespace Vlingo.Common
             return scheduledContinuation;
         }
 
-        public ICompletes<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function)
+        public virtual ICompletes<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function)
         {
             var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, function);
             Parent.AndThenInternal(continuationCompletes);
@@ -196,7 +193,7 @@ namespace Vlingo.Common
         {
             try
             {
-                outcomeKnown.Wait();
+                OutcomeKnown.Wait();
             }
             catch
             {
@@ -210,7 +207,7 @@ namespace Vlingo.Common
         {
             try
             {
-                outcomeKnown.Wait();
+                OutcomeKnown.Wait();
             }
             catch
             {
@@ -224,7 +221,7 @@ namespace Vlingo.Common
         {
             try
             {
-                outcomeKnown.Wait(timeout);
+                OutcomeKnown.Wait(timeout);
             }
             catch
             {
@@ -238,7 +235,7 @@ namespace Vlingo.Common
         {
             try
             {
-                outcomeKnown.Wait(timeout);
+                OutcomeKnown.Wait(timeout);
             }
             catch
             {
@@ -248,7 +245,7 @@ namespace Vlingo.Common
             return AwaitInternal<TNewResult>();
         }
 
-        public bool IsCompleted => outcomeKnown.IsSet;
+        public bool IsCompleted => OutcomeKnown.IsSet;
 
         public bool HasFailed => HasFailedValue.Get();
         public void Failed()
@@ -263,6 +260,11 @@ namespace Vlingo.Common
 
         public virtual TResult Outcome => Result;
         
+        public virtual ICompletes<TResult> Repeat()
+        {
+            throw new NotImplementedException();
+        }
+
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
             if (Action is Action invokableAction)
@@ -278,6 +280,33 @@ namespace Vlingo.Common
                     Result = basicCompletes.Outcome;
                 }
             }
+        }
+
+        internal override void UpdateFailure(BasicCompletes previousContinuation)
+        {
+            if (previousContinuation is BasicCompletes<TResult> completes && completes.HasOutcome)
+            {
+                HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));
+            }
+        }
+        
+        internal override void BackUp(CompletesContinuation continuation)
+        {
+        }
+        
+        protected virtual void Restore()
+        {
+        }
+
+        protected override void RunContinuationsWhenReady()
+        {
+            var lastCompletes = RunContinuations();
+            TrySetResult(lastCompletes);
+        }
+        
+        internal void Restore(CompletesContinuation continuation)
+        {
+            Parent.AndThenInternal(continuation);
         }
 
         private TNewResult AwaitInternal<TNewResult>()
@@ -300,20 +329,6 @@ namespace Vlingo.Common
 
             return default;
         }
-        
-        internal override void UpdateFailure(BasicCompletes previousContinuation)
-        {
-            if (previousContinuation is BasicCompletes<TResult> completes && completes.HasOutcome)
-            {
-                HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));
-            }
-        }
-
-        internal override void RunContinuationsWhenReady()
-        {
-            var lastCompletes = RunContinuations();
-            TrySetResult(lastCompletes);
-        }
 
         private BasicCompletes RunContinuations()
         {
@@ -322,6 +337,7 @@ namespace Vlingo.Common
             {
                 try
                 {
+                    Parent.BackUp(continuation);
                     continuation.Completes.UpdateFailure(lastRunContinuation);
                     HasFailedValue.Set(continuation.Completes.HasFailedValue.Get());
                     if (continuation.Completes.HasFailedValue.Get())
@@ -385,7 +401,7 @@ namespace Vlingo.Common
         
         private bool HandleFailureInternal(Optional<TResult> outcome)
         {
-            if (outcomeKnown.IsSet && HasFailed)
+            if (OutcomeKnown.IsSet && HasFailed)
             {
                 return true; // already reached below
             }
@@ -402,7 +418,7 @@ namespace Vlingo.Common
 
         private void CompletedWith(TResult outcome)
         {
-            if (!TimedOut.Get())
+            if (!timedOut.Get())
             {
                 Result = outcome;
             }
@@ -411,7 +427,7 @@ namespace Vlingo.Common
 
             TrySetResult(lastRunContinuation);
             
-            outcomeKnown.Set();
+            OutcomeKnown.Set();
             ReadyToExectue.Set(HasOutcome);
         }
     }

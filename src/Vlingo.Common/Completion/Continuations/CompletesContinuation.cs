@@ -13,12 +13,6 @@ namespace Vlingo.Common.Completion.Continuations
 
         public CompletesContinuation(BasicCompletes completes) => Completes = completes;
 
-        internal void Run(BasicCompletes antecedentCompletes)
-        {
-            if (Completes.Accessible.CompareAndSet(false, true))
-            {
-                Completes.InnerInvoke(antecedentCompletes);   
-            }
-        }
+        internal void Run(BasicCompletes antecedentCompletes) => Completes.InnerInvoke(antecedentCompletes);   
     }
 }

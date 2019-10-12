@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Threading;
 using Vlingo.Common.Completion.Continuations;
 
 namespace Vlingo.Common.Completion
@@ -17,7 +18,7 @@ namespace Vlingo.Common.Completion
         protected BasicCompletes Parent;
         protected readonly AtomicBoolean ReadyToExectue = new AtomicBoolean(false);
         protected readonly AtomicReference<Exception> ExceptionValue = new AtomicReference<Exception>();
-        internal readonly AtomicBoolean Accessible = new AtomicBoolean(false);
+        internal readonly ManualResetEventSlim OutcomeKnown = new ManualResetEventSlim(false);
         internal readonly AtomicBoolean HasFailedValue = new AtomicBoolean(false);
         internal readonly Scheduler Scheduler;
         internal readonly ConcurrentQueue<CompletesContinuation> Continuations = new ConcurrentQueue<CompletesContinuation>();
@@ -39,22 +40,18 @@ namespace Vlingo.Common.Completion
         
         internal abstract void UpdateFailure(BasicCompletes previousContinuation);
 
-        internal abstract void RunContinuationsWhenReady();
+        internal abstract void BackUp(CompletesContinuation continuation);
 
         internal Exception Exception => ExceptionValue.Get();
-
-        private void RegisterContinuation(CompletesContinuation continuationCompletes) =>
-            Continuations.Enqueue(continuationCompletes);
-        
-        private void RegisterFailureContinuation(CompletesContinuation continuationCompletes) =>
-            FailureContinuation = continuationCompletes;
-
-        private void RegisterExceptionContinuation(CompletesContinuation continuationCompletes) =>
-            ExceptionContinuation = continuationCompletes;
 
         internal void AndThenInternal(BasicCompletes continuationCompletes)
         {
             var continuation = new CompletesContinuation(continuationCompletes);
+            AndThenInternal(continuation);
+        }
+        
+        internal void AndThenInternal(CompletesContinuation continuation)
+        {
             RegisterContinuation(continuation);
             if (ReadyToExectue.Get())
             {
@@ -73,5 +70,16 @@ namespace Vlingo.Common.Completion
             var continuation = new CompletesContinuation(continuationCompletes);
             RegisterExceptionContinuation(continuation);
         }
+        
+        protected abstract void RunContinuationsWhenReady();
+        
+        private void RegisterContinuation(CompletesContinuation continuationCompletes) =>
+            Continuations.Enqueue(continuationCompletes);
+        
+        private void RegisterFailureContinuation(CompletesContinuation continuationCompletes) =>
+            FailureContinuation = continuationCompletes;
+
+        private void RegisterExceptionContinuation(CompletesContinuation continuationCompletes) =>
+            ExceptionContinuation = continuationCompletes;
     }
 }

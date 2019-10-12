@@ -6,651 +6,429 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using System.Collections.Concurrent;
-using System.Threading;
+using Vlingo.Common.Completion;
+using Vlingo.Common.Completion.Continuations;
 
 namespace Vlingo.Common
 {
-    public class BasicCompletes<T> : ICompletes<T>
+    public class BasicCompletes<TResult> : BasicCompletes, ICompletes<TResult>
     {
-        protected readonly IActiveState<T> state;
+        protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
+        protected internal Optional<TResult> FailedOutcomeValue;
+        protected TResult Result;
+        private readonly AtomicBoolean timedOut = new AtomicBoolean(false);
 
-        public BasicCompletes(Scheduler scheduler) : this(new BasicActiveState<T>(scheduler))
+        public BasicCompletes(TResult outcome) : this(outcome, true)
         {
         }
 
-        public BasicCompletes(T outcome, bool succeeded) : this(new BasicActiveState<T>(), outcome, succeeded)
-        {
-        }
+        internal BasicCompletes(Delegate valueSelector) : base(valueSelector) => Parent = this;
 
-        public BasicCompletes(T outcome) : this(new BasicActiveState<T>(), outcome)
-        {
-        }
+        public BasicCompletes(Scheduler scheduler) : base(scheduler, default) => Parent = this;
 
-        protected internal BasicCompletes(IActiveState<T> state)
+        public BasicCompletes(TResult outcome, bool succeeded) : base(default)
         {
-            this.state = state;
-        }
-
-        protected internal BasicCompletes(IActiveState<T> state, T outcome, bool succeeded)
-        {
-            this.state = state;
+            Parent = this;
             if (succeeded)
             {
-                this.state.CompletedWith(outcome);
+                CompletedWith(outcome);
             }
             else
             {
-                this.state.FailedValue(Optional.Of(outcome));
-                this.state.Failed();
+                FailedOutcomeValue = Optional.Of(outcome);
+                Failed();
             }
         }
+        
+        public virtual ICompletes<TO> With<TO>(TO outcome) => (ICompletes<TO>)With((TResult)(object)outcome);
 
-        protected internal BasicCompletes(IActiveState<T> state, T outcome)
+        public virtual ICompletes<TResult> With(TResult outcome)
         {
-            this.state = state;
-            this.state.Outcome(outcome);
-        }
+            if (!HandleFailureInternal(Optional.Of(outcome)))
+            {
+                CompletedWith(outcome);
+            }
 
-        private ICompletes<TO> AndThenInternal<TO>(TimeSpan timeout, Optional<TO> failedOutcomeValue, Func<T, TO> function)
-        {
-            state.FailedValue(failedOutcomeValue);
-            state.RegisterWithExecution(Action<T>.With(function), timeout, state);
-            return (ICompletes<TO>)this;
-        }
-
-        public virtual ICompletes<TO> AndThen<TO>(TimeSpan timeout, TO failedOutcomeValue, Func<T, TO> function)
-            => AndThenInternal(timeout, Optional.Of(failedOutcomeValue), function);
-
-        public virtual ICompletes<TO> AndThen<TO>(TO failedOutcomeValue, Func<T, TO> function)
-            => AndThenInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), function);
-
-        public virtual ICompletes<TO> AndThen<TO>(TimeSpan timeout, Func<T, TO> function)
-            => AndThenInternal(timeout, Optional.Empty<TO>(), function);
-
-        public virtual ICompletes<TO> AndThen<TO>(Func<T, TO> function)
-            => AndThenInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<TO>(), function);
-
-        private ICompletes<T> AndThenConsumeInternal(TimeSpan timeout, Optional<T> failedOutcomeValue, System.Action<T> consumer)
-        {
-            state.FailedValue(failedOutcomeValue);
-            state.RegisterWithExecution(Action<T>.With(consumer), timeout, state);
             return this;
         }
 
-        public virtual ICompletes<T> AndThenConsume(TimeSpan timeout, T failedOutcomeValue, System.Action<T> consumer)
-            => AndThenConsumeInternal(timeout, Optional.Of(failedOutcomeValue), consumer);
-
-        public virtual ICompletes<T> AndThenConsume(TimeSpan timeout, System.Action<T> consumer)
-            => AndThenConsumeInternal(timeout, Optional.Empty<T>(), consumer);
-
-        public virtual ICompletes<T> AndThenConsume(T failedOutcomeValue, System.Action<T> consumer)
-            => AndThenConsumeInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), consumer);
-
-        public virtual ICompletes<T> AndThenConsume(System.Action<T> consumer)
-            => AndThenConsumeInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<T>(), consumer);
-
-        private TO AndThenToInternal<TF, TO>(TimeSpan timeout, Optional<TF> failedOutcomeValue, Func<T, TO> function)
+        public ICompletes<TNewResult> AndThen<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            var nestedCompletes = new BasicCompletes<TO>(state.Scheduler);
-            nestedCompletes.state.FailedValue(failedOutcomeValue);
-            nestedCompletes.state.FailureAction((BasicCompletes<TO>.Action<TO>)(object)state.FailureActionFunction());
-            state.RegisterWithExecution((Action<T>)(object)BasicCompletes<TO>.Action<TO>.With(function, nestedCompletes), timeout, state);
-            return (TO)(object)nestedCompletes;
+            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, Optional.Of(failedOutcomeValue), function);
+            Parent.AndThenInternal(scheduledContinuation);
+            return scheduledContinuation;
         }
 
-        public virtual TO AndThenTo<TF, TO>(TimeSpan timeout, TF failedOutcomeValue, Func<T, TO> function)
-            => AndThenToInternal(timeout, Optional.Of(failedOutcomeValue), function);
-
-        public virtual TO AndThenTo<TF, TO>(TF failedOutcomeValue, Func<T, TO> function)
-            => AndThenToInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Of(failedOutcomeValue), function);
-
-        public virtual TO AndThenTo<TO>(TimeSpan timeout, Func<T, TO> function)
-            => AndThenToInternal(timeout, Optional.Empty<object>(), function);
-
-        public virtual TO AndThenTo<TO>(Func<T, TO> function)
-            => AndThenToInternal(TimeSpan.FromMilliseconds(Timeout.Infinite), Optional.Empty<object>(), function);
-
-        public virtual ICompletes<T> Otherwise(Func<T, T> function)
+        public ICompletes<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            state.FailureAction(Action<T>.With(function));
-            return this;
+            var scheduledContinuation = new AndThenContinuation<TResult, TNewResult>(Parent, this, Optional.Of(failedOutcomeValue), function);
+            Parent.AndThenInternal(scheduledContinuation);
+            return scheduledContinuation;
         }
 
-        public virtual ICompletes<T> OtherwiseConsume(System.Action<T> consumer)
+        public ICompletes<TNewResult> AndThen<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function)
         {
-            state.FailureAction(Action<T>.With(consumer));
-            return this;
+            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, function);
+            Parent.AndThenInternal(scheduledContinuation);
+            return scheduledContinuation;
         }
 
-        public virtual ICompletes<T> RecoverFrom(Func<Exception, T> function)
+        public virtual ICompletes<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function)
         {
-            state.ExceptionAction(function);
-            return this;
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, function);
+            Parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
         }
 
-        public virtual TO Await<TO>()
+        public ICompletes<TResult> AndThenConsume(TimeSpan timeout, TResult failedOutcomeValue, Action<TResult> consumer)
         {
-            state.Await();
-            return (TO)(object)Outcome;
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(Parent.Scheduler, Parent, this, timeout, Optional.Of(failedOutcomeValue), consumer);
+            Parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
         }
 
-        public virtual TO Await<TO>(TimeSpan timeout)
+        public ICompletes<TResult> AndThenConsume(TResult failedOutcomeValue, Action<TResult> consumer)
         {
-            if (state.Await(timeout))
+            var continuationCompletes = new AndThenContinuation<TResult, TResult>(Parent, this, Optional.Of(failedOutcomeValue), consumer);
+            Parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public ICompletes<TResult> AndThenConsume(TimeSpan timeout, Action<TResult> consumer)
+        {
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(Parent.Scheduler, Parent, this, timeout, consumer);
+            Parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public ICompletes<TResult> AndThenConsume(Action<TResult> consumer)
+        {
+            var continuationCompletes = new AndThenContinuation<TResult, TResult>(Parent, this, consumer);
+            Parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
+        {
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, Optional.Of(failedOutcomeValue), function);
+            Parent.AndThenInternal(continuationCompletes);
+            return default;
+        }
+
+        public ICompletes<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, ICompletes<TNewResult>> function)
+        {
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, Optional.Of(failedOutcomeValue), function);
+            Parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public TNewResult AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
+        {
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, Optional.Of(failedOutcomeValue), function);
+            Parent.AndThenInternal(continuationCompletes);
+            return default;
+        }
+        
+        public ICompletes<TNewResult> AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, ICompletes<TNewResult>> function)
+        {
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, Optional.Of(failedOutcomeValue), function);
+            Parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function)
+        {
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, function);
+            Parent.AndThenInternal(continuationCompletes);
+            return default;
+        }
+
+        public ICompletes<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, ICompletes<TNewResult>> function)
+        {
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, function);
+            Parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function)
+        {
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, function);
+            Parent.AndThenInternal(continuationCompletes);
+            return default;
+        }
+
+        public ICompletes<TNewResult> AndThenTo<TNewResult>(Func<TResult, ICompletes<TNewResult>> function)
+        {
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, function);
+            Parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public ICompletes<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TFailedOutcome> function)
+        {
+            var continuationCompletes = new OtherwiseContinuation<TFailedOutcome, TFailedOutcome>(Parent, (BasicCompletes<TFailedOutcome>)(object)this, function);
+            Parent.OtherwiseInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public ICompletes<TResult> OtherwiseConsume(Action<TResult> consumer)
+        {
+            var continuationCompletes = new OtherwiseContinuation<TResult, TResult>(Parent, this, consumer);
+            Parent.OtherwiseInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public ICompletes<TResult> RecoverFrom(Func<Exception, TResult> function)
+        {
+            if (HasException.Get())
             {
-                return (TO)(object)Outcome;
+                function(ExceptionValue.Get());
+            }
+            var continuationCompletes = new RecoverContinuation<TResult>(this, function);
+            Parent.RecoverInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
+        public TResult Await()
+        {
+            try
+            {
+                OutcomeKnown.Wait();
+            }
+            catch
+            {
+                // should not blow but return actual value
             }
 
-            return default(TO);
+            return AwaitInternal<TResult>();
         }
-
-        public virtual bool IsCompleted => state.IsOutcomeKnown;
-
-        public virtual bool HasFailed => state.HasFailed;
-
-        public virtual void Failed()
+        
+        public TNewResult Await<TNewResult>()
         {
-            With(state.FailedValue());
-        }
-
-        public virtual bool HasOutcome => state.HasOutcome;
-
-        public virtual T Outcome => state.Outcome<T>();
-
-        public virtual ICompletes<T> Repeat()
-        {
-            throw new NotSupportedException();
-        }
-
-        public virtual ICompletes<TO> With<TO>(TO outcome)
-        {
-            if (!state.HandleFailure(Optional.Of((T)(object)outcome)))
+            try
             {
-                state.CompletedWith((T)(object)outcome);
+                OutcomeKnown.Wait();
+            }
+            catch
+            {
+                // should not blow but return actual value
             }
 
-            return (ICompletes<TO>)this;
+            return AwaitInternal<TNewResult>();
         }
 
-        protected internal class Action<TAct>
+        public TResult Await(TimeSpan timeout)
         {
-            protected internal readonly TAct defaultValue;
-            protected internal readonly bool hasDefaultValue;
-            private readonly object function;
-            private readonly ICompletes<TAct> nestedCompletes;
-
-            protected internal static Action<TAct> With(object function) => new Action<TAct>(function);
-
-            protected internal static Action<TAct> With(object function, ICompletes<TAct> nestedCompletes)
-                => new Action<TAct>(function, nestedCompletes);
-
-            protected internal static Action<TAct> With(object function, TAct defaultValue, ICompletes<TAct> nestedCompletes)
-                => new Action<TAct>(function, defaultValue, nestedCompletes);
-
-            Action(object function)
+            try
             {
-                this.function = function;
-                this.defaultValue = default(TAct);
-                this.hasDefaultValue = false;
-                this.nestedCompletes = null;
+                OutcomeKnown.Wait(timeout);
+            }
+            catch
+            {
+                // should not blow but return actual value
             }
 
-            Action(object function, TAct defaultValue)
-            {
-                this.function = function;
-                this.defaultValue = defaultValue;
-                this.hasDefaultValue = true;
-                this.nestedCompletes = null;
-            }
-
-            Action(object function, ICompletes<TAct> nestedCompletes)
-            {
-                this.function = function;
-                this.defaultValue = default(TAct);
-                this.hasDefaultValue = false;
-                this.nestedCompletes = nestedCompletes;
-            }
-
-            Action(object function, TAct defaultValue, ICompletes<TAct> nestedCompletes)
-            {
-                this.function = function;
-                this.defaultValue = defaultValue;
-                this.hasDefaultValue = true;
-                this.nestedCompletes = nestedCompletes;
-            }
-
-            public virtual F Function<F>() => (F)function;
-
-            public virtual System.Action<TAct> AsConsumer() => (System.Action<TAct>)function;
-
-            public virtual bool IsConsumer => (function is System.Action<TAct>);
-
-            public virtual Func<TAct, TAct> AsFunction() => (Func<TAct, TAct>)function;
-
-            public virtual bool IsFunction => (function is Func<TAct, TAct>);
-
-            public virtual bool HasNestedCompletes => nestedCompletes != null;
-
-            public virtual ICompletes<TAct> NestedCompletes => nestedCompletes;
+            return AwaitInternal<TResult>();
         }
 
-        protected internal interface IActiveState<TActSt>
+        public TNewResult Await<TNewResult>(TimeSpan timeout)
         {
-            void Await();
-            bool Await(TimeSpan timeout);
-            void BackUp(Action<TActSt> action);
-            void CancelTimer();
-            void CompletedWith(TActSt outcome);
-            bool ExecuteFailureAction();
-            bool HasFailed { get; }
-            void Failed();
-            void FailedValue<F>(Optional<F> failedOutcomeValue);
-            TActSt FailedValue();
-            void FailureAction(Action<TActSt> action);
-            Action<TActSt> FailureActionFunction();
-            bool HandleFailure(Optional<TActSt> outcome);
-            void ExceptionAction(Func<Exception, TActSt> function);
-            void HandleException();
-            void HandleException(Exception e);
-            bool HasException { get; }
-            bool HasOutcome { get; }
-            void Outcome(TActSt outcome);
-            O Outcome<O>();
-            bool IsOutcomeKnown { get; set; }
-            bool OutcomeMustDefault { get; }
-            void RegisterWithExecution(Action<TActSt> action, TimeSpan timeout, IActiveState<TActSt> state);
-            bool IsRepeatable { get; }
-            void Repeat();
-            void Restore();
-            void Restore(Action<TActSt> action);
-            Scheduler Scheduler { get; }
-            void StartTimer(TimeSpan timeout);
-        }
-
-        private class Executables<TExec>
-        {
-            private AtomicBoolean accessible;
-            private ConcurrentQueue<Action<TExec>> actions;
-            private AtomicBoolean readyToExecute;
-
-            internal Executables()
+            try
             {
-                accessible = new AtomicBoolean(false);
-                actions = new ConcurrentQueue<Action<TExec>>();
-                readyToExecute = new AtomicBoolean(false);
+                OutcomeKnown.Wait(timeout);
+            }
+            catch
+            {
+                // should not blow but return actual value
             }
 
-            internal int Count => actions.Count;
+            return AwaitInternal<TNewResult>();
+        }
 
-            internal void Execute(IActiveState<TExec> state)
+        public bool IsCompleted => OutcomeKnown.IsSet;
+
+        public bool HasFailed => HasFailedValue.Get();
+        public void Failed()
+        {
+            if (!HandleFailureInternal(FailedOutcomeValue))
             {
-                while (true)
+                With(FailedOutcomeValue.Get());   
+            }
+        }
+
+        public bool HasOutcome => Result != null && !Result.Equals(default(TResult));
+
+        public virtual TResult Outcome => Result;
+        
+        public virtual ICompletes<TResult> Repeat()
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override void InnerInvoke(BasicCompletes completedCompletes)
+        {
+            if (Action is Action invokableAction)
+            {
+                invokableAction();
+            }
+            
+            if (Action is Action<TResult> invokableActionInput)
+            {
+                if (completedCompletes is BasicCompletes<TResult> basicCompletes)
                 {
-                    if(accessible.CompareAndSet(false, true))
-                    {
-                        readyToExecute.Set(true);
-                        ExecuteActions(state);
-                        accessible.Set(false);
-                        break;
-                    }
-                }
-            }
-
-            internal bool IsReadyToExecute => readyToExecute.Get();
-
-            internal void RegisterWithExecution(Action<TExec> action, TimeSpan timeout, IActiveState<TExec> state)
-            {
-                while (true)
-                {
-                    if(accessible.CompareAndSet(false, true))
-                    {
-                        actions.Enqueue(action);
-                        if (IsReadyToExecute)
-                        {
-                            ExecuteActions(state);
-                        }
-                        else
-                        {
-                            state.StartTimer(timeout);
-                        }
-                        accessible.Set(false);
-                        break;
-                    }
-                }
-            }
-
-            internal void Reset()
-            {
-                readyToExecute.Set(false);
-                while (!actions.IsEmpty)
-                {
-                    actions.TryDequeue(out _);
-                }
-            }
-
-            internal void Restore(Action<TExec> action)
-            {
-                actions.Enqueue(action);
-            }
-
-            private bool HasActions => !actions.IsEmpty;
-
-            private void ExecuteActions(IActiveState<TExec> state)
-            {
-                while (HasActions)
-                {
-                    if(state.HasOutcome && state.HasFailed)
-                    {
-                        state.ExecuteFailureAction();
-                        return;
-                    }
-                    else if(state.HasException)
-                    {
-                        state.HandleException();
-                        return;
-                    }
-
-                    if(!actions.TryDequeue(out var action))
-                    {
-                        continue;
-                    }
-                    state.BackUp(action);
-
-                    if (action.hasDefaultValue && state.OutcomeMustDefault)
-                    {
-                        state.Outcome(action.defaultValue);
-                    }
-                    else
-                    {
-                        try
-                        {
-                            if (action.IsConsumer)
-                            {
-                                action.AsConsumer().Invoke(state.Outcome<TExec>());
-                            }
-                            else if (action.IsFunction)
-                            {
-                                if (action.HasNestedCompletes)
-                                {
-                                    ((ICompletes<TExec>)action.AsFunction().Invoke(state.Outcome<TExec>()))
-                                        .AndThenConsume(value => action.NestedCompletes.With(value));
-                                }
-                                else
-                                {
-                                    state.Outcome(action.AsFunction().Invoke(state.Outcome<TExec>()));
-                                }
-                            }
-                        }
-                        catch(Exception ex)
-                        {
-                            state.HandleException(ex);
-                            break;
-                        }
-                    }
+                    invokableActionInput(basicCompletes.Outcome);
+                    Result = basicCompletes.Outcome;
                 }
             }
         }
 
-        protected internal class BasicActiveState<TBActSt> : IActiveState<TBActSt>, IScheduled<object>
+        internal override void UpdateFailure(BasicCompletes previousContinuation)
         {
-            private ICancellable cancellable;
-            private readonly Executables<TBActSt> executables;
-            private readonly AtomicBoolean failed;
-            private Optional<TBActSt> failedOutcomeValue;
-            private Action<TBActSt> failureAction;
-            private readonly AtomicReference<Exception> exception;
-            private Func<Exception, TBActSt> exceptionAction;
-            private readonly AtomicReference<object> outcome;
-            private ManualResetEventSlim outcomeKnown;
-            private readonly Scheduler scheduler;
-            private readonly AtomicBoolean timedOut;
-
-            protected internal BasicActiveState(Scheduler scheduler)
+            if (previousContinuation is BasicCompletes<TResult> completes && completes.HasOutcome)
             {
-                this.scheduler = scheduler;
-                executables = new Executables<TBActSt>();
-                failed = new AtomicBoolean(false);
-                failedOutcomeValue = Optional.Empty<TBActSt>();
-                exception = new AtomicReference<Exception>(null);
-                outcome = new AtomicReference<object>(null);
-                outcomeKnown = new ManualResetEventSlim(false);
-                timedOut = new AtomicBoolean(false);
+                HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));
             }
+        }
+        
+        internal override void BackUp(CompletesContinuation continuation)
+        {
+        }
+        
+        protected virtual void Restore()
+        {
+        }
 
-            protected internal BasicActiveState() : this(null)
-            {
-            }
+        protected override void RunContinuationsWhenReady()
+        {
+            var lastCompletes = RunContinuations();
+            TrySetResult(lastCompletes);
+        }
+        
+        internal void Restore(CompletesContinuation continuation)
+        {
+            Parent.AndThenInternal(continuation);
+        }
 
-            public void Await()
+        private TNewResult AwaitInternal<TNewResult>()
+        {
+            if (HasOutcome)
             {
                 try
                 {
-                    outcomeKnown.Wait();
-                }
-                catch { }
-            }
-
-            public bool Await(TimeSpan timeout)
-            {
-                try
-                {
-                    return outcomeKnown.Wait(timeout);
+                    if (TransformedResult != null)
+                    {
+                        return (TNewResult) Convert.ChangeType(TransformedResult, typeof(TNewResult));
+                    }
+                    return (TNewResult) Convert.ChangeType(Result, typeof(TNewResult));
                 }
                 catch
                 {
-                    return false;
+                    // should not blow but return actual value
                 }
             }
 
-            public virtual void BackUp(Action<TBActSt> action)
-            {
-                // unused; see RepeatableCompletes
-            }
+            return default;
+        }
 
-            public void CancelTimer()
+        private BasicCompletes RunContinuations()
+        {
+            BasicCompletes lastRunContinuation = this;
+            while (Continuations.TryDequeue(out var continuation))
             {
-                if (cancellable != null)
+                try
                 {
-                    cancellable.Cancel();
-                    cancellable = null;
-                }
-            }
-
-            public void CompletedWith(TBActSt outcome)
-            {
-                CancelTimer();
-                if (!timedOut.Get())
-                {
-                    this.outcome.Set(outcome);
-                }
-
-                executables.Execute(this);
-                IsOutcomeKnown = true;
-            }
-
-            public bool ExecuteFailureAction()
-            {
-                if(failureAction != null)
-                {
-                    var executeFailureAction = failureAction;
-                    failureAction = null;
-                    failed.Set(true);
-
-                    if (executeFailureAction.IsConsumer)
+                    Parent.BackUp(continuation);
+                    continuation.Completes.UpdateFailure(lastRunContinuation);
+                    HasFailedValue.Set(continuation.Completes.HasFailedValue.Get());
+                    if (continuation.Completes.HasFailedValue.Get())
                     {
-                        executeFailureAction.AsConsumer().Invoke((TBActSt)outcome.Get());
-                    }
-                    else
-                    {
-                        outcome.Set(executeFailureAction.AsFunction().Invoke((TBActSt)outcome.Get()));
+                        if (FailureContinuation != null)
+                        {
+                            FailureContinuation.Run(continuation.Completes);
+                            return FailureContinuation.Completes;   
+                        }
+
+                        return continuation.Completes;
                     }
 
-                    return true;
+                    continuation.Run(lastRunContinuation);
+                    lastRunContinuation = continuation.Completes;
                 }
-
-                return false;
-            }
-
-            public virtual bool HasFailed => failed.Get();
-
-            public virtual void Failed()
-            {
-                HandleFailure(failedOutcomeValue);
-            }
-
-            public virtual void FailedValue<F>(Optional<F> failedOutcomeValue)
-            {
-                if (failedOutcomeValue.IsPresent)
+                catch (InvalidCastException)
                 {
-                    this.failedOutcomeValue = failedOutcomeValue.Map(x => (TBActSt)(object)x);
+                    throw; // raised by failure continuation
                 }
-            }
-
-            public virtual TBActSt FailedValue() => failedOutcomeValue.Get();
-
-            public virtual void FailureAction(Action<TBActSt> action)
-            {
-                failureAction = action;
-                if (IsOutcomeKnown && HasFailed)
+                catch (Exception e)
                 {
-                    ExecuteFailureAction();
+                    HandleException(e);
+                    ExceptionContinuation?.Run(this);
+                    break;
                 }
             }
 
-            public Action<TBActSt> FailureActionFunction() => failureAction;
+            return lastRunContinuation;
+        } 
 
-            public bool HandleFailure(Optional<TBActSt> outcome)
+        private void TrySetResult(BasicCompletes lastCompletes)
+        {
+            if (!lastCompletes.HasFailedValue.Get())
             {
-                if (IsOutcomeKnown && HasFailed)
+                if (lastCompletes is BasicCompletes<TResult> continuation && continuation.HasOutcome)
                 {
-                    return true; // already reached below
+                    Result = continuation.Outcome;
                 }
-
-                var handle = false;
-                if (outcome.Equals(failedOutcomeValue))
+            
+                if (lastCompletes is BasicCompletes completesContinuation)
                 {
-                    handle = true;
-                }
-
-                if (handle)
+                    TransformedResult = completesContinuation.TransformedResult;
+                }   
+            }
+            else
+            {
+                if (lastCompletes is BasicCompletes<TResult> continuation && Continuations.IsEmpty)
                 {
-                    failed.Set(true);
-                    executables.Reset();
-                    this.outcome.Set(failedOutcomeValue.Get());
-                    IsOutcomeKnown = true;
-                    ExecuteFailureAction();
-                }
-
-                return handle;
-            }
-
-            public virtual void ExceptionAction(Func<Exception, TBActSt> function)
-            {
-                exceptionAction = function;
-                HandleException();
-            }
-
-            public virtual void HandleException()
-            {
-                if (HasException)
-                {
-                    HandleException(exception.Get());
+                    Result = continuation.FailedOutcomeValue.Get();
                 }
             }
-
-            public virtual void HandleException(Exception e)
+        }
+        
+        private void HandleException(Exception e)
+        {
+            ExceptionValue.Set(e);
+            HasException.Set(true);
+            HasFailedValue.Set(true);
+        }
+        
+        private bool HandleFailureInternal(Optional<TResult> outcome)
+        {
+            if (OutcomeKnown.IsSet && HasFailed)
             {
-                exception.Set(e);
-                if (exceptionAction != null)
-                {
-                    failed.Set(true);
-                    executables.Reset();
-                    outcome.Set(exceptionAction.Invoke(e));
-                    IsOutcomeKnown = true;
-                }
+                return true; // already reached below
             }
 
-            public virtual bool HasException => exception.Get() != null;
+            bool handle = outcome.Equals(FailedOutcomeValue);
 
-            public virtual bool HasOutcome => outcome.Get() != null;
-
-            public virtual void Outcome(TBActSt outcome)
+            if (handle)
             {
-                this.outcome.Set(outcome);
+                HasFailedValue.Set(true);
             }
 
-            public virtual O Outcome<O>()
+            return handle;
+        }
+
+        private void CompletedWith(TResult outcome)
+        {
+            if (!timedOut.Get())
             {
-                return (O)(outcome.Get() ?? default(O));
+                Result = outcome;
             }
+            
+            var lastRunContinuation = RunContinuations();
 
-            public bool IsOutcomeKnown
-            {
-                get
-                {
-                    return outcomeKnown.IsSet;
-                }
-                set
-                {
-                    if (value)
-                    {
-                        outcomeKnown.Set();
-                    }
-                    else
-                    {
-                        outcomeKnown.Reset();
-                    }
-                }
-            }
-
-            public bool OutcomeMustDefault => outcome.Get() == null;
-
-            public void RegisterWithExecution(Action<TBActSt> action, TimeSpan timeout, IActiveState<TBActSt> state)
-                => executables.RegisterWithExecution(action, timeout, state);
-
-            public virtual bool IsRepeatable => false;
-
-            public virtual void Repeat()
-            {
-                throw new NotSupportedException();
-            }
-
-            public virtual void Restore()
-            {
-                // unused; see RepeatableCompletes
-            }
-
-            public void Restore(Action<TBActSt> action) => executables.Restore(action);
-
-            public virtual Scheduler Scheduler => scheduler;
-
-            public virtual void StartTimer(TimeSpan timeout)
-            {
-                if (timeout.TotalMilliseconds > 0 && scheduler != null)
-                {
-                    // 2ms delayBefore prevents timeout until after return from here
-                    cancellable = scheduler.ScheduleOnce(this, null, TimeSpan.FromMilliseconds(2), timeout);
-                }
-            }
-
-            public void IntervalSignal(IScheduled<object> scheduled, object data)
-            {
-                if(IsOutcomeKnown || executables.IsReadyToExecute)
-                {
-                    // do nothing
-                }
-                else
-                {
-                    timedOut.Set(true);
-                    Failed();
-                }
-            }
-
-            public override string ToString()
-            {
-                return "BasicActiveState[actions=" + executables.Count + "]";
-            }
+            TrySetResult(lastRunContinuation);
+            
+            OutcomeKnown.Set();
+            ReadyToExectue.Set(HasOutcome);
         }
     }
 }

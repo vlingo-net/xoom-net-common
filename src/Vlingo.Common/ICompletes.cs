@@ -6,6 +6,7 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+using Vlingo.Common.Completion;
 
 namespace Vlingo.Common
 {
@@ -13,38 +14,44 @@ namespace Vlingo.Common
     {
         ICompletes<TO> With<TO>(TO outcome);
     }
-
-    public interface ICompletes<T> : ICompletes
+    
+    public interface ICompletes<TResult> : ICompletes
     {
-        ICompletes<TO> AndThen<TO>(TimeSpan timeout, TO failedOutcomeValue, Func<T, TO> function);
-        ICompletes<TO> AndThen<TO>(TO failedOutcomeValue, Func<T, TO> function);
-        ICompletes<TO> AndThen<TO>(TimeSpan timeout, Func<T, TO> function);
-        ICompletes<TO> AndThen<TO>(Func<T, TO> function);
+        ICompletes<TResult> With(TResult outcome);
+        ICompletes<TNewResult> AndThen<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
+        ICompletes<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
+        ICompletes<TNewResult> AndThen<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function);
+        ICompletes<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function);
 
-        ICompletes<T> AndThenConsume(TimeSpan timeout, T failedOutcomeValue, Action<T> consumer);
-        ICompletes<T> AndThenConsume(T failedOutcomeValue, Action<T> consumer);
-        ICompletes<T> AndThenConsume(TimeSpan timeout, Action<T> consumer);
-        ICompletes<T> AndThenConsume(Action<T> consumer);
+        ICompletes<TResult> AndThenConsume(TimeSpan timeout, TResult failedOutcomeValue, Action<TResult> consumer);
+        ICompletes<TResult> AndThenConsume(TResult failedOutcomeValue, Action<TResult> consumer);
+        ICompletes<TResult> AndThenConsume(TimeSpan timeout, Action<TResult> consumer);
+        ICompletes<TResult> AndThenConsume(Action<TResult> consumer);
 
-        TO AndThenTo<TF, TO>(TimeSpan timeout, TF failedOutcomeValue, Func<T, TO> function);
-        TO AndThenTo<TF, TO>(TF failedOutcomeValue, Func<T, TO> function);
-        TO AndThenTo<TO>(TimeSpan timeout, Func<T, TO> function);
-        TO AndThenTo<TO>(Func<T, TO> function);
+        TNewResult AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
+        ICompletes<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, ICompletes<TNewResult>> function);
+        TNewResult AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
+        ICompletes<TNewResult> AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, ICompletes<TNewResult>> function);
+        TNewResult AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function);
+        ICompletes<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, ICompletes<TNewResult>> function);
+        TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function);
+        ICompletes<TNewResult> AndThenTo<TNewResult>(Func<TResult, ICompletes<TNewResult>> function);
 
-        ICompletes<T> Otherwise(Func<T, T> function);
-        ICompletes<T> OtherwiseConsume(Action<T> consumer);
-        ICompletes<T> RecoverFrom(Func<Exception, T> function);
-
-        TO Await<TO>();
-        TO Await<TO>(TimeSpan timeout);
+        ICompletes<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TFailedOutcome> function);
+        ICompletes<TResult> OtherwiseConsume(Action<TResult> consumer);
+        ICompletes<TResult> RecoverFrom(Func<Exception, TResult> function);
+        TResult Await();
+        TNewResult Await<TNewResult>();
+        TResult Await(TimeSpan timeout);
+        TNewResult Await<TNewResult>(TimeSpan timeout);
         bool IsCompleted { get; }
         bool HasFailed { get; }
         void Failed();
         bool HasOutcome { get; }
-        T Outcome { get; }
-        ICompletes<T> Repeat();
+        TResult Outcome { get; }
+        ICompletes<TResult> Repeat();
     }
-
+    
     public static class Completes
     {
         public static ICompletes<T> Using<T>(Scheduler scheduler)
@@ -64,7 +71,7 @@ namespace Vlingo.Common
 
         public static ICompletes<T> WithFailure<T>()
         {
-            return new BasicCompletes<T>(default(T), false);
+            return new BasicCompletes<T>(default, false);
         }
 
         public static ICompletes<T> RepeatableUsing<T>(Scheduler scheduler)

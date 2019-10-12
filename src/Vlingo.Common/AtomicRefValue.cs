@@ -9,27 +9,27 @@ using System.Threading;
 
 namespace Vlingo.Common
 {
-    public class AtomicReference<T> where T : class
+    public class AtomicRefValue<T>
     {
-        private T value;
-        private readonly T defaultValue;
+        private object value;
+        private readonly object defaultValue;
 
-        public AtomicReference(T initialValue)
+        public AtomicRefValue(T initialValue)
         {
             value = initialValue;
             defaultValue = default(T);
         }
 
-        public AtomicReference()
+        public AtomicRefValue()
             : this(default(T))
         {
         }
 
-        public T Get() => Interlocked.CompareExchange(ref value, defaultValue, defaultValue);
+        public T Get() => (T)Interlocked.CompareExchange(ref value, defaultValue, defaultValue);
 
-        public T Set(T newValue) => Interlocked.Exchange(ref value, newValue);
+        public T Set(T newValue) => (T)Interlocked.Exchange(ref value, newValue);
 
         public T CompareAndSet(T expected, T update)
-            => Interlocked.CompareExchange(ref value, update, expected);
+            => (T)Interlocked.CompareExchange(ref value, update, expected);
     }
 }

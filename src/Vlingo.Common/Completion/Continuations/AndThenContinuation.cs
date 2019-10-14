@@ -37,7 +37,7 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 funcCompletes(antecedent.Get().Outcome).AndThenConsume(t =>
                 {
-                    Result = t;
+                    OutcomeValue.Set(t);
                     TransformedResult = t;
                 });
                 return;
@@ -45,8 +45,8 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, TResult> function)
             {
-                Result = function(antecedent.Get().Outcome);
-                TransformedResult = Result;
+                OutcomeValue.Set(function(antecedent.Get().Outcome));
+                TransformedResult = OutcomeValue.Get();
             }
         }
 

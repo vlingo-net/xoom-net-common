@@ -614,10 +614,16 @@ namespace Vlingo.Common.Tests
                     return 0;
                 });
             
-            Thread.Sleep(100);
             
-            completes.With(1);
-            
+            var thread = new Thread(() =>
+            {
+                Thread.Sleep(100);
+                completes.With(1);
+            });
+            thread.Start();
+
+            completes.Await();
+
             Assert.NotEqual(1, consumedResult);
             Assert.Equal(0, consumedResult);
             Assert.Equal(0, completes.Outcome);

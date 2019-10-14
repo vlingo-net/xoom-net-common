@@ -11,28 +11,20 @@ namespace Vlingo.Common.Completion.Continuations
 {
     internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object>
     {
-        private readonly Scheduler scheduler;
         private readonly TimeSpan timeout;
         private ICancellable cancellable;
         private readonly AtomicBoolean executed = new AtomicBoolean(false);
-        private readonly AtomicBoolean timedOut = new AtomicBoolean(false);
 
         internal AndThenScheduledContinuation(
-            Scheduler scheduler,
             BasicCompletes parent,
             BasicCompletes<TAntecedentResult> antecedent,
             TimeSpan timeout,
             Delegate function)
-            : base(parent, antecedent, function)
+            : this(parent, antecedent, timeout, Optional.Empty<TResult>(), function)
         {
-            this.scheduler = scheduler;
-            this.timeout = timeout;
-            ClearTimer();
-            StartTimer();
         }
         
         internal AndThenScheduledContinuation(
-            Scheduler scheduler,
             BasicCompletes parent,
             BasicCompletes<TAntecedentResult> antecedent,
             TimeSpan timeout,
@@ -40,7 +32,6 @@ namespace Vlingo.Common.Completion.Continuations
             Delegate function)
             : base(parent, antecedent, failedOutcomeValue, function)
         {
-            this.scheduler = scheduler;
             this.timeout = timeout;
             ClearTimer();
             StartTimer();
@@ -48,7 +39,7 @@ namespace Vlingo.Common.Completion.Continuations
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
-            if (timedOut.Get())
+            if (TimedOut.Get())
             {
                 return;
             }
@@ -61,17 +52,16 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (!executed.Get())
             {
-                timedOut.Set(true);
+                TimedOut.Set(true);
                 HasFailedValue.Set(true);
             }
         }
 
         private void StartTimer()
         {
-            if (timeout.TotalMilliseconds > 0 && scheduler != null)
+            if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                // 2ms delayBefore prevents timeout until after return from here
-                cancellable = scheduler.ScheduleOnce(this, null, TimeSpan.FromMilliseconds(2), timeout);
+                cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);
             }
         }
 

@@ -44,7 +44,7 @@ namespace Vlingo.Common.Completion.Continuations
             
             if (Action is Func<ICompletes<TAntecedentResult>, TResult> funcCompletes)
             {
-                Result = funcCompletes(antecedent);
+                OutcomeValue.Set(funcCompletes(antecedent));
                 return;
             }
 
@@ -52,7 +52,7 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 if (completedCompletes is AndThenContinuation<TResult, TAntecedentResult> andThenContinuation)
                 {
-                    Result = function(andThenContinuation.FailedOutcomeValue.Get());
+                    OutcomeValue.Set(function(andThenContinuation.FailedOutcomeValue.Get()));
                     return;   
                 }
             }

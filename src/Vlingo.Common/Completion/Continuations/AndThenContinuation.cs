@@ -37,7 +37,7 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 funcCompletes(antecedent.Get().Outcome).AndThenConsume(t =>
                 {
-                    Result = t;
+                    OutcomeValue.Set(t);
                     TransformedResult = t;
                 });
                 return;
@@ -45,8 +45,8 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, TResult> function)
             {
-                Result = function(antecedent.Get().Outcome);
-                TransformedResult = Result;
+                OutcomeValue.Set(function(antecedent.Get().Outcome));
+                TransformedResult = OutcomeValue.Get();
             }
         }
 
@@ -58,12 +58,9 @@ namespace Vlingo.Common.Completion.Continuations
                 return;
             }
             
-            if (previousContinuation is BasicCompletes<TAntecedentResult> completes)
+            if (previousContinuation is BasicCompletes<TAntecedentResult> completes && completes.HasOutcome)
             {
-                if (completes.HasOutcome)
-                {
-                    HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));  
-                }
+                HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));
             }
         }
     }

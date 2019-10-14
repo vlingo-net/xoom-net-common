@@ -15,8 +15,8 @@ namespace Vlingo.Common
     {
         protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
         protected internal Optional<TResult> FailedOutcomeValue;
-        protected TResult Result;
-        private readonly AtomicBoolean timedOut = new AtomicBoolean(false);
+        protected AtomicRefValue<TResult> OutcomeValue = new AtomicRefValue<TResult>();
+        protected readonly AtomicBoolean TimedOut = new AtomicBoolean(false);
 
         public BasicCompletes(TResult outcome) : this(outcome, true)
         {
@@ -54,7 +54,7 @@ namespace Vlingo.Common
 
         public ICompletes<TNewResult> AndThen<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, Optional.Of(failedOutcomeValue), function);
+            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, Optional.Of(failedOutcomeValue), function);
             Parent.AndThenInternal(scheduledContinuation);
             return scheduledContinuation;
         }
@@ -68,7 +68,7 @@ namespace Vlingo.Common
 
         public ICompletes<TNewResult> AndThen<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function)
         {
-            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, function);
+            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, function);
             Parent.AndThenInternal(scheduledContinuation);
             return scheduledContinuation;
         }
@@ -82,7 +82,7 @@ namespace Vlingo.Common
 
         public ICompletes<TResult> AndThenConsume(TimeSpan timeout, TResult failedOutcomeValue, Action<TResult> consumer)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(Parent.Scheduler, Parent, this, timeout, Optional.Of(failedOutcomeValue), consumer);
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(Parent, this, timeout, Optional.Of(failedOutcomeValue), consumer);
             Parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
@@ -96,7 +96,7 @@ namespace Vlingo.Common
 
         public ICompletes<TResult> AndThenConsume(TimeSpan timeout, Action<TResult> consumer)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(Parent.Scheduler, Parent, this, timeout, consumer);
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(Parent, this, timeout, consumer);
             Parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
@@ -110,14 +110,14 @@ namespace Vlingo.Common
 
         public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, Optional.Of(failedOutcomeValue), function);
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, Optional.Of(failedOutcomeValue), function);
             Parent.AndThenInternal(continuationCompletes);
             return default;
         }
 
         public ICompletes<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, ICompletes<TNewResult>> function)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, Optional.Of(failedOutcomeValue), function);
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, Optional.Of(failedOutcomeValue), function);
             Parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
@@ -138,14 +138,14 @@ namespace Vlingo.Common
 
         public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, function);
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, function);
             Parent.AndThenInternal(continuationCompletes);
             return default;
         }
 
         public ICompletes<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, ICompletes<TNewResult>> function)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Scheduler, Parent, this, timeout, function);
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, function);
             Parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
@@ -256,9 +256,9 @@ namespace Vlingo.Common
             }
         }
 
-        public bool HasOutcome => Result != null && !Result.Equals(default(TResult));
+        public bool HasOutcome => OutcomeValue.Get() != null && !OutcomeValue.Get().Equals(default(TResult));
 
-        public virtual TResult Outcome => Result;
+        public virtual TResult Outcome => OutcomeValue.Get();
         
         public virtual ICompletes<TResult> Repeat()
         {
@@ -277,7 +277,7 @@ namespace Vlingo.Common
                 if (completedCompletes is BasicCompletes<TResult> basicCompletes)
                 {
                     invokableActionInput(basicCompletes.Outcome);
-                    Result = basicCompletes.Outcome;
+                    OutcomeValue.Set(basicCompletes.Outcome);
                 }
             }
         }
@@ -319,7 +319,7 @@ namespace Vlingo.Common
                     {
                         return (TNewResult) Convert.ChangeType(TransformedResult, typeof(TNewResult));
                     }
-                    return (TNewResult) Convert.ChangeType(Result, typeof(TNewResult));
+                    return (TNewResult) Convert.ChangeType(OutcomeValue.Get(), typeof(TNewResult));
                 }
                 catch
                 {
@@ -375,7 +375,7 @@ namespace Vlingo.Common
             {
                 if (lastCompletes is BasicCompletes<TResult> continuation && continuation.HasOutcome)
                 {
-                    Result = continuation.Outcome;
+                    OutcomeValue.Set(continuation.Outcome);
                 }
             
                 if (lastCompletes is BasicCompletes completesContinuation)
@@ -387,7 +387,7 @@ namespace Vlingo.Common
             {
                 if (lastCompletes is BasicCompletes<TResult> continuation && Continuations.IsEmpty)
                 {
-                    Result = continuation.FailedOutcomeValue.Get();
+                    OutcomeValue.Set(continuation.FailedOutcomeValue.Get());
                 }
             }
         }
@@ -418,9 +418,9 @@ namespace Vlingo.Common
 
         private void CompletedWith(TResult outcome)
         {
-            if (!timedOut.Get())
+            if (!TimedOut.Get())
             {
-                Result = outcome;
+                OutcomeValue.Set(outcome);
             }
             
             var lastRunContinuation = RunContinuations();

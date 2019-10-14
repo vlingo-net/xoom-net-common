@@ -58,12 +58,9 @@ namespace Vlingo.Common.Completion.Continuations
                 return;
             }
             
-            if (previousContinuation is BasicCompletes<TAntecedentResult> completes)
+            if (previousContinuation is BasicCompletes<TAntecedentResult> completes && completes.HasOutcome)
             {
-                if (completes.HasOutcome)
-                {
-                    HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));  
-                }
+                HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));
             }
         }
     }

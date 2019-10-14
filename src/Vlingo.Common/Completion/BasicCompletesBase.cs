@@ -18,6 +18,7 @@ namespace Vlingo.Common.Completion
         protected BasicCompletes Parent;
         protected readonly AtomicBoolean ReadyToExectue = new AtomicBoolean(false);
         protected readonly AtomicReference<Exception> ExceptionValue = new AtomicReference<Exception>();
+        internal readonly AtomicBoolean TimedOut = new AtomicBoolean(false);
         internal readonly ManualResetEventSlim OutcomeKnown = new ManualResetEventSlim(false);
         internal readonly AtomicBoolean HasFailedValue = new AtomicBoolean(false);
         internal readonly Scheduler Scheduler;

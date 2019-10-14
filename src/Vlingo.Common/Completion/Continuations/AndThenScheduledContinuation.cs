@@ -53,6 +53,7 @@ namespace Vlingo.Common.Completion.Continuations
             if (!executed.Get())
             {
                 TimedOut.Set(true);
+                Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
             }
         }

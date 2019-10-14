@@ -16,7 +16,6 @@ namespace Vlingo.Common
         protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
         protected internal Optional<TResult> FailedOutcomeValue;
         protected AtomicRefValue<TResult> OutcomeValue = new AtomicRefValue<TResult>();
-        protected readonly AtomicBoolean TimedOut = new AtomicBoolean(false);
 
         public BasicCompletes(TResult outcome) : this(outcome, true)
         {
@@ -385,7 +384,7 @@ namespace Vlingo.Common
             }
             else
             {
-                if (lastCompletes is BasicCompletes<TResult> continuation && Continuations.IsEmpty)
+                if (lastCompletes is BasicCompletes<TResult> continuation)
                 {
                     OutcomeValue.Set(continuation.FailedOutcomeValue.Get());
                 }
@@ -397,6 +396,7 @@ namespace Vlingo.Common
             ExceptionValue.Set(e);
             HasException.Set(true);
             HasFailedValue.Set(true);
+            FailedOutcomeValue = Optional.Of(Outcome);
         }
         
         private bool HandleFailureInternal(Optional<TResult> outcome)
@@ -424,11 +424,11 @@ namespace Vlingo.Common
             }
             
             var lastRunContinuation = RunContinuations();
-
+            ReadyToExectue.Set(HasOutcome);
+            
             TrySetResult(lastRunContinuation);
             
             OutcomeKnown.Set();
-            ReadyToExectue.Set(HasOutcome);
         }
     }
 }

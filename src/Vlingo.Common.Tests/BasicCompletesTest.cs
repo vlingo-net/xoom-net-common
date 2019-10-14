@@ -134,7 +134,7 @@ namespace Vlingo.Common.Tests
             Assert.True(completes.HasFailed);
             Assert.NotEqual(10, andThenValue);
             Assert.Equal(0, andThenValue);
-            Assert.Equal(5, completed);
+            Assert.Equal(-10, completed);
         }
 
         [Fact]

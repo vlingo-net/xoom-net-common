@@ -599,6 +599,29 @@ namespace Vlingo.Common.Tests
             Assert.Equal(-1, consumedResult);
             Assert.Equal(0, completed);
         }
+
+        [Fact]
+        public void TestThatTimeOutOccursForSideEffects()
+        {
+            var completes = new BasicCompletes<int>(new Scheduler());
+            var consumedResult = -1;
+            
+            completes
+                .AndThenConsume(TimeSpan.FromMilliseconds(2), 0, value => consumedResult = value)
+                .Otherwise<int>(value =>
+                {
+                    consumedResult = value;
+                    return 0;
+                });
+            
+            Thread.Sleep(100);
+            
+            completes.With(1);
+            
+            Assert.NotEqual(1, consumedResult);
+            Assert.Equal(0, consumedResult);
+            Assert.Equal(0, completes.Outcome);
+        }
         
         [Fact]
         public void TestAndThenConsumeFails()

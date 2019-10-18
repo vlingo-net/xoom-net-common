@@ -26,9 +26,9 @@ namespace Vlingo.Common
 
         public T? Get() => Interlocked.CompareExchange(ref value, defaultValue, defaultValue);
 
-        public T? Set(T newValue) => Interlocked.Exchange(ref value, newValue);
+        public T? Set(T? newValue) => Interlocked.Exchange(ref value, newValue);
 
-        public T? CompareAndSet(T expected, T update)
+        public T? CompareAndSet(T? expected, T? update)
             => Interlocked.CompareExchange(ref value, update, expected);
     }
 }

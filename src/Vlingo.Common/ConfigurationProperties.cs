@@ -24,9 +24,9 @@ namespace Vlingo.Common
 
         public bool IsEmpty => dictionary.Count == 0;
 
-        public string GetProperty(string key) => GetProperty(key, null);
+        public string? GetProperty(string key) => GetProperty(key, null);
 
-        public string GetProperty(string key, string defaultValue)
+        public string? GetProperty(string key, string? defaultValue)
         {
             if (dictionary.TryGetValue(key, out string value))
             {

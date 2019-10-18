@@ -16,12 +16,11 @@ namespace Vlingo.Common
 
         public AtomicRefValue(T initialValue)
         {
-            value = initialValue;
-            defaultValue = default(T);
+            value = initialValue!;
+            defaultValue = default(T)!;
         }
 
-        public AtomicRefValue()
-            : this(default(T))
+        public AtomicRefValue() : this(default!)
         {
         }
 

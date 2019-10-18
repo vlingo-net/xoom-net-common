@@ -59,7 +59,7 @@ namespace Vlingo.Common
 
         public virtual TValue GetOrNull()
         {
-            return default(TValue);
+            return default!;
         }
 
         public virtual IOutcome<TCause, TValue> Otherwise(Func<TCause, TValue> action)

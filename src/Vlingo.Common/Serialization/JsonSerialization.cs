@@ -5,6 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
+using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
@@ -17,6 +18,9 @@ namespace Vlingo.Common.Serialization
 
         public static T Deserialized<T>(string serialization)
             => JsonConvert.DeserializeObject<T>(serialization, DateTimeConverter);
+        
+        public static object Deserialized(string serialization, Type sourceType)
+            => JsonConvert.DeserializeObject(serialization, sourceType, DateTimeConverter);
 
         public static List<T> DeserializedList<T>(string serialization)
             => JsonConvert.DeserializeObject<List<T>>(serialization, DateTimeConverter);

@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using Vlingo.Common.Completion;
 using Vlingo.Common.Completion.Continuations;
 
 namespace Vlingo.Common
@@ -15,20 +16,30 @@ namespace Vlingo.Common
     {
         private readonly ConcurrentQueue<CompletesContinuation> continuationsBackup = new ConcurrentQueue<CompletesContinuation>();
         private readonly AtomicBoolean repeating = new AtomicBoolean(false);
+
+        public RepeatableCompletes(Scheduler scheduler) : this(scheduler, null)
+        {
+        }
         
-        public RepeatableCompletes(Scheduler scheduler) : base(scheduler)
+        public RepeatableCompletes(Scheduler scheduler, BasicCompletes? parent) : base(scheduler, parent)
+        {
+        }
+        
+        public RepeatableCompletes(TResult outcome, bool succeeded) : this(outcome, succeeded, null)
         {
         }
 
-        public RepeatableCompletes(TResult outcome, bool succeeded) : base(outcome, succeeded)
+        public RepeatableCompletes(TResult outcome, bool succeeded, BasicCompletes? parent) : base(outcome, succeeded, parent)
         {
         }
 
         public RepeatableCompletes(TResult outcome) : base(outcome)
         {
         }
-        
-        protected RepeatableCompletes(Delegate valueSelector) : base(valueSelector) => Parent = this;
+
+        protected RepeatableCompletes(Delegate valueSelector, BasicCompletes? parent) : base(valueSelector, parent)
+        {
+        }
         
         public override ICompletes<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function)
         {

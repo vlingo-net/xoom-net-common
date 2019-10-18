@@ -12,7 +12,7 @@ namespace Vlingo.Common.Completion.Continuations
     internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object>
     {
         private readonly TimeSpan timeout;
-        private ICancellable cancellable;
+        private ICancellable? cancellable;
         private readonly AtomicBoolean executed = new AtomicBoolean(false);
 
         internal AndThenScheduledContinuation(
@@ -25,7 +25,7 @@ namespace Vlingo.Common.Completion.Continuations
         }
         
         internal AndThenScheduledContinuation(
-            BasicCompletes parent,
+            BasicCompletes? parent,
             BasicCompletes<TAntecedentResult> antecedent,
             TimeSpan timeout,
             Optional<TResult> failedOutcomeValue,
@@ -62,7 +62,7 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);
+                cancellable = Parent.Scheduler.ScheduleOnce(this, null!, TimeSpan.Zero, timeout);
             }
         }
 

@@ -11,7 +11,7 @@ namespace Vlingo.Common
 {
     public class NoSuchElementException : Exception
     {
-        public NoSuchElementException(string message, Exception inner) : base(message, inner)
+        public NoSuchElementException(string message, Exception? inner) : base(message, inner)
         {
         }
 

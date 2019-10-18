@@ -26,7 +26,7 @@ namespace Vlingo.Common.Compiler
             return loadedAssembly.GetType(fullyQualifiedClassName);
         }
 
-        public Type LoadClass(string fullyQualifiedClassName, Type protocolName = null)
+        public Type? LoadClass(string fullyQualifiedClassName, Type? protocolName = null)
         {
             var candidateTypes = new List<Type>();
             var assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.FullName.StartsWith("Vlingo"));

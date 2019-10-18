@@ -13,7 +13,11 @@ namespace Vlingo.Common.Completion.Continuations
     {
         private readonly BasicCompletes<TResult> antecedent;
 
-        internal RecoverContinuation(BasicCompletes<TResult> antecedent, Delegate function) : base(function) =>
+        internal RecoverContinuation(BasicCompletes<TResult> antecedent, Delegate function) : this(antecedent, function, null)
+        {
+        }
+            
+        internal RecoverContinuation(BasicCompletes<TResult> antecedent, Delegate function, BasicCompletes? parent) : base(function, parent) =>
             this.antecedent = antecedent;
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
@@ -22,7 +26,7 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 if (completedCompletes is BasicCompletes<TResult> basicCompletes)
                 {
-                    OutcomeValue.Set(function(basicCompletes.Exception));
+                    OutcomeValue.Set(function(basicCompletes.Exception!));
                 }
             }
         }

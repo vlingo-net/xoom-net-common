@@ -76,7 +76,7 @@ namespace Vlingo.Common
 
         public virtual IOutcome<TNextFailure, TNextSuccess> OtherwiseTo<TNextFailure, TNextSuccess>(Func<TCause, IOutcome<TNextFailure, TNextSuccess>> action) where TNextFailure : Exception
         {
-            return Success.Of<TNextFailure, TNextSuccess>((TNextSuccess)(object)value);
+            return Success.Of<TNextFailure, TNextSuccess>((TNextSuccess)(object)value!);
         }
 
         public virtual TNextSuccess Resolve<TNextSuccess>(Func<TCause, TNextSuccess> onFailedOutcome, Func<TValue, TNextSuccess> onSuccessfulOutcome)
@@ -102,7 +102,7 @@ namespace Vlingo.Common
 
         public override int GetHashCode()
         {
-            return 31 * value.GetHashCode();
+            return 31 * value!.GetHashCode();
         }
     }
 

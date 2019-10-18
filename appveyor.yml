@@ -7,7 +7,7 @@ before_build:
 - cmd: dotnet restore src/Vlingo.Common.sln
 build:
   project: src/Vlingo.Common.sln
-  verbosity: normal
+  verbosity: minimal
   publish_nuget: true
 test_script:
 - cmd: dotnet test src/Vlingo.Common.Tests

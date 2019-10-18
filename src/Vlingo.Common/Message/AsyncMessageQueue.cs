@@ -15,9 +15,9 @@ namespace Vlingo.Common.Message
     public class AsyncMessageQueue : IMessageQueue, IRunnable, IDisposable
     {
         private bool disposed;
-        private readonly IMessageQueue deadLettersQueue;
+        private readonly IMessageQueue? deadLettersQueue;
         private readonly AtomicBoolean dispatching;
-        private IMessageQueueListener listener;
+        private IMessageQueueListener? listener;
         private readonly AtomicBoolean open;
         private readonly ConcurrentQueue<IMessage> queue;
 
@@ -31,7 +31,7 @@ namespace Vlingo.Common.Message
         {
         }
 
-        public AsyncMessageQueue(IMessageQueue deadLettersQueue)
+        public AsyncMessageQueue(IMessageQueue? deadLettersQueue)
         {
             this.deadLettersQueue = deadLettersQueue;
             dispatching = new AtomicBoolean(false);
@@ -103,7 +103,7 @@ namespace Vlingo.Common.Message
 
         public virtual void Run()
         {
-            IMessage message = null;
+            IMessage? message = null;
 
             try
             {
@@ -111,7 +111,7 @@ namespace Vlingo.Common.Message
                 message = Dequeue();
                 if (message != null)
                 {
-                    listener.HandleMessage(message);
+                    listener!.HandleMessage(message);
                 }
             }
             catch (Exception e)
@@ -159,7 +159,7 @@ namespace Vlingo.Common.Message
             disposed = true;
         }
 
-        private IMessage Dequeue()
+        private IMessage? Dequeue()
         {
             if(queue.TryDequeue(out IMessage msg))
             {

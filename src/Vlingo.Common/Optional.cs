@@ -22,7 +22,7 @@ namespace Vlingo.Common
 
         internal Optional()
         {
-            value = default(T);
+            value = default!;
             hasValue = false;
         }
 
@@ -90,7 +90,7 @@ namespace Vlingo.Common
             }
 
             supplier();
-            return default(T);
+            return default!;
         }
 
         public override bool Equals(object obj)
@@ -126,7 +126,7 @@ namespace Vlingo.Common
                 return "Empty()";
             }
 
-            return $"Value<{typeof(T).FullName}>[{value.ToString()}]";
+            return $"Value<{typeof(T).FullName}>[{value!.ToString()}]";
         }
     }
 

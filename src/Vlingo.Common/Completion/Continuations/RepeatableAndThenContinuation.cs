@@ -13,9 +13,8 @@ namespace Vlingo.Common.Completion.Continuations
     {
         private readonly AtomicReference<RepeatableCompletes<TAntecedentResult>> antecedent = new AtomicReference<RepeatableCompletes<TAntecedentResult>>(default);
 
-        private RepeatableAndThenContinuation(BasicCompletes parent, RepeatableCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function)
+        private RepeatableAndThenContinuation(BasicCompletes parent, RepeatableCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function, parent)
         {
-            Parent = parent;
             this.antecedent.Set(antecedent);
             FailedOutcomeValue = failedOutcomeValue;
         }
@@ -35,7 +34,7 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, ICompletes<TResult>> funcCompletes)
             {
-                funcCompletes(antecedent.Get().Outcome).AndThenConsume(t =>
+                funcCompletes(antecedent.Get()!.Outcome).AndThenConsume(t =>
                 {
                     OutcomeValue.Set(t);
                     TransformedResult = t;
@@ -45,7 +44,7 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, TResult> function)
             {
-                OutcomeValue.Set(function(antecedent.Get().Outcome));
+                OutcomeValue.Set(function(antecedent.Get()!.Outcome));
                 TransformedResult = OutcomeValue.Get();
             }
         }
@@ -62,7 +61,7 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 if (completes.HasOutcome)
                 {
-                    HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome.Equals(FailedOutcomeValue.Get()));  
+                    HasFailedValue.Set(HasFailedValue.Get() || completes.Outcome!.Equals(FailedOutcomeValue.Get()));  
                 }
             }
         }

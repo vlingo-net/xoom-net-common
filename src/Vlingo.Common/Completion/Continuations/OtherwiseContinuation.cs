@@ -14,10 +14,9 @@ namespace Vlingo.Common.Completion.Continuations
         private readonly BasicCompletes<TAntecedentResult> antecedent;
 
         internal OtherwiseContinuation(BasicCompletes parent, BasicCompletes<TAntecedentResult> antecedent, Delegate function) :
-            base(function)
+            base(function, parent)
         {
             this.antecedent = antecedent;
-            Parent = parent;
         }
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)

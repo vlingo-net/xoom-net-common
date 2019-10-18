@@ -15,24 +15,25 @@ namespace Vlingo.Common.Completion
     public abstract class BasicCompletes
     {
         protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
-        protected BasicCompletes Parent;
+        protected readonly BasicCompletes Parent;
         protected readonly AtomicBoolean ReadyToExectue = new AtomicBoolean(false);
         protected readonly AtomicReference<Exception> ExceptionValue = new AtomicReference<Exception>();
         internal readonly AtomicBoolean TimedOut = new AtomicBoolean(false);
         internal readonly ManualResetEventSlim OutcomeKnown = new ManualResetEventSlim(false);
         internal readonly AtomicBoolean HasFailedValue = new AtomicBoolean(false);
-        internal readonly Scheduler Scheduler;
+        internal readonly Scheduler? Scheduler;
         internal readonly ConcurrentQueue<CompletesContinuation> Continuations = new ConcurrentQueue<CompletesContinuation>();
-        internal CompletesContinuation FailureContinuation;
-        internal CompletesContinuation ExceptionContinuation;
-        internal object TransformedResult;
+        internal CompletesContinuation? FailureContinuation;
+        internal CompletesContinuation? ExceptionContinuation;
+        internal object? TransformedResult;
 
-        protected BasicCompletes(Delegate action) : this(null, action)
+        protected BasicCompletes(Delegate action, BasicCompletes? parent) : this(null, action, parent)
         {
         }
 
-        protected BasicCompletes(Scheduler scheduler, Delegate action)
+        protected BasicCompletes(Scheduler? scheduler, Delegate action, BasicCompletes? parent)
         {
+            Parent = parent ?? this;
             Scheduler = scheduler;
             Action = action;
         }
@@ -43,7 +44,7 @@ namespace Vlingo.Common.Completion
 
         internal abstract void BackUp(CompletesContinuation continuation);
 
-        internal Exception Exception => ExceptionValue.Get();
+        internal Exception? Exception => ExceptionValue.Get();
 
         internal void AndThenInternal(BasicCompletes continuationCompletes)
         {

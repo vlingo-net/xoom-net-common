@@ -114,7 +114,7 @@ namespace Vlingo.Common
             private readonly IScheduled<T> scheduled;
             private readonly T data;
             private readonly bool repeats;
-            private Timer timer;
+            private Timer? timer;
             private bool hasRun;
 
             public SchedulerTask(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval, bool repeats)

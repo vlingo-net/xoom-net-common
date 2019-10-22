@@ -9,7 +9,7 @@ using System;
 
 namespace Vlingo.Common.Completion.Continuations
 {
-    internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object>
+    internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object?>
     {
         private readonly TimeSpan timeout;
         private ICancellable? cancellable;
@@ -48,7 +48,7 @@ namespace Vlingo.Common.Completion.Continuations
             executed.Set(true);
         }
 
-        public void IntervalSignal(IScheduled<object> scheduled, object data)
+        public void IntervalSignal(IScheduled<object?> scheduled, object? data)
         {
             if (!executed.Get())
             {
@@ -62,7 +62,7 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                cancellable = Parent.Scheduler.ScheduleOnce(this, null!, TimeSpan.Zero, timeout);
+                cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);
             }
         }
 

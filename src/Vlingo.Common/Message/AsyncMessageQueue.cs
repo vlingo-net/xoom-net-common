@@ -111,7 +111,7 @@ namespace Vlingo.Common.Message
                 message = Dequeue();
                 if (message != null)
                 {
-                    listener!.HandleMessage(message);
+                    listener?.HandleMessage(message);
                 }
             }
             catch (Exception e)

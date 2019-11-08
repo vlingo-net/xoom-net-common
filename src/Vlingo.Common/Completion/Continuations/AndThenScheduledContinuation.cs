@@ -14,6 +14,7 @@ namespace Vlingo.Common.Completion.Continuations
         private readonly TimeSpan timeout;
         private ICancellable? cancellable;
         private readonly AtomicBoolean executed = new AtomicBoolean(false);
+        private readonly AtomicBoolean timedOut = new AtomicBoolean(false);
 
         internal AndThenScheduledContinuation(
             BasicCompletes parent,
@@ -39,7 +40,7 @@ namespace Vlingo.Common.Completion.Continuations
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
-            if (TimedOut.Get() || executed.Get())
+            if (timedOut.Get() || executed.Get())
             {
                 return;
             }
@@ -50,9 +51,10 @@ namespace Vlingo.Common.Completion.Continuations
 
         public void IntervalSignal(IScheduled<object?> scheduled, object? data)
         {
-            if (!executed.Get() && !TimedOut.Get())
+            if (!executed.Get() && !timedOut.Get())
             {
                 TimedOut.Set(true);
+                timedOut.Set(true);
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
             }   

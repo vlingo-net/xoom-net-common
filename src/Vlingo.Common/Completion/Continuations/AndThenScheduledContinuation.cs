@@ -58,7 +58,7 @@ namespace Vlingo.Common.Completion.Continuations
             
             if (!executed.Get() && !TimedOut.Get())
             {
-                Parent.DiagnosticCollector.StopAppendStart($"IntervalSignal expeced '{((TimeSpan)data!).TotalMilliseconds}ms'");
+                Parent.DiagnosticCollector.StopAppendStart($"IntervalSignal timouting with expected '{((TimeSpan)data!).TotalMilliseconds}ms'");
                 TimedOut.Set(true);
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);

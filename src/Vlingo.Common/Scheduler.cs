@@ -131,7 +131,7 @@ namespace Vlingo.Common
                 DiagnosticCollector.StopAppendStart($"Scheduler: starting a task on thread #{Thread.CurrentThread.ManagedThreadId}");
             }
             
-            internal IDiagnosticCollector DiagnosticCollector { get; set; }
+            internal IDiagnosticCollector DiagnosticCollector { get; set; } = new NoOpDiagnosticCollector();
 
             private void Tick(object state) => Run();
 

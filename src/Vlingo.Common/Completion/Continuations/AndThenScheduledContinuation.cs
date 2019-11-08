@@ -57,7 +57,7 @@ namespace Vlingo.Common.Completion.Continuations
                 _stopwatch.Stop();
                 if (_stopwatch.ElapsedMilliseconds > ((TimeSpan) data).TotalMilliseconds)
                 {
-                    Console.WriteLine($"Scheduled timeout {data} but elapsed scheduled time {_stopwatch.ElapsedMilliseconds}");
+                    Console.WriteLine($"Scheduled timeout {((TimeSpan) data).TotalMilliseconds} but elapsed scheduled time {_stopwatch.ElapsedMilliseconds}");
                 }
                 TimedOut.Set(true);
                 Parent.TimedOut.Set(true);

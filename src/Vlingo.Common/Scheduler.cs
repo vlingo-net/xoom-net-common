@@ -23,7 +23,7 @@ namespace Vlingo.Common
         private bool disposed;
         private readonly ConcurrentStack<ICancellable> tasks;
         
-        internal IDiagnosticCollector DiagnosticCollector { get; set; }
+        internal IDiagnosticCollector DiagnosticCollector { get; set; } = new NoOpDiagnosticCollector();
 
         /// <summary>
         /// Answer a <code>ICancellable</code> for the repeating scheduled notifier.

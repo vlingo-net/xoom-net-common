@@ -41,17 +41,20 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (TimedOut.Get() || executed.Get())
             {
+                Console.WriteLine($"Returning from execution: TimedOut {TimedOut.Get()}, executed {executed.Get()}");
                 return;
             }
             
             base.InnerInvoke(completedCompletes);
             executed.Set(true);
+            Console.WriteLine("Executed");
         }
 
         public void IntervalSignal(IScheduled<object?> scheduled, object? data)
         {
             if (!executed.Get())
             {
+                Console.WriteLine($"Timeout set");
                 TimedOut.Set(true);
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
@@ -60,6 +63,7 @@ namespace Vlingo.Common.Completion.Continuations
 
         private void StartTimer()
         {
+            Console.WriteLine($"Timeout started");
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
                 cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);

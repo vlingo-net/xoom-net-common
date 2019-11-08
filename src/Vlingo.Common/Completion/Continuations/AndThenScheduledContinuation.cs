@@ -39,25 +39,30 @@ namespace Vlingo.Common.Completion.Continuations
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
-            Parent.DiagnosticCollector.Append($"InnerInvoke timedout? {TimedOut.Get()} executed ? {executed.Get()}");
             if (TimedOut.Get() || executed.Get())
             {
                 return;
             }
-        
+            
+            Parent.DiagnosticCollector.Append($"InnerInvoke will execute");
             base.InnerInvoke(completedCompletes);
             executed.Set(true);
         }
 
         public void IntervalSignal(IScheduled<object?> scheduled, object? data)
         {
+            if (executed.Get() && !TimedOut.Get())
+            {
+                Parent.DiagnosticCollector.StopAppendStart($"Want to time out but already executed '{((TimeSpan)data!).TotalMilliseconds}ms'");
+            }
+            
             if (!executed.Get() && !TimedOut.Get())
             {
                 Parent.DiagnosticCollector.StopAppendStart($"IntervalSignal expeced '{((TimeSpan)data!).TotalMilliseconds}ms'");
                 TimedOut.Set(true);
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
-            }   
+            }
         }
 
         private void StartTimer()

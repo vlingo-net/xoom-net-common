@@ -774,6 +774,15 @@ namespace Vlingo.Common.Tests
             
             Assert.Equal("Tomasz", expectedUserState?.Name);
         }
+        
+        [Fact]
+        public void TestAwaitWithGenericTypes()
+        {
+            var readerActor = new InMemoryStateStoreEntryReaderActor<string>();
+            var completes = new BasicCompletes<IStateStoreEntryReader<string>>(readerActor);
+            var completed = completes.Await();
+            Assert.Equal(readerActor, completed);
+        }
 
         private class Sender
         {
@@ -836,6 +845,14 @@ namespace Vlingo.Common.Tests
                 Name = name;
                 Contact = contact;
             }
+        }
+
+        private interface IStateStoreEntryReader<TEntry>
+        {
+        }
+
+        private class InMemoryStateStoreEntryReaderActor<TEntry> : IStateStoreEntryReader<TEntry>
+        {
         }
     }
 }

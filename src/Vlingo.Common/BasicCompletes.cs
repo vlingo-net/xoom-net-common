@@ -325,15 +325,20 @@ namespace Vlingo.Common
             {
                 try
                 {
+                    // can yield Object must implement IConvertible.
+                    if (TransformedResult != null)
+                    {
+                        return (TNewResult) TransformedResult;
+                    }
+                    return (TNewResult)(object) OutcomeValue.Get();
+                }
+                catch
+                {
                     if (TransformedResult != null)
                     {
                         return (TNewResult) Convert.ChangeType(TransformedResult, typeof(TNewResult));
                     }
                     return (TNewResult) Convert.ChangeType(OutcomeValue.Get(), typeof(TNewResult));
-                }
-                catch
-                {
-                    // should not blow but return actual value
                 }
             }
 

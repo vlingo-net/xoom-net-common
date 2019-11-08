@@ -14,6 +14,8 @@ namespace Vlingo.Common.Completion.Continuations
         private readonly TimeSpan timeout;
         private ICancellable? cancellable;
         private readonly AtomicBoolean executed = new AtomicBoolean(false);
+        private volatile object innerLock = new object();
+        private volatile object internvalLock = new object();
 
         internal AndThenScheduledContinuation(
             BasicCompletes parent,
@@ -39,31 +41,37 @@ namespace Vlingo.Common.Completion.Continuations
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
-            if (TimedOut.Get() || executed.Get())
+            lock (innerLock)
             {
-                Console.WriteLine($"Returning from execution: TimedOut {TimedOut.Get()}, executed {executed.Get()} | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
-                return;
-            }
+                if (TimedOut.Get() || executed.Get())
+                {
+                    // Console.WriteLine($"Returning from execution: TimedOut {TimedOut.Get()}, executed {executed.Get()} | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
+                    return;
+                }
             
-            base.InnerInvoke(completedCompletes);
-            executed.Set(true);
-            Console.WriteLine($"Executed | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
+                base.InnerInvoke(completedCompletes);
+                executed.Set(true);
+                // Console.WriteLine($"Executed | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");   
+            }
         }
 
         public void IntervalSignal(IScheduled<object?> scheduled, object? data)
         {
-            if (!executed.Get() && !TimedOut.Get())
+            lock (internvalLock)
             {
-                Console.WriteLine($"Timeout set | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
-                TimedOut.Set(true);
-                Parent.TimedOut.Set(true);
-                HasFailedValue.Set(true);
+                if (!executed.Get() && !TimedOut.Get())
+                {
+                    // Console.WriteLine($"Timeout set | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
+                    TimedOut.Set(true);
+                    Parent.TimedOut.Set(true);
+                    HasFailedValue.Set(true);
+                }   
             }
         }
 
         private void StartTimer()
         {
-            Console.WriteLine($"Timeout started | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
+            // Console.WriteLine($"Timeout started | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
                 cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.FromMilliseconds(5), timeout);

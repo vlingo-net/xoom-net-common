@@ -64,7 +64,7 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                Parent.DiagnosticCollector.StartAppend($"StartTimer with expected timeout of {timeout.TotalMilliseconds}");
+                Parent.DiagnosticCollector.StartAppend($"StartTimer with expected timeout of '{timeout.TotalMilliseconds}ms'");
                 cancellable = Parent.Scheduler.ScheduleOnce(this, timeout, TimeSpan.Zero, timeout);
             }
         }

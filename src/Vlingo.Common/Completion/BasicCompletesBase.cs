@@ -28,7 +28,7 @@ namespace Vlingo.Common.Completion
         internal CompletesContinuation? FailureContinuation;
         internal CompletesContinuation? ExceptionContinuation;
         internal object? TransformedResult;
-        internal DiagnosticCollector DiagnosticCollector;
+        internal IDiagnosticCollector DiagnosticCollector;
 
 
         protected BasicCompletes(Delegate action, BasicCompletes? parent) : this(null, action, parent)
@@ -44,7 +44,7 @@ namespace Vlingo.Common.Completion
             Parent = parent ?? this;
             Scheduler = scheduler;
             Action = action;
-            DiagnosticCollector = new DiagnosticCollector(diagnosticsMessage);
+            DiagnosticCollector = string.IsNullOrWhiteSpace(diagnosticsMessage) ? (IDiagnosticCollector) new NoOpDiagnosticCollector() : new DiagnosticCollector(diagnosticsMessage);
         }
 
         internal abstract void InnerInvoke(BasicCompletes completedCompletes);
@@ -94,35 +94,74 @@ namespace Vlingo.Common.Completion
             ExceptionContinuation = continuationCompletes;
     }
 
-    internal class DiagnosticCollector
+    internal interface IDiagnosticCollector
+    {
+        void Append(string message);
+        void StartAppend(string message);
+        void StopAppendStart(string message);
+        void Stop();
+        string Logs { get; }
+
+    }
+
+    internal class DiagnosticCollector : IDiagnosticCollector
     {
         private readonly string _baseName;
         private Stopwatch _stopwatch = new Stopwatch();
         private StringBuilder _logs = new StringBuilder();
+        
 
         public DiagnosticCollector(string baseName) => _baseName = baseName;
 
-        internal void Append(string message) => _logs.AppendLine(message);
+        public void Append(string message) => _logs.AppendLine(message);
 
-        internal void StartAppend(string message)
+        public void StartAppend(string message)
         {
             _stopwatch.Start();
             _logs.AppendLine($"{_baseName} : {message}");
         }
 
-        internal void StopAppendStart(string message)
+        public void StopAppendStart(string message)
         {
             _stopwatch.Stop();
             _logs.AppendLine($"{_baseName} : {message} elapsed time '{_stopwatch.ElapsedMilliseconds}ms'");
             _stopwatch.Start();
         }
 
-        internal void Stop()
+        public void Stop()
         {
             _stopwatch.Stop();
             _logs.AppendLine($"{_baseName} : Stopped with total elapsed time '{_stopwatch.ElapsedMilliseconds}ms'");
         }
 
-        internal string Logs => _logs.ToString();
+        public string Logs
+        {
+            get
+            {
+                Stop();
+                return _logs.ToString();
+            }
+        }
+    }
+    
+    internal class NoOpDiagnosticCollector : IDiagnosticCollector
+    {
+        public void Append(string message)
+        {
+        }
+
+        public void StartAppend(string message)
+        {
+        }
+
+        public void StopAppendStart(string message)
+        {
+        }
+
+        public void Stop()
+        {
+        }
+
+        public string Logs => string.Empty;
     }
 }

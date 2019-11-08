@@ -73,6 +73,7 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 Parent.DiagnosticCollector.StartAppend($"StartTimer with expected timeout of '{timeout.TotalMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
                 Parent.DiagnosticCollector.Append($"Scheduler #{Parent.Scheduler.GetHashCode()}");
+                Parent.Scheduler.DiagnosticCollector = Parent.DiagnosticCollector;
                 cancellable = Parent.Scheduler.ScheduleOnce(this, timeout, TimeSpan.Zero, timeout);
             }
         }

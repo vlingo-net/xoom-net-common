@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using Vlingo.Common.Completion;
 
 namespace Vlingo.Common
 {
@@ -21,6 +22,8 @@ namespace Vlingo.Common
     {
         private bool disposed;
         private readonly ConcurrentStack<ICancellable> tasks;
+        
+        internal IDiagnosticCollector DiagnosticCollector { get; set; }
 
         /// <summary>
         /// Answer a <code>ICancellable</code> for the repeating scheduled notifier.
@@ -105,6 +108,7 @@ namespace Vlingo.Common
             bool repeats)
         {
             var task = new SchedulerTask<T>(scheduled, data, delayBefore, interval, repeats);
+            task.DiagnosticCollector = DiagnosticCollector;
             tasks.Push(task);
             return task;
         }
@@ -124,12 +128,16 @@ namespace Vlingo.Common
                 this.repeats = repeats;
                 hasRun = false;
                 timer = new Timer(Tick, null, delayBefore, interval);
+                DiagnosticCollector.StopAppendStart($"Scheduler: starting a task on thread #{Thread.CurrentThread.ManagedThreadId}");
             }
+            
+            internal IDiagnosticCollector DiagnosticCollector { get; set; }
 
             private void Tick(object state) => Run();
 
             public void Run()
             {
+                DiagnosticCollector.StopAppendStart($"Scheduler: running a task on thread #{Thread.CurrentThread.ManagedThreadId}");
                 hasRun = true;
                 scheduled.IntervalSignal(scheduled, data);
 
@@ -143,6 +151,7 @@ namespace Vlingo.Common
             {
                 if (timer != null)
                 {
+                    DiagnosticCollector.StopAppendStart($"Scheduler: fuck, I'm disposed #{Thread.CurrentThread.ManagedThreadId}");
                     timer.Dispose();
                     timer = null;
                 }

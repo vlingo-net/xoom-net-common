@@ -39,7 +39,7 @@ namespace Vlingo.Common.Completion.Continuations
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
-            if (TimedOut.Get())
+            if (TimedOut.Get() || executed.Get())
             {
                 return;
             }

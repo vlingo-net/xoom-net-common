@@ -330,7 +330,7 @@ namespace Vlingo.Common
                     {
                         return (TNewResult) TransformedResult;
                     }
-                    return (TNewResult)(object) OutcomeValue.Get();
+                    return (TNewResult)(object) OutcomeValue.Get()!;
                 }
                 catch
                 {

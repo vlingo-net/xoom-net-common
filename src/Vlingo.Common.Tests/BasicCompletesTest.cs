@@ -8,11 +8,16 @@
 using System;
 using System.Threading;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Vlingo.Common.Tests
 {
     public class BasicCompletesTest
     {
+        private readonly ITestOutputHelper _testOutputHelper;
+        
+        public BasicCompletesTest(ITestOutputHelper testOutputHelper) => _testOutputHelper = testOutputHelper;
+
         [Fact]
         public void TestCompletesWith()
         {
@@ -116,7 +121,7 @@ namespace Vlingo.Common.Tests
         public void TestTimeoutBeforeOutcome()
         {
             var andThenValue = 0;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler(), "TestTimeoutBeforeOutcome()");
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
@@ -130,6 +135,8 @@ namespace Vlingo.Common.Tests
             thread.Start();
 
             var completed = completes.Await();
+            
+            _testOutputHelper.WriteLine(completes.DiagnosticCollector.Logs);
 
             Assert.True(completes.HasFailed);
             Assert.NotEqual(10, andThenValue);
@@ -188,7 +195,7 @@ namespace Vlingo.Common.Tests
         {
             var andThenValue = 0;
             var failedValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler(), "TestThatFailureOutcomeFailsWhenScheduledTimesOut()");
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
@@ -203,6 +210,8 @@ namespace Vlingo.Common.Tests
             thread.Start();
 
             completes.Await();
+            
+            _testOutputHelper.WriteLine(completes.DiagnosticCollector.Logs);
 
             Assert.True(completes.HasFailed);
             Assert.Equal(0, andThenValue);
@@ -214,7 +223,7 @@ namespace Vlingo.Common.Tests
         {
             var andThenValue = 0;
             var failedValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler(), "TestThatFailureOutcomeFailsWhenScheduledTimesOutWithOneAndThen()");
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
@@ -228,6 +237,8 @@ namespace Vlingo.Common.Tests
             thread.Start();
 
             completes.Await();
+            
+            _testOutputHelper.WriteLine(completes.DiagnosticCollector.Logs);
 
             Assert.True(completes.HasFailed);
             Assert.Equal(0, andThenValue);
@@ -432,7 +443,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenToFailsWhenScheduledTimesOut()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler(), "TestAndThenToFailsWhenScheduledTimesOut()");
             completes.AndThenTo(TimeSpan.FromMilliseconds(1), 10, v => v * 10);
 
             int result;
@@ -444,6 +455,8 @@ namespace Vlingo.Common.Tests
             thread.Start();
 
             result = completes.Await();
+            
+            _testOutputHelper.WriteLine(completes.DiagnosticCollector.Logs);
 
             Assert.True(completes.HasFailed);
             Assert.Equal(10, result);
@@ -496,7 +509,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestOtherwiseConsumeAfterTimeout()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler(), "TestOtherwiseConsumeAfterTimeout()");
             var failedResult = -1;
 
             completes
@@ -511,6 +524,8 @@ namespace Vlingo.Common.Tests
             thread.Start();
 
             completes.Await();
+            
+            _testOutputHelper.WriteLine(completes.DiagnosticCollector.Logs);
             
             Assert.Equal(5, failedResult);
         }
@@ -580,7 +595,7 @@ namespace Vlingo.Common.Tests
         public void TestAndThenConsumeNotRunAfterTimeout()
         {
             var scheduler = new Scheduler();
-            var completes = new BasicCompletes<int>(scheduler);
+            var completes = new BasicCompletes<int>(scheduler, "TestAndThenConsumeNotRunAfterTimeout()");
             var consumedResult = -1;
 
             completes
@@ -596,6 +611,8 @@ namespace Vlingo.Common.Tests
 
             var completed = completes.Await();
             
+            _testOutputHelper.WriteLine(completes.DiagnosticCollector.Logs);
+            
             Assert.Equal(-1, consumedResult);
             Assert.Equal(0, completed);
         }
@@ -603,7 +620,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestThatTimeOutOccursForSideEffects()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new Scheduler(), "TestThatTimeOutOccursForSideEffects()");
             var consumedResult = -1;
 
             completes
@@ -623,6 +640,8 @@ namespace Vlingo.Common.Tests
             thread.Start();
 
             completes.Await();
+            
+            _testOutputHelper.WriteLine(completes.DiagnosticCollector.Logs);
 
             Assert.NotEqual(1, consumedResult);
             Assert.Equal(0, consumedResult);

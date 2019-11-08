@@ -17,6 +17,10 @@ namespace Vlingo.Common
         protected internal Optional<TResult> FailedOutcomeValue = Optional.Empty<TResult>();
         protected AtomicRefValue<TResult> OutcomeValue = new AtomicRefValue<TResult>();
 
+        internal BasicCompletes(Scheduler scheduler, string diagnosticsMessage) : base(scheduler, default!, null, diagnosticsMessage)
+        {
+        }
+
         public BasicCompletes(TResult outcome) : this(outcome, true, null)
         {
         }
@@ -25,7 +29,7 @@ namespace Vlingo.Common
         {
         }
 
-        public BasicCompletes(Scheduler scheduler) : this(scheduler, null)
+        public BasicCompletes(Scheduler scheduler) : this(scheduler, (BasicCompletes?)null)
         {
         }
         
@@ -445,6 +449,7 @@ namespace Vlingo.Common
             TrySetResult(lastRunContinuation);
             
             OutcomeKnown.Set();
+            DiagnosticCollector.StopAppendStart("CompletedWith value known");
         }
     }
 }

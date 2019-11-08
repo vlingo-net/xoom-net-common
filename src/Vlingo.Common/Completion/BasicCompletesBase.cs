@@ -7,6 +7,8 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text;
 using System.Threading;
 using Vlingo.Common.Completion.Continuations;
 
@@ -26,16 +28,23 @@ namespace Vlingo.Common.Completion
         internal CompletesContinuation? FailureContinuation;
         internal CompletesContinuation? ExceptionContinuation;
         internal object? TransformedResult;
+        internal DiagnosticCollector DiagnosticCollector;
+
 
         protected BasicCompletes(Delegate action, BasicCompletes? parent) : this(null, action, parent)
         {
         }
 
-        protected BasicCompletes(Scheduler? scheduler, Delegate action, BasicCompletes? parent)
+        protected BasicCompletes(Scheduler? scheduler, Delegate action, BasicCompletes? parent) : this(scheduler, action, parent, string.Empty)
+        {
+        }
+
+        protected BasicCompletes(Scheduler? scheduler, Delegate action, BasicCompletes? parent, string diagnosticsMessage)
         {
             Parent = parent ?? this;
             Scheduler = scheduler;
             Action = action;
+            DiagnosticCollector = new DiagnosticCollector(diagnosticsMessage);
         }
 
         internal abstract void InnerInvoke(BasicCompletes completedCompletes);
@@ -83,5 +92,37 @@ namespace Vlingo.Common.Completion
 
         private void RegisterExceptionContinuation(CompletesContinuation continuationCompletes) =>
             ExceptionContinuation = continuationCompletes;
+    }
+
+    internal class DiagnosticCollector
+    {
+        private readonly string _baseName;
+        private Stopwatch _stopwatch = new Stopwatch();
+        private StringBuilder _logs = new StringBuilder();
+
+        public DiagnosticCollector(string baseName) => _baseName = baseName;
+
+        internal void Append(string message) => _logs.AppendLine(message);
+
+        internal void StartAppend(string message)
+        {
+            _stopwatch.Start();
+            _logs.AppendLine($"{_baseName} : {message}");
+        }
+
+        internal void StopAppendStart(string message)
+        {
+            _stopwatch.Stop();
+            _logs.AppendLine($"{_baseName} : {message} elapsed time '{_stopwatch.ElapsedMilliseconds}ms'");
+            _stopwatch.Start();
+        }
+
+        internal void Stop()
+        {
+            _stopwatch.Stop();
+            _logs.AppendLine($"{_baseName} : Stopped with total elapsed time '{_stopwatch.ElapsedMilliseconds}ms'");
+        }
+
+        internal string Logs => _logs.ToString();
     }
 }

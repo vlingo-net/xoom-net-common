@@ -39,6 +39,7 @@ namespace Vlingo.Common.Completion.Continuations
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
+            Parent.DiagnosticCollector.Append($"InnerInvoke timedout? {TimedOut.Get()} executed ? {executed.Get()}");
             if (TimedOut.Get() || executed.Get())
             {
                 return;
@@ -52,6 +53,7 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (!executed.Get() && !TimedOut.Get())
             {
+                Parent.DiagnosticCollector.StopAppendStart($"IntervalSignal expeced '{((TimeSpan)data!).TotalMilliseconds}ms'");
                 TimedOut.Set(true);
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
@@ -62,7 +64,8 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);
+                Parent.DiagnosticCollector.StartAppend($"StartTimer with expected timeout of {timeout.TotalMilliseconds}");
+                cancellable = Parent.Scheduler.ScheduleOnce(this, timeout, TimeSpan.Zero, timeout);
             }
         }
 

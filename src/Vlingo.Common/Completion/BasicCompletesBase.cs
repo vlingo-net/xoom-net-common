@@ -124,14 +124,14 @@ namespace Vlingo.Common.Completion
         public void StopAppendStart(string message)
         {
             _stopwatch.Stop();
-            _logs.AppendLine($"{_baseName} : {message} elapsed time '{_stopwatch.ElapsedMilliseconds}ms'");
+            _logs.AppendLine($"{_baseName} : {message} elapsed time '{_stopwatch.ElapsedMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
             _stopwatch.Start();
         }
 
         public void Stop()
         {
             _stopwatch.Stop();
-            _logs.AppendLine($"{_baseName} : Stopped with total elapsed time '{_stopwatch.ElapsedMilliseconds}ms'");
+            _logs.AppendLine($"{_baseName} : Stopped with total elapsed time '{_stopwatch.ElapsedMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
         }
 
         public string Logs

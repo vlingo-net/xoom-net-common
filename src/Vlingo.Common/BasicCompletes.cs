@@ -449,7 +449,7 @@ namespace Vlingo.Common
             TrySetResult(lastRunContinuation);
             
             OutcomeKnown.Set();
-            DiagnosticCollector.StopAppendStart("CompletedWith value known");
+            DiagnosticCollector.StopAppendStart($"CompletedWith value known on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
         }
     }
 }

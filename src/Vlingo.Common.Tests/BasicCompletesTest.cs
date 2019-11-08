@@ -129,7 +129,7 @@ namespace Vlingo.Common.Tests
 
             var thread = new Thread(() =>
             {
-                Thread.Sleep(200);
+                Thread.Sleep(100);
                 completes.With(5);
             });
             thread.Start();
@@ -604,7 +604,7 @@ namespace Vlingo.Common.Tests
             
             var thread = new Thread(() =>
             {
-                Thread.Sleep(200);
+                Thread.Sleep(100);
                 completes.With(5);
             });
             thread.Start();

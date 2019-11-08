@@ -124,12 +124,14 @@ namespace Vlingo.Common
                 this.repeats = repeats;
                 hasRun = false;
                 timer = new Timer(Tick, null, delayBefore, interval);
+                Console.WriteLine($"Starting timer on thread #{Thread.CurrentThread.ManagedThreadId}");
             }
 
             private void Tick(object state) => Run();
 
             public void Run()
             {
+                Console.WriteLine($"running timer on thread #{Thread.CurrentThread.ManagedThreadId}");
                 hasRun = true;
                 scheduled.IntervalSignal(scheduled, data);
 
@@ -143,6 +145,8 @@ namespace Vlingo.Common
             {
                 if (timer != null)
                 {
+                    Console.WriteLine($"Timer garbaged on thread #{Thread.CurrentThread.ManagedThreadId}");
+                    Console.WriteLine(Environment.StackTrace);
                     timer.Dispose();
                     timer = null;
                 }

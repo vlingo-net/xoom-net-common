@@ -44,7 +44,7 @@ namespace Vlingo.Common.Completion.Continuations
                 return;
             }
             
-            Parent.DiagnosticCollector.Append($"InnerInvoke will execute");
+            Parent.DiagnosticCollector.Append($"InnerInvoke will execute on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
             base.InnerInvoke(completedCompletes);
             executed.Set(true);
         }
@@ -53,12 +53,12 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (executed.Get() && !TimedOut.Get())
             {
-                Parent.DiagnosticCollector.StopAppendStart($"Want to time out but already executed '{((TimeSpan)data!).TotalMilliseconds}ms'");
+                Parent.DiagnosticCollector.StopAppendStart($"Want to time out but already executed '{((TimeSpan)data!).TotalMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
             }
             
             if (!executed.Get() && !TimedOut.Get())
             {
-                Parent.DiagnosticCollector.StopAppendStart($"IntervalSignal timouting with expected '{((TimeSpan)data!).TotalMilliseconds}ms'");
+                Parent.DiagnosticCollector.StopAppendStart($"IntervalSignal timouting with expected '{((TimeSpan)data!).TotalMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
                 TimedOut.Set(true);
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
@@ -71,7 +71,7 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                Parent.DiagnosticCollector.StartAppend($"StartTimer with expected timeout of '{timeout.TotalMilliseconds}ms'");
+                Parent.DiagnosticCollector.StartAppend($"StartTimer with expected timeout of '{timeout.TotalMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
                 Parent.DiagnosticCollector.Append($"Scheduler #{Parent.Scheduler.GetHashCode()}");
                 cancellable = Parent.Scheduler.ScheduleOnce(this, timeout, TimeSpan.Zero, timeout);
             }

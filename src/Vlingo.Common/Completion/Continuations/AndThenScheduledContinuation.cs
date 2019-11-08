@@ -6,7 +6,6 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using System.Diagnostics;
 
 namespace Vlingo.Common.Completion.Continuations
 {
@@ -15,7 +14,6 @@ namespace Vlingo.Common.Completion.Continuations
         private readonly TimeSpan timeout;
         private ICancellable? cancellable;
         private readonly AtomicBoolean executed = new AtomicBoolean(false);
-        private Stopwatch _stopwatch = new Stopwatch();
 
         internal AndThenScheduledContinuation(
             BasicCompletes parent,
@@ -54,11 +52,6 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (!executed.Get() && !TimedOut.Get())
             {
-                _stopwatch.Stop();
-                if (_stopwatch.ElapsedMilliseconds > ((TimeSpan) data).TotalMilliseconds)
-                {
-                    Console.WriteLine($"Scheduled timeout {((TimeSpan) data).TotalMilliseconds} but elapsed scheduled time {_stopwatch.ElapsedMilliseconds}");
-                }
                 TimedOut.Set(true);
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
@@ -69,8 +62,7 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                _stopwatch.Start();
-                cancellable = Parent.Scheduler.ScheduleOnce(this, timeout, TimeSpan.Zero, timeout);
+                cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);
             }
         }
 

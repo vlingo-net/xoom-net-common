@@ -41,20 +41,20 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (TimedOut.Get() || executed.Get())
             {
-                Console.WriteLine($"Returning from execution: TimedOut {TimedOut.Get()}, executed {executed.Get()}");
+                Console.WriteLine($"Returning from execution: TimedOut {TimedOut.Get()}, executed {executed.Get()} | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
                 return;
             }
             
             base.InnerInvoke(completedCompletes);
             executed.Set(true);
-            Console.WriteLine("Executed");
+            Console.WriteLine($"Executed | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
         }
 
         public void IntervalSignal(IScheduled<object?> scheduled, object? data)
         {
-            if (!executed.Get())
+            if (!executed.Get() && !TimedOut.Get())
             {
-                Console.WriteLine($"Timeout set");
+                Console.WriteLine($"Timeout set | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
                 TimedOut.Set(true);
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
@@ -63,10 +63,10 @@ namespace Vlingo.Common.Completion.Continuations
 
         private void StartTimer()
         {
-            Console.WriteLine($"Timeout started");
+            Console.WriteLine($"Timeout started | thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);
+                cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.FromMilliseconds(5), timeout);
             }
         }
 

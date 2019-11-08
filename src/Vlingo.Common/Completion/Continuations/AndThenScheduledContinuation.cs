@@ -63,6 +63,8 @@ namespace Vlingo.Common.Completion.Continuations
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
             }
+            
+            Parent.DiagnosticCollector.StopAppendStart("IntervalSignal called but done nothing");
         }
 
         private void StartTimer()
@@ -70,6 +72,7 @@ namespace Vlingo.Common.Completion.Continuations
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
                 Parent.DiagnosticCollector.StartAppend($"StartTimer with expected timeout of '{timeout.TotalMilliseconds}ms'");
+                Parent.DiagnosticCollector.Append($"Scheduler #{Parent.Scheduler.GetHashCode()}");
                 cancellable = Parent.Scheduler.ScheduleOnce(this, timeout, TimeSpan.Zero, timeout);
             }
         }

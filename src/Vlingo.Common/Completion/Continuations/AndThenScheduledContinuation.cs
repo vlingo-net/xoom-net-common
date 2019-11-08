@@ -6,6 +6,7 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+using System.Diagnostics;
 
 namespace Vlingo.Common.Completion.Continuations
 {
@@ -14,7 +15,7 @@ namespace Vlingo.Common.Completion.Continuations
         private readonly TimeSpan timeout;
         private ICancellable? cancellable;
         private readonly AtomicBoolean executed = new AtomicBoolean(false);
-        private readonly AtomicBoolean timedOut = new AtomicBoolean(false);
+        private Stopwatch _stopwatch = new Stopwatch();
 
         internal AndThenScheduledContinuation(
             BasicCompletes parent,
@@ -40,7 +41,7 @@ namespace Vlingo.Common.Completion.Continuations
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
-            if (timedOut.Get() || executed.Get())
+            if (TimedOut.Get() || executed.Get())
             {
                 return;
             }
@@ -51,10 +52,14 @@ namespace Vlingo.Common.Completion.Continuations
 
         public void IntervalSignal(IScheduled<object?> scheduled, object? data)
         {
-            if (!executed.Get() && !timedOut.Get())
+            if (!executed.Get() && !TimedOut.Get())
             {
+                _stopwatch.Stop();
+                if (_stopwatch.ElapsedMilliseconds > ((TimeSpan) data).TotalMilliseconds)
+                {
+                    Console.WriteLine($"Scheduled timeout {data} but elapsed scheduled time {_stopwatch.ElapsedMilliseconds}");
+                }
                 TimedOut.Set(true);
-                timedOut.Set(true);
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
             }   
@@ -64,7 +69,8 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.FromMilliseconds(5), timeout);
+                _stopwatch.Start();
+                cancellable = Parent.Scheduler.ScheduleOnce(this, timeout, TimeSpan.Zero, timeout);
             }
         }
 

@@ -8,8 +8,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
-using Vlingo.Common.Completion;
-using Vlingo.Common.Completion.Testing;
 
 namespace Vlingo.Common
 {
@@ -24,8 +22,6 @@ namespace Vlingo.Common
         private bool disposed;
         private readonly ConcurrentStack<ICancellable> tasks;
         
-        internal IDiagnosticCollector DiagnosticCollector { get; set; } = new NoOpDiagnosticCollector();
-
         /// <summary>
         /// Answer a <code>ICancellable</code> for the repeating scheduled notifier.
         /// </summary>
@@ -85,7 +81,6 @@ namespace Vlingo.Common
         
         protected virtual void Dispose(bool disposing)
         {
-            DiagnosticCollector.StopAppendStart($"Scheduler: fuck, I'm disposed #{Thread.CurrentThread.ManagedThreadId}");
             if (disposed)
             {
                 return;    
@@ -109,8 +104,7 @@ namespace Vlingo.Common
             TimeSpan interval,
             bool repeats)
         {
-            DiagnosticCollector.StopAppendStart($"Scheduler: before creating a scheduled task on thread #{Thread.CurrentThread.ManagedThreadId}");
-            var task = new SchedulerTask<T>(scheduled, data, delayBefore, interval, repeats, DiagnosticCollector);
+            var task = new SchedulerTask<T>(scheduled, data, delayBefore, interval, repeats);
             tasks.Push(task);
             return task;
         }
@@ -131,26 +125,11 @@ namespace Vlingo.Common
                 hasRun = false;
                 timer = new Timer(Tick, null, delayBefore, interval);
             }
-            
-            // only for testing
-            internal SchedulerTask(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval, bool repeats, IDiagnosticCollector diagnosticCollector)
-            {
-                this.scheduled = scheduled;
-                this.data = data;
-                this.repeats = repeats;
-                hasRun = false;
-                DiagnosticCollector = diagnosticCollector;
-                timer = new Timer(Tick, null, delayBefore, interval);
-                DiagnosticCollector.StopAppendStart($"Scheduler: starting a task on thread #{Thread.CurrentThread.ManagedThreadId}");
-            }
-            
-            internal IDiagnosticCollector DiagnosticCollector { get; } = new NoOpDiagnosticCollector();
 
             private void Tick(object state) => Run();
 
             public void Run()
             {
-                DiagnosticCollector.StopAppendStart($"Scheduler: running a task on thread #{Thread.CurrentThread.ManagedThreadId}");
                 hasRun = true;
                 scheduled.IntervalSignal(scheduled, data);
 
@@ -164,7 +143,6 @@ namespace Vlingo.Common
             {
                 if (timer != null)
                 {
-                    DiagnosticCollector.StopAppendStart($"Scheduler: fuck, I'm a task and I'm disposed #{Thread.CurrentThread.ManagedThreadId}");
                     timer.Dispose();
                     timer = null;
                 }

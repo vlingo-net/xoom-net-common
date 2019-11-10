@@ -9,7 +9,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using Vlingo.Common.Completion.Continuations;
-using Vlingo.Common.Completion.Testing;
 
 namespace Vlingo.Common.Completion
 {

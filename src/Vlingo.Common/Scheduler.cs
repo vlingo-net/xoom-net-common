@@ -78,6 +78,7 @@ namespace Vlingo.Common
         
         public void Dispose()
         {
+            DiagnosticCollector.StopAppendStart($"Scheduler: fuck, I'm disposed #{Thread.CurrentThread.ManagedThreadId}");
             Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -152,7 +153,7 @@ namespace Vlingo.Common
             {
                 if (timer != null)
                 {
-                    DiagnosticCollector.StopAppendStart($"Scheduler: fuck, I'm disposed #{Thread.CurrentThread.ManagedThreadId}");
+                    DiagnosticCollector.StopAppendStart($"Scheduler: fuck, I'm a task and I'm disposed #{Thread.CurrentThread.ManagedThreadId}");
                     timer.Dispose();
                     timer = null;
                 }

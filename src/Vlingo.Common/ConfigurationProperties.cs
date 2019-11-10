@@ -15,10 +15,10 @@ namespace Vlingo.Common
     public abstract class ConfigurationProperties
     {
         private readonly IDictionary<string, string> dictionary;
-        public ConfigurationProperties()
-        {
-            dictionary = new Dictionary<string, string>();
-        }
+        
+        public ConfigurationProperties() => dictionary = new Dictionary<string, string>();
+
+        public ConfigurationProperties(IDictionary<string, string> properties) => dictionary = properties;
 
         public ICollection<string> Keys => dictionary.Keys;
 

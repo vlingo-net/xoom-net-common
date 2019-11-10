@@ -109,8 +109,7 @@ namespace Vlingo.Common
             bool repeats)
         {
             DiagnosticCollector.StopAppendStart($"Scheduler: before creating a scheduled task on thread #{Thread.CurrentThread.ManagedThreadId}");
-            var task = new SchedulerTask<T>(scheduled, data, delayBefore, interval, repeats);
-            task.DiagnosticCollector = DiagnosticCollector;
+            var task = new SchedulerTask<T>(scheduled, data, delayBefore, interval, repeats, DiagnosticCollector);
             tasks.Push(task);
             return task;
         }
@@ -134,7 +133,20 @@ namespace Vlingo.Common
                 DiagnosticCollector.StopAppendStart($"Scheduler: starting a task on thread #{Thread.CurrentThread.ManagedThreadId}");
             }
             
-            internal IDiagnosticCollector DiagnosticCollector { get; set; } = new NoOpDiagnosticCollector();
+            // only for testing
+            internal SchedulerTask(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval, bool repeats, IDiagnosticCollector diagnosticCollector)
+            {
+                this.scheduled = scheduled;
+                this.data = data;
+                this.repeats = repeats;
+                hasRun = false;
+                DiagnosticCollector = diagnosticCollector;
+                DiagnosticCollector.StopAppendStart($"Scheduler: before timer on thread #{Thread.CurrentThread.ManagedThreadId}");
+                timer = new Timer(Tick, null, delayBefore, interval);
+                DiagnosticCollector.StopAppendStart($"Scheduler: starting a task on thread #{Thread.CurrentThread.ManagedThreadId}");
+            }
+            
+            internal IDiagnosticCollector DiagnosticCollector { get; } = new NoOpDiagnosticCollector();
 
             private void Tick(object state) => Run();
 

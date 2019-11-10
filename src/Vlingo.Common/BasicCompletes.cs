@@ -17,10 +17,6 @@ namespace Vlingo.Common
         protected internal Optional<TResult> FailedOutcomeValue = Optional.Empty<TResult>();
         protected AtomicRefValue<TResult> OutcomeValue = new AtomicRefValue<TResult>();
 
-        internal BasicCompletes(Scheduler scheduler, string diagnosticsMessage) : base(scheduler, default!, null, diagnosticsMessage)
-        {
-        }
-
         public BasicCompletes(TResult outcome) : this(outcome, true, null)
         {
         }
@@ -449,7 +445,6 @@ namespace Vlingo.Common
             TrySetResult(lastRunContinuation);
             
             OutcomeKnown.Set();
-            DiagnosticCollector.StopAppendStart($"CompletedWith value known on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
         }
     }
 }

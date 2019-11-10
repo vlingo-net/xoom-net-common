@@ -7,10 +7,9 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Text;
 using System.Threading;
 using Vlingo.Common.Completion.Continuations;
+using Vlingo.Common.Completion.Testing;
 
 namespace Vlingo.Common.Completion
 {
@@ -28,23 +27,16 @@ namespace Vlingo.Common.Completion
         internal CompletesContinuation? FailureContinuation;
         internal CompletesContinuation? ExceptionContinuation;
         internal object? TransformedResult;
-        internal IDiagnosticCollector DiagnosticCollector;
-
 
         protected BasicCompletes(Delegate action, BasicCompletes? parent) : this(null, action, parent)
         {
         }
 
-        protected BasicCompletes(Scheduler? scheduler, Delegate action, BasicCompletes? parent) : this(scheduler, action, parent, string.Empty)
-        {
-        }
-
-        protected BasicCompletes(Scheduler? scheduler, Delegate action, BasicCompletes? parent, string diagnosticsMessage)
+        protected BasicCompletes(Scheduler? scheduler, Delegate action, BasicCompletes? parent)
         {
             Parent = parent ?? this;
             Scheduler = scheduler;
             Action = action;
-            DiagnosticCollector = string.IsNullOrWhiteSpace(diagnosticsMessage) ? (IDiagnosticCollector) new NoOpDiagnosticCollector() : new DiagnosticCollector(diagnosticsMessage);
         }
 
         internal abstract void InnerInvoke(BasicCompletes completedCompletes);
@@ -92,85 +84,5 @@ namespace Vlingo.Common.Completion
 
         private void RegisterExceptionContinuation(CompletesContinuation continuationCompletes) =>
             ExceptionContinuation = continuationCompletes;
-    }
-
-    internal interface IDiagnosticCollector
-    {
-        void Append(string message);
-        void StartAppend(string message);
-        void StopAppendStart(string message);
-        void Stop();
-        string Logs { get; }
-
-    }
-
-    internal class DiagnosticCollector : IDiagnosticCollector
-    {
-        private readonly string _baseName;
-        private Stopwatch _stopwatch = new Stopwatch();
-        private StringBuilder _logs = new StringBuilder();
-        private volatile object syncLock = new object();
-        
-        public DiagnosticCollector(string baseName) => _baseName = baseName;
-
-        public void Append(string message) => _logs.AppendLine(message);
-
-        public void StartAppend(string message)
-        {
-            lock (syncLock)
-            {
-                _stopwatch.Start();
-                _logs.AppendLine($"{_baseName} : {message}");
-            }
-        }
-
-        public void StopAppendStart(string message)
-        {
-            lock (syncLock)
-            {
-                _stopwatch.Stop();
-                _logs.AppendLine($"{_baseName} : {message} elapsed time '{_stopwatch.ElapsedMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
-                _stopwatch.Start();   
-            }
-        }
-
-        public void Stop()
-        {
-            lock (syncLock)
-            {
-                _stopwatch.Stop();
-                _logs.AppendLine($"{_baseName} : Stopped with total elapsed time '{_stopwatch.ElapsedMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");   
-            }
-        }
-
-        public string Logs
-        {
-            get
-            {
-                Stop();
-                return _logs.ToString();
-            }
-        }
-    }
-    
-    internal class NoOpDiagnosticCollector : IDiagnosticCollector
-    {
-        public void Append(string message)
-        {
-        }
-
-        public void StartAppend(string message)
-        {
-        }
-
-        public void StopAppendStart(string message)
-        {
-        }
-
-        public void Stop()
-        {
-        }
-
-        public string Logs => string.Empty;
     }
 }

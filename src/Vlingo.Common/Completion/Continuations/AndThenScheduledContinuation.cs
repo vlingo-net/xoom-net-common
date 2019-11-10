@@ -44,37 +44,24 @@ namespace Vlingo.Common.Completion.Continuations
                 return;
             }
             
-            Parent.DiagnosticCollector.StopAppendStart($"InnerInvoke will execute on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
             base.InnerInvoke(completedCompletes);
             executed.Set(true);
         }
 
         public void IntervalSignal(IScheduled<object?> scheduled, object? data)
         {
-            if (executed.Get() && !TimedOut.Get())
-            {
-                Parent.DiagnosticCollector.StopAppendStart($"Want to time out but already executed '{((TimeSpan)data!).TotalMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
-            }
-            
             if (!executed.Get() && !TimedOut.Get())
             {
-                Parent.DiagnosticCollector.StopAppendStart($"IntervalSignal timouting with expected '{((TimeSpan)data!).TotalMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
                 TimedOut.Set(true);
                 Parent.TimedOut.Set(true);
                 HasFailedValue.Set(true);
             }
-            
-            Parent.DiagnosticCollector.StopAppendStart("IntervalSignal called but done nothing");
         }
 
         private void StartTimer()
         {
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                Parent.DiagnosticCollector.StartAppend($"StartTimer with expected timeout of '{timeout.TotalMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
-                Parent.DiagnosticCollector.Append($"Scheduler #{Parent.Scheduler.GetHashCode()}");
-                Parent.DiagnosticCollector.Append($"Scheduler DiagnosticController {Parent.DiagnosticCollector.GetType().Name}");
-                Parent.Scheduler.DiagnosticCollector = Parent.DiagnosticCollector;
                 cancellable = Parent.Scheduler.ScheduleOnce(this, timeout, TimeSpan.Zero, timeout);
             }
         }

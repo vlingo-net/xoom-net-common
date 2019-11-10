@@ -107,6 +107,7 @@ namespace Vlingo.Common
             TimeSpan interval,
             bool repeats)
         {
+            DiagnosticCollector.StopAppendStart($"Scheduler: before creating a scheduled task on thread #{Thread.CurrentThread.ManagedThreadId}");
             var task = new SchedulerTask<T>(scheduled, data, delayBefore, interval, repeats);
             task.DiagnosticCollector = DiagnosticCollector;
             tasks.Push(task);

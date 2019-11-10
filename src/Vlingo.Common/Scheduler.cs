@@ -129,6 +129,7 @@ namespace Vlingo.Common
                 this.data = data;
                 this.repeats = repeats;
                 hasRun = false;
+                DiagnosticCollector.StopAppendStart($"Scheduler: before timer on thread #{Thread.CurrentThread.ManagedThreadId}");
                 timer = new Timer(Tick, null, delayBefore, interval);
                 DiagnosticCollector.StopAppendStart($"Scheduler: starting a task on thread #{Thread.CurrentThread.ManagedThreadId}");
             }

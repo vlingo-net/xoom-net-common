@@ -44,7 +44,7 @@ namespace Vlingo.Common.Completion.Continuations
                 return;
             }
             
-            Parent.DiagnosticCollector.Append($"InnerInvoke will execute on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
+            Parent.DiagnosticCollector.StopAppendStart($"InnerInvoke will execute on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
             base.InnerInvoke(completedCompletes);
             executed.Set(true);
         }
@@ -73,7 +73,7 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 Parent.DiagnosticCollector.StartAppend($"StartTimer with expected timeout of '{timeout.TotalMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
                 Parent.DiagnosticCollector.Append($"Scheduler #{Parent.Scheduler.GetHashCode()}");
-                Parent.DiagnosticCollector.Append($"Scheduler {Parent.Scheduler.GetType().Name}");
+                Parent.DiagnosticCollector.Append($"Scheduler DiagnosticController {Parent.DiagnosticCollector.GetType().Name}");
                 Parent.Scheduler.DiagnosticCollector = Parent.DiagnosticCollector;
                 cancellable = Parent.Scheduler.ScheduleOnce(this, timeout, TimeSpan.Zero, timeout);
             }

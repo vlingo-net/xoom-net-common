@@ -78,13 +78,13 @@ namespace Vlingo.Common
         
         public void Dispose()
         {
-            DiagnosticCollector.StopAppendStart($"Scheduler: fuck, I'm disposed #{Thread.CurrentThread.ManagedThreadId}");
             Dispose(true);
             GC.SuppressFinalize(this);
         }
         
         protected virtual void Dispose(bool disposing)
         {
+            DiagnosticCollector.StopAppendStart($"Scheduler: fuck, I'm disposed #{Thread.CurrentThread.ManagedThreadId}");
             if (disposed)
             {
                 return;    
@@ -128,9 +128,7 @@ namespace Vlingo.Common
                 this.data = data;
                 this.repeats = repeats;
                 hasRun = false;
-                DiagnosticCollector.StopAppendStart($"Scheduler: before timer on thread #{Thread.CurrentThread.ManagedThreadId}");
                 timer = new Timer(Tick, null, delayBefore, interval);
-                DiagnosticCollector.StopAppendStart($"Scheduler: starting a task on thread #{Thread.CurrentThread.ManagedThreadId}");
             }
             
             // only for testing
@@ -141,7 +139,6 @@ namespace Vlingo.Common
                 this.repeats = repeats;
                 hasRun = false;
                 DiagnosticCollector = diagnosticCollector;
-                DiagnosticCollector.StopAppendStart($"Scheduler: before timer on thread #{Thread.CurrentThread.ManagedThreadId}");
                 timer = new Timer(Tick, null, delayBefore, interval);
                 DiagnosticCollector.StopAppendStart($"Scheduler: starting a task on thread #{Thread.CurrentThread.ManagedThreadId}");
             }

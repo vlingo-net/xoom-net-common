@@ -114,6 +114,7 @@ namespace Vlingo.Common
             private readonly IScheduled<T> scheduled;
             private readonly T data;
             private readonly bool repeats;
+            private readonly TimeSpan interval;
             private Timer? timer;
             private bool hasRun;
 
@@ -122,20 +123,51 @@ namespace Vlingo.Common
                 this.scheduled = scheduled;
                 this.data = data;
                 this.repeats = repeats;
+                this.interval = interval;
                 hasRun = false;
-                timer = new Timer(Tick, null, delayBefore, interval);
+                // for scheduled in intervals and scheduled once we fire only the first time.
+                timer = new Timer(Tick, null, delayBefore, TimeSpan.FromMilliseconds(Timeout.Infinite));
             }
 
             private void Tick(object state) => Run();
 
             public void Run()
             {
-                hasRun = true;
-                scheduled.IntervalSignal(scheduled, data);
+                var start = DateTime.UtcNow;
 
-                if (!repeats)
+                try
                 {
-                    Cancel();
+                    hasRun = true;
+                    scheduled.IntervalSignal(scheduled, data);
+
+                    if (!repeats)
+                    {
+                        Cancel();
+                    }
+                }
+                finally
+                {
+                    // if we want to fire periodically we use timer.Change firing the next interval instead of relying
+                    // on built in periodic callbacks of timer. Why ? Because this ensure that we will have just a single
+                    // thread in the callback, where with the standard behaviour the callback has to be reentrant meaning
+                    // that if enqueuing of the message is slow we can have several competing threads inside.
+                    // this methods allows single thread in callback without locking.
+                    // from : https://docs.microsoft.com/en-us/dotnet/api/system.threading.timer?view=netcore-3.0
+                    // The callback method executed by the timer should be reentrant, because it is called on ThreadPool threads.
+                    // The callback can be executed simultaneously on two thread pool threads
+                    // if the timer interval is less than the time required to execute the callback,
+                    // or if all thread pool threads are in use and the callback is queued multiple times.
+                    if (interval.TotalMilliseconds >  0)
+                    {
+                        var elapsed = DateTime.UtcNow - start;
+                        var dueIn = (int) (interval - elapsed).TotalMilliseconds;
+                        if (dueIn < 0)
+                        {
+                            dueIn = 0;
+                        }
+                    
+                        timer?.Change(TimeSpan.FromMilliseconds(dueIn), TimeSpan.FromMilliseconds(Timeout.Infinite));   
+                    }
                 }
             }
 

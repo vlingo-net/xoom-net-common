@@ -44,14 +44,27 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestScheduleManyHappyDelivery()
         {
-            using (var holder = new CounterHolder(505))
+            using (var holder = new CounterHolder(500))
             {
                 scheduler.Schedule(scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
 
                 holder.Completes();
 
-                Assert.True(holder.Counter > 500);
+                Assert.Equal(500, holder.Counter);
             }
+        }
+        
+        [Fact]
+        public void TestScheduleCallbackIsReentrant()
+        {
+            var holder = new NotSynchronizedCounter();
+            var slowScheduled = new ScheduledSlow();
+           
+            scheduler.Schedule(slowScheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(10));
+            
+            Thread.Sleep(1000);
+
+            Assert.InRange(holder.Count, 9, 10);
         }
 
 
@@ -60,6 +73,15 @@ namespace Vlingo.Common.Tests
             public void IntervalSignal(IScheduled<CounterHolder> scheduled, CounterHolder data)
             {
                 data.Increment();
+            }
+        }
+        
+        private class ScheduledSlow : IScheduled<NotSynchronizedCounter>
+        {
+            public void IntervalSignal(IScheduled<NotSynchronizedCounter> scheduled, NotSynchronizedCounter data)
+            {
+                data.Increment();
+                Thread.Sleep(100);
             }
         }
 
@@ -76,8 +98,11 @@ namespace Vlingo.Common.Tests
 
             public void Increment()
             {
-                ++Counter;
-                until.Signal();
+                if (until.CurrentCount > 0)
+                {
+                    ++Counter;
+                    until.Signal();   
+                }
             }
 
             public void Completes()
@@ -90,6 +115,18 @@ namespace Vlingo.Common.Tests
             }
 
             public void Dispose() => until.Dispose();
+        }
+
+        private class NotSynchronizedCounter
+        {
+            private int count = 0;
+            
+            public void Increment()
+            {
+                count++;
+            }
+
+            public int Count => count;
         }
     }
 }

@@ -62,7 +62,7 @@ namespace Vlingo.Common.Completion.Continuations
         {
             if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
             {
-                cancellable = Parent.Scheduler.ScheduleOnce(this, timeout, TimeSpan.Zero, timeout);
+                cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);
             }
         }
 

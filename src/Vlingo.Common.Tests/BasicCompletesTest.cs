@@ -8,16 +8,13 @@
 using System;
 using System.Threading;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Vlingo.Common.Tests
 {
     public class BasicCompletesTest
     {
-        private readonly ITestOutputHelper _testOutputHelper;
+        private Scheduler _testScheduler;
         
-        public BasicCompletesTest(ITestOutputHelper testOutputHelper) => _testOutputHelper = testOutputHelper;
-
         [Fact]
         public void TestCompletesWith()
         {
@@ -104,7 +101,7 @@ namespace Vlingo.Common.Tests
         public void TestOutcomeBeforeTimeout()
         {
             var andThenValue = 0;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1000), value => value * 2)
@@ -121,7 +118,7 @@ namespace Vlingo.Common.Tests
         public void TestTimeoutBeforeOutcome()
         {
             var andThenValue = 0;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
@@ -129,7 +126,7 @@ namespace Vlingo.Common.Tests
 
             var thread = new Thread(() =>
             {
-                Thread.Sleep(200);
+                Thread.Sleep(10);
                 completes.With(5);
             });
             thread.Start();
@@ -146,7 +143,7 @@ namespace Vlingo.Common.Tests
         public void TestThatFailureOutcomeFails()
         {
             int andThenValue = -1, failureValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             completes
                 .AndThen(-100, value => 2 * value)
                 .AndThen(x => andThenValue = x)
@@ -166,7 +163,7 @@ namespace Vlingo.Common.Tests
         {
             var andThenValue = 0;
             var failedValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(200), -10, value => value * 2)
@@ -193,7 +190,7 @@ namespace Vlingo.Common.Tests
         {
             var andThenValue = 0;
             var failedValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
@@ -202,7 +199,7 @@ namespace Vlingo.Common.Tests
 
             var thread = new Thread(() =>
             {
-                Thread.Sleep(200);
+                Thread.Sleep(10);
                 completes.With(5);
             });
             thread.Start();
@@ -219,7 +216,7 @@ namespace Vlingo.Common.Tests
         {
             var andThenValue = 0;
             var failedValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThen(TimeSpan.FromMilliseconds(1), -10, value => value * 2)
@@ -227,7 +224,7 @@ namespace Vlingo.Common.Tests
 
             var thread = new Thread(() =>
             {
-                Thread.Sleep(200);
+                Thread.Sleep(10);
                 completes.With(5);
             });
             thread.Start();
@@ -244,7 +241,7 @@ namespace Vlingo.Common.Tests
         {
             var andThenValue = 0;
             var failedValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThen(x => x * x)
@@ -269,7 +266,7 @@ namespace Vlingo.Common.Tests
         public void TestThatFailureOutcomeFailsInMiddle()
         {
             int andThenValue = -1, failureValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             completes
                 .AndThen(value => value * value)
                 .AndThen(100, x => andThenValue = 200)
@@ -288,7 +285,7 @@ namespace Vlingo.Common.Tests
         {
             var andThenValue = string.Empty;
             var failureValue = string.Empty;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             completes
                 .AndThen(value => (value * value).ToString())
                 .AndThen("100", x => andThenValue = "200")
@@ -305,7 +302,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestThatExceptionOutcomeInvalidCast()
         {
-            var completes = new BasicCompletes<string>(new Scheduler());
+            var completes = new BasicCompletes<string>(_testScheduler);
             completes
                 .AndThen("-100", value => (2 * int.Parse(value)).ToString())
                 .AndThen(x => int.Parse(x))
@@ -318,7 +315,7 @@ namespace Vlingo.Common.Tests
         public void TestThatExceptionOutcomeFails()
         {
             var failureValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThen(42, value => value * 2)
@@ -336,7 +333,7 @@ namespace Vlingo.Common.Tests
         public void TestThatExceptionOtherwiseFails()
         {
             var failureValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThen(42, value => value * 2)
@@ -355,7 +352,7 @@ namespace Vlingo.Common.Tests
         public void TestThatExceptionHandlerDelayRecovers()
         {
             var failureValue = -1;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             completes
                 .AndThen(0, value => value * 2)
                 .AndThen<int>(value => throw new Exception($"{value * 2}"));
@@ -373,7 +370,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestThatAwaitTimesOut()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             var completed = completes.Await(TimeSpan.FromMilliseconds(10));
 
@@ -386,7 +383,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestThatAwaitCompletes()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             var thread = new Thread(() =>
             {
@@ -403,7 +400,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenToCompletesCastingOutput()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             completes.AndThenTo(v => (v * 10).ToString());
             completes.With(10);
             var result = completes.Await();
@@ -414,7 +411,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenToCompletes()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             completes.AndThenTo(v => (v * 10).ToString());
             completes.With(10);
             var result = completes.Await<string>();
@@ -425,7 +422,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenToFails()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             completes.AndThenTo(10, v => v * 10);
             completes.With(10);
             var result = completes.Await();
@@ -437,13 +434,13 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenToFailsWhenScheduledTimesOut()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(new TestScheduler());
             completes.AndThenTo(TimeSpan.FromMilliseconds(1), 10, v => v * 10);
 
             int result;
             var thread = new Thread(() =>
             {
-                Thread.Sleep(200);
+                Thread.Sleep(10);
                 completes.With(5);
             });
             thread.Start();
@@ -457,7 +454,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenToOutcomeBeforeTimeout()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes.AndThenTo(TimeSpan.FromMilliseconds(1000), value => value * 2);
 
@@ -470,7 +467,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenToOutcomeBeforeTimeoutWithResult()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes.AndThenTo(TimeSpan.FromMilliseconds(1000), value => (value * 2).ToString());
 
@@ -484,7 +481,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestOtherwiseConsume()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             var failedResult = -1;
             
             completes
@@ -501,7 +498,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestOtherwiseConsumeAfterTimeout()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             var failedResult = -1;
 
             completes
@@ -510,7 +507,7 @@ namespace Vlingo.Common.Tests
             
             var thread = new Thread(() =>
             {
-                Thread.Sleep(200);
+                Thread.Sleep(10);
                 completes.With(10);
             });
             thread.Start();
@@ -523,7 +520,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestConsumeBeforeTimeout()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThenTo(TimeSpan.FromMilliseconds(1000), v => Completes.WithSuccess(v * 2));
@@ -543,7 +540,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenConsumeCalled()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             var consumedResult = -1;
             
             completes
@@ -561,7 +558,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenConsumeBeforeTimeout()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             var consumedResult = -1;
             
             completes
@@ -584,7 +581,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenConsumeNotRunAfterTimeout()
         {
-            var scheduler = new Scheduler();
+            var scheduler = _testScheduler;
             var completes = new BasicCompletes<int>(scheduler);
             var consumedResult = -1;
 
@@ -594,7 +591,7 @@ namespace Vlingo.Common.Tests
             
             var thread = new Thread(() =>
             {
-                Thread.Sleep(200);
+                Thread.Sleep(10);
                 completes.With(5);
             });
             thread.Start();
@@ -608,7 +605,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestThatTimeOutOccursForSideEffects()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             var consumedResult = -1;
 
             completes
@@ -622,7 +619,7 @@ namespace Vlingo.Common.Tests
             
             var thread = new Thread(() =>
             {
-                Thread.Sleep(200);
+                Thread.Sleep(10);
                 completes.With(1);
             });
             thread.Start();
@@ -637,7 +634,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenConsumeFails()
         {
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
             var consumedResult = -1;
             
             completes
@@ -657,7 +654,7 @@ namespace Vlingo.Common.Tests
         public void TestAndThenConsumeTimeoutBeforeOutcome()
         {
             var andThenValue = 0;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThenTo(v => Completes.WithSuccess(v * 2))
@@ -665,7 +662,7 @@ namespace Vlingo.Common.Tests
 
             var thread = new Thread(() =>
             {
-                Thread.Sleep(100);
+                Thread.Sleep(10);
                 completes.With(5);
             });
             thread.Start();
@@ -681,7 +678,7 @@ namespace Vlingo.Common.Tests
         public void TestAndThenConsumeOutcomesBeforeTiemout()
         {
             var andThenValue = 0;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThenTo(v => Completes.WithSuccess(v * 2))
@@ -705,7 +702,7 @@ namespace Vlingo.Common.Tests
         public void TestAndThenConsumeFailsBeforeTimeoutWithFailedOutcome()
         {
             var andThenValue = 0;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThenTo(v => Completes.WithSuccess(v * 2))
@@ -730,7 +727,7 @@ namespace Vlingo.Common.Tests
         {
             var andThenValue = 0;
             var failedValue = 0;
-            var completes = new BasicCompletes<int>(new Scheduler());
+            var completes = new BasicCompletes<int>(_testScheduler);
 
             completes
                 .AndThenTo(v => Completes.WithSuccess(v * 2))
@@ -750,7 +747,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenToWithComplexType()
         {
-            var completes = new BasicCompletes<IUser>(new Scheduler());
+            var completes = new BasicCompletes<IUser>(_testScheduler);
 
             completes.AndThenTo(user => user.WithName("Tomasz"));
 
@@ -764,7 +761,7 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestAndThenToWithComplexTypes()
         {
-            var completes = new BasicCompletes<IUser>(new Scheduler());
+            var completes = new BasicCompletes<IUser>(_testScheduler);
             UserState expectedUserState = null;
             completes
                 .AndThenTo(user => user.WithName("Tomasz"))
@@ -773,7 +770,7 @@ namespace Vlingo.Common.Tests
                     expectedUserState = userState;
                 });
 
-             completes.With<IUser>(new User());
+            completes.With<IUser>(new User());
 
             completes.Await();
             
@@ -787,6 +784,11 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<IStateStoreEntryReader<string>>(readerActor);
             var completed = completes.Await();
             Assert.Equal(readerActor, completed);
+        }
+
+        public BasicCompletesTest()
+        {
+            _testScheduler = new TestScheduler();
         }
 
         private class Sender

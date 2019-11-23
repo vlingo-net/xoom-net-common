@@ -30,28 +30,23 @@ namespace Vlingo.Common.Tests
         [Fact]
         public void TestScheduleOnceOneHappyDelivery()
         {
-            using (var holder = new CounterHolder(1))
-            {
+            using var holder = new CounterHolder(1);
+            scheduler.ScheduleOnce(scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
 
-                scheduler.ScheduleOnce(scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+            holder.Completes();
 
-                holder.Completes();
-
-                Assert.Equal(1, holder.Counter);
-            }
+            Assert.Equal(1, holder.Counter);
         }
 
         [Fact]
         public void TestScheduleManyHappyDelivery()
         {
-            using (var holder = new CounterHolder(500))
-            {
-                scheduler.Schedule(scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+            using var holder = new CounterHolder(500);
+            scheduler.Schedule(scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
 
-                holder.Completes();
+            holder.Completes();
 
-                Assert.Equal(500, holder.Counter);
-            }
+            Assert.Equal(500, holder.Counter);
         }
 
 

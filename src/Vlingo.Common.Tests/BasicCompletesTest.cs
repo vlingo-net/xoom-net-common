@@ -437,15 +437,14 @@ namespace Vlingo.Common.Tests
             var completes = new BasicCompletes<int>(new TestScheduler());
             completes.AndThenTo(TimeSpan.FromMilliseconds(1), 10, v => v * 10);
 
-            int result;
             var thread = new Thread(() =>
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 completes.With(5);
             });
             thread.Start();
 
-            result = completes.Await();
+            var result = completes.Await();
             
             Assert.True(completes.HasFailed);
             Assert.Equal(10, result);

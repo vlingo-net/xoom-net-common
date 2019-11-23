@@ -19,10 +19,10 @@ namespace Vlingo.Common.Serialization
         public static T Deserialized<T>(string serialization)
             => JsonConvert.DeserializeObject<T>(serialization, DateTimeConverter);
         
-        public static object Deserialized(string serialization, Type sourceType)
+        public static object? Deserialized(string serialization, Type sourceType)
             => JsonConvert.DeserializeObject(serialization, sourceType, DateTimeConverter);
 
-        public static List<T> DeserializedList<T>(string serialization)
+        public static List<T>? DeserializedList<T>(string serialization)
             => JsonConvert.DeserializeObject<List<T>>(serialization, DateTimeConverter);
 
         public static string Serialized(object instance)

@@ -11,15 +11,18 @@ namespace Vlingo.Common.Completion.Continuations
 {
     internal class AndThenContinuation<TAntecedentResult, TResult> : BasicCompletes<TResult>
     {
+        private readonly Action<BasicCompletes> onResultCallback;
         private readonly AtomicReference<BasicCompletes<TAntecedentResult>> antecedent = new AtomicReference<BasicCompletes<TAntecedentResult>>(default);
 
-        internal AndThenContinuation(BasicCompletes? parent, BasicCompletes<TAntecedentResult> antecedent, Delegate function) : this(parent, antecedent, Optional.Empty<TResult>(), function)
+        internal AndThenContinuation(BasicCompletes? parent, BasicCompletes<TAntecedentResult> antecedent, Delegate function, Action<BasicCompletes> onResultCallback)
+            : this(parent, antecedent, Optional.Empty<TResult>(), function, onResultCallback)
         {
         }
         
-        internal AndThenContinuation(BasicCompletes? parent, BasicCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function, parent)
+        internal AndThenContinuation(BasicCompletes? parent, BasicCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function, Action<BasicCompletes> onResultCallback) : base(function, parent)
         {
             this.antecedent.Set(antecedent);
+            this.onResultCallback = onResultCallback;
             FailedOutcomeValue = failedOutcomeValue;
         }
 
@@ -34,11 +37,23 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, ICompletes<TResult>> funcCompletes)
             {
-                funcCompletes(antecedent.Get()!.Outcome).AndThenConsume(t =>
+                var innerCompletes = funcCompletes(antecedent.Get()!.Outcome);
+
+                if (innerCompletes.HasOutcome) // it's already computed
                 {
-                    OutcomeValue.Set(t);
-                    TransformedResult = t;
-                });
+                    OutcomeValue.Set(innerCompletes.Outcome);
+                    TransformedResult = Outcome;
+                }
+                else // otherwise e continuation has to be scheduled
+                {
+                    innerCompletes.AndThenConsume(outcome =>
+                    {
+                        OutcomeValue.Set(outcome);
+                        TransformedResult = outcome;
+                        onResultCallback(this);
+                    });   
+                }
+
                 return;
             }
 

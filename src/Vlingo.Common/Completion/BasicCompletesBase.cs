@@ -37,12 +37,16 @@ namespace Vlingo.Common.Completion
             Scheduler = scheduler;
             Action = action;
         }
-
+        
         internal abstract void InnerInvoke(BasicCompletes completedCompletes);
         
         internal abstract void UpdateFailure(BasicCompletes previousContinuation);
 
         internal abstract void BackUp(CompletesContinuation continuation);
+        
+        internal abstract bool CanBeExecuted();
+        
+        internal void OnResultAvailable(BasicCompletes lastRunContinuation) => RunContinuationsWhenReady(lastRunContinuation);
 
         internal Exception? Exception => ExceptionValue.Get();
 
@@ -75,6 +79,8 @@ namespace Vlingo.Common.Completion
         
         protected abstract void RunContinuationsWhenReady();
         
+        protected abstract void RunContinuationsWhenReady(BasicCompletes completedContinuation);
+
         private void RegisterContinuation(CompletesContinuation continuationCompletes) =>
             Continuations.Enqueue(continuationCompletes);
         

@@ -19,8 +19,9 @@ namespace Vlingo.Common.Completion.Continuations
             BasicCompletes parent,
             BasicCompletes<TAntecedentResult> antecedent,
             TimeSpan timeout,
-            Delegate function)
-            : this(parent, antecedent, timeout, Optional.Empty<TResult>(), function)
+            Delegate function,
+            Action<BasicCompletes> onResultCallback)
+            : this(parent, antecedent, timeout, Optional.Empty<TResult>(), function, onResultCallback)
         {
         }
         
@@ -29,8 +30,9 @@ namespace Vlingo.Common.Completion.Continuations
             BasicCompletes<TAntecedentResult> antecedent,
             TimeSpan timeout,
             Optional<TResult> failedOutcomeValue,
-            Delegate function)
-            : base(parent, antecedent, failedOutcomeValue, function)
+            Delegate function,
+            Action<BasicCompletes> onResultCallback)
+            : base(parent, antecedent, failedOutcomeValue, function, onResultCallback)
         {
             this.timeout = timeout;
             ClearTimer();

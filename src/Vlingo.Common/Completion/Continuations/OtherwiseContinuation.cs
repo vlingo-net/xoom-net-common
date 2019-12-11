@@ -37,6 +37,7 @@ namespace Vlingo.Common.Completion.Continuations
                 if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
                 {
                     invokableActionInput(andThenContinuation.FailedOutcomeValue.Get());
+                    OutcomeKnown.Set();
                     return;   
                 }
             }
@@ -44,6 +45,7 @@ namespace Vlingo.Common.Completion.Continuations
             if (Action is Func<ICompletes<TAntecedentResult>, TResult> funcCompletes)
             {
                 OutcomeValue.Set(funcCompletes(antecedent));
+                OutcomeKnown.Set();
                 return;
             }
 
@@ -52,6 +54,7 @@ namespace Vlingo.Common.Completion.Continuations
                 if (completedCompletes is AndThenContinuation<TResult, TAntecedentResult> andThenContinuation)
                 {
                     OutcomeValue.Set(function(andThenContinuation.FailedOutcomeValue.Get()));
+                    OutcomeKnown.Set();
                     return;   
                 }
             }

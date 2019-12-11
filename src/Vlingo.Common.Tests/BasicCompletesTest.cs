@@ -598,7 +598,7 @@ namespace Vlingo.Common.Tests
             var completed = completes.Await();
             
             Assert.Equal(-1, consumedResult);
-            Assert.Equal(0, completed);
+            Assert.Equal(5, completed);
         }
 
         [Fact]
@@ -623,11 +623,11 @@ namespace Vlingo.Common.Tests
             });
             thread.Start();
 
-            completes.Await();
+            var completed = completes.Await();
             
             Assert.NotEqual(1, consumedResult);
             Assert.Equal(0, consumedResult);
-            Assert.Equal(0, completes.Outcome);
+            Assert.Equal(0, completed);
         }
         
         [Fact]

@@ -13,6 +13,7 @@ namespace Vlingo.Common
 {
     public class BasicCompletes<TResult> : BasicCompletes, ICompletes<TResult>
     {
+        private AtomicRefValue<TResult> defaultOutcomeValue = new AtomicRefValue<TResult>();
         protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
         protected internal Optional<TResult> FailedOutcomeValue = Optional.Empty<TResult>();
         protected AtomicRefValue<TResult> OutcomeValue = new AtomicRefValue<TResult>();
@@ -45,8 +46,12 @@ namespace Vlingo.Common
                 Failed();
             }
         }
-        
-        public virtual ICompletes<TO> With<TO>(TO outcome) => (ICompletes<TO>)With((TResult)(object)outcome!);
+
+        public virtual ICompletes<TO> With<TO>(TO outcome)
+        {
+            var completes = With((TResult) (object) outcome!);
+            return new BasicCompletes<TO>((TO)(object)completes.Outcome!);
+        }
 
         public virtual ICompletes<TResult> With(TResult outcome)
         {
@@ -300,7 +305,7 @@ namespace Vlingo.Common
         {
         }
         
-        internal override bool CanBeExecuted() => HasOutcome || HasFailed || TimedOut.Get() || HasFailed;
+        internal override bool CanBeExecuted() => HasOutcome || HasFailed || TimedOut.Get() || HasFailed || OutcomeValue.Get()!.Equals(defaultOutcomeValue.Get());
         
         protected virtual void Restore()
         {
@@ -449,7 +454,9 @@ namespace Vlingo.Common
         }
 
         private void CompletedWith(TResult outcome)
-        { 
+        {
+            defaultOutcomeValue.Set(outcome);
+            
             OutcomeValue.Set(outcome);
 
             var lastRunContinuation = RunContinuations();

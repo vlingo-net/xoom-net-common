@@ -13,6 +13,6 @@ namespace Vlingo.Common
     /// </summary>
     public class Nothing
     {
-        public static Nothing AtAll => null;
+        public static Nothing AtAll => null!;
     }
 }

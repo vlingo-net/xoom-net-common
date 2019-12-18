@@ -126,7 +126,7 @@ namespace Vlingo.Common.Tests
 
             var thread = new Thread(() =>
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 completes.With(5);
             });
             thread.Start();
@@ -224,7 +224,7 @@ namespace Vlingo.Common.Tests
 
             var thread = new Thread(() =>
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 completes.With(5);
             });
             thread.Start();
@@ -506,7 +506,7 @@ namespace Vlingo.Common.Tests
             
             var thread = new Thread(() =>
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 completes.With(10);
             });
             thread.Start();
@@ -590,7 +590,7 @@ namespace Vlingo.Common.Tests
             
             var thread = new Thread(() =>
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 completes.With(5);
             });
             thread.Start();
@@ -618,7 +618,7 @@ namespace Vlingo.Common.Tests
             
             var thread = new Thread(() =>
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 completes.With(1);
             });
             thread.Start();
@@ -661,7 +661,7 @@ namespace Vlingo.Common.Tests
 
             var thread = new Thread(() =>
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 completes.With(5);
             });
             thread.Start();

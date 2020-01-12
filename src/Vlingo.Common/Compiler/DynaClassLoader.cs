@@ -41,7 +41,7 @@ namespace Vlingo.Common.Compiler
                 if (protocolName != null)
                 {
                     var className = fullyQualifiedClassName
-                        .Substring(fullyQualifiedClassName.LastIndexOf(".", StringComparison.InvariantCulture) + 1);
+                        .Substring(fullyQualifiedClassName.LastIndexOf(".", StringComparison.Ordinal) + 1);
                     candidateTypes.AddRange(assembly.ExportedTypes
                         .Where(t => protocolName.IsAssignableFrom(t) && !t.IsInterface && t.Name == className));
                 }

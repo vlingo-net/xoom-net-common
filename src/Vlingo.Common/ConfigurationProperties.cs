@@ -28,7 +28,7 @@ namespace Vlingo.Common
 
         public string? GetProperty(string key, string? defaultValue)
         {
-            if (dictionary.TryGetValue(key, out string value))
+            if (dictionary.TryGetValue(key.ToLowerInvariant(), out string value))
             {
                 return value;
             }
@@ -38,13 +38,13 @@ namespace Vlingo.Common
 
         public void SetProperty(string key, string value)
         {
-            dictionary[key] = value;
+            dictionary[key.ToLowerInvariant()] = value;
         }
 
         public void Load(FileInfo configFile)
         {
             var config = new ConfigurationBuilder()
-              .AddJsonFile(configFile.Name, optional: false, reloadOnChange: true)
+              .AddJsonFile(configFile.Name, false, true)
               .Build();
 
             var configurations = config.AsEnumerable().Where(c => c.Value != null);

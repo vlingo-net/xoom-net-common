@@ -464,7 +464,8 @@ namespace Vlingo.Common
             ReadyToExectue.Set(HasOutcome);
         
             TrySetResult(lastRunContinuation);
-
+            
+            lastRunContinuation.OutcomeKnown.Set();
             OutcomeKnown.Set();   
         }
     }

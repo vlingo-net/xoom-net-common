@@ -351,6 +351,18 @@ namespace Vlingo.Common
                 }
             }
 
+            if (HasFailed)
+            {
+                try
+                {
+                    return (TNewResult)(object)FailedOutcomeValue.Get()!;
+                }
+                catch
+                {
+                    return (TNewResult) Convert.ChangeType(FailedOutcomeValue.Get(), typeof(TNewResult));
+                }
+            }
+
             return default!;
         }
 
@@ -448,6 +460,7 @@ namespace Vlingo.Common
             if (handle)
             {
                 HasFailedValue.Set(true);
+                OutcomeKnown.Set();
             }
 
             return handle;

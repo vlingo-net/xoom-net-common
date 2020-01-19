@@ -315,6 +315,9 @@ namespace Vlingo.Common
         {
             var lastCompletes = RunContinuations();
             TrySetResult(lastCompletes);
+            
+            lastCompletes.OutcomeKnown.Set();
+            OutcomeKnown.Set();
         }
 
         protected override void RunContinuationsWhenReady(BasicCompletes completedContinuation)
@@ -479,7 +482,7 @@ namespace Vlingo.Common
             TrySetResult(lastRunContinuation);
             
             lastRunContinuation.OutcomeKnown.Set();
-            OutcomeKnown.Set();   
+            OutcomeKnown.Set();
         }
     }
 }

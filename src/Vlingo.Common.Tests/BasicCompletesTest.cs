@@ -330,6 +330,24 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestThatNestedRecoverFromWithNoExceptionSetsOutput()
+        {
+            var failureValue = -1;
+            var completes = new BasicCompletes<int>(_testScheduler);
+
+            completes
+                .AndThenTo(42, value => Completes.WithSuccess(value * 2).RecoverFrom(e => 0 ))
+                .RecoverFrom(e => failureValue = int.Parse(e.Message));
+
+            completes.With(2);
+            completes.Await();
+
+            Assert.False(completes.HasFailed);
+            Assert.Equal(-1, failureValue);
+            Assert.Equal(4, completes.Outcome);
+        }
+        
+        [Fact]
         public void TestThatExceptionOtherwiseFails()
         {
             var failureValue = -1;

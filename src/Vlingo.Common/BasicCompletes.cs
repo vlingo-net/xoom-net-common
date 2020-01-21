@@ -186,7 +186,7 @@ namespace Vlingo.Common
         {
             var continuationCompletes = new OtherwiseContinuation<TResult, TResult>(Parent, this, consumer);
             Parent.OtherwiseInternal(continuationCompletes);
-            return continuationCompletes;
+            return this;
         }
 
         public ICompletes<TResult> RecoverFrom(Func<Exception, TResult> function)
@@ -197,7 +197,7 @@ namespace Vlingo.Common
             }
             var continuationCompletes = new RecoverContinuation<TResult>(this, function);
             Parent.RecoverInternal(continuationCompletes);
-            return continuationCompletes;
+            return this;
         }
 
         public TResult Await()

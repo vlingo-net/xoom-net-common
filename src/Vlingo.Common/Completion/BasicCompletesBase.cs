@@ -15,12 +15,13 @@ namespace Vlingo.Common.Completion
     public abstract class BasicCompletes
     {
         protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
-        protected readonly BasicCompletes Parent;
+        protected readonly BasicCompletes? Parent;
         protected readonly AtomicBoolean ReadyToExectue = new AtomicBoolean(false);
-        protected readonly AtomicReference<Exception> ExceptionValue = new AtomicReference<Exception>();
+        internal readonly AtomicReference<Exception> ExceptionValue = new AtomicReference<Exception>();
         internal readonly AtomicBoolean TimedOut = new AtomicBoolean(false);
         internal readonly ManualResetEventSlim OutcomeKnown = new ManualResetEventSlim(false);
         internal readonly AtomicBoolean HasFailedValue = new AtomicBoolean(false);
+        internal readonly AtomicBoolean HasException = new AtomicBoolean(false);
         internal readonly Scheduler? Scheduler;
         internal readonly ConcurrentQueue<CompletesContinuation> Continuations = new ConcurrentQueue<CompletesContinuation>();
         internal CompletesContinuation? FailureContinuation;
@@ -33,7 +34,7 @@ namespace Vlingo.Common.Completion
 
         protected BasicCompletes(Scheduler? scheduler, Delegate action, BasicCompletes? parent)
         {
-            Parent = parent ?? this;
+            Parent = parent;
             Scheduler = scheduler;
             Action = action;
         }
@@ -41,6 +42,8 @@ namespace Vlingo.Common.Completion
         internal abstract void InnerInvoke(BasicCompletes completedCompletes);
         
         internal abstract void UpdateFailure(BasicCompletes previousContinuation);
+
+        internal abstract void HandleException(Exception e);
 
         internal abstract void BackUp(CompletesContinuation continuation);
         
@@ -69,6 +72,10 @@ namespace Vlingo.Common.Completion
         {
             var continuation = new CompletesContinuation(continuationCompletes);
             RegisterFailureContinuation(continuation);
+            if (OutcomeKnown.IsSet && HasFailedValue.Get())
+            {
+                continuation.Run(this);
+            }
         }
 
         internal void RecoverInternal(BasicCompletes continuationCompletes)

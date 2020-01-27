@@ -43,8 +43,9 @@ namespace Vlingo.Common
         
         public override ICompletes<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function)
         {
-            var continuationCompletes = new RepeatableAndThenContinuation<TResult, TNewResult>(Parent, this, function);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new RepeatableAndThenContinuation<TResult, TNewResult>(parent, this, function);
+            parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
 

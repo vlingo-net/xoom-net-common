@@ -57,6 +57,13 @@ namespace Vlingo.Common.Completion.Continuations
                     OutcomeKnown.Set();
                     return;   
                 }
+
+                if (completedCompletes is BasicCompletes<TAntecedentResult> otherwiseContinuation)
+                {
+                    OutcomeValue.Set(function(otherwiseContinuation.FailedOutcomeValue.Get()));
+                    OutcomeKnown.Set();
+                    return;
+                }
             }
             
             base.InnerInvoke(completedCompletes);

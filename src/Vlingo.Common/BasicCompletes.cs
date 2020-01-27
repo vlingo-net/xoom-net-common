@@ -411,7 +411,10 @@ namespace Vlingo.Common
                     return lastRunContinuation;
                 }
 
-                parent.Continuations.TryDequeue(out var continuation);
+                if (!parent.Continuations.TryDequeue(out var continuation))
+                {
+                    return lastRunContinuation;
+                }
                 
                 try
                 {

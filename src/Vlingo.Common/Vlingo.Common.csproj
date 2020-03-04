@@ -7,7 +7,7 @@
     
     <!-- NuGet Metadata -->
     <IsPackable>true</IsPackable>
-    <PackageVersion>0.6.4.6</PackageVersion>
+    <PackageVersion>$(VlingoVersion)</PackageVersion>
     <PackageId>Vlingo.Common</PackageId>
     <Authors>Vlingo</Authors>
     <Description>
@@ -20,6 +20,7 @@
     <PackageIcon>vlingo-64x64.png</PackageIcon>
     <RepositoryUrl>https://github.com/vlingo-net/vlingo-net-common</RepositoryUrl>
     <PackageTags>vlingo-net-common;actor-model;dotnet;netstandard;c#;reactive-programming</PackageTags>
+    <Configurations>Debug;Release;Debug With Project References</Configurations>
   </PropertyGroup>
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
@@ -34,7 +35,18 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.3.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Vlingo.UUID" Version="0.6.4.6" />
   </ItemGroup>
+  <Choose>
+    <When Condition="'$(Configuration)' == 'Debug With Project References'">
+      <ItemGroup>
+        <ProjectReference Include="..\..\..\vlingo-net-uuid\src\Vlingo.UUID\Vlingo.UUID.csproj" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <PackageReference Include="Vlingo.UUID" Version="$(VlingoVersion)" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
 
 </Project>

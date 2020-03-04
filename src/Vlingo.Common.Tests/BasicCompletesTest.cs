@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2012-2019 Vaughn Vernon. All rights reserved.
+﻿// Copyright (c) 2012-2020 Vaughn Vernon. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the
 // Mozilla Public License, v. 2.0. If a copy of the MPL
@@ -28,6 +28,16 @@ namespace Vlingo.Common.Tests
         {
             var completes = new BasicCompletes<int>(0);
             completes.AndThen(value => value * 2);
+
+            completes.With(5);
+
+            Assert.Equal(10, completes.Outcome);
+        }
+        
+        [Fact]
+        public void TestCompletesAfterFluentFunction()
+        {
+            var completes = new BasicCompletes<int>(0).AndThen(value => value * 2);
 
             completes.With(5);
 
@@ -300,6 +310,22 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestThatAlreadyFailedExecutesOtherwise()
+        {
+            var failureValue = -1;
+            var completes = Completes.WithFailure(100);
+            completes
+                .AndThen(value => value * value)
+                .Otherwise<int>(x => failureValue = x);
+
+            var outcome = completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(100, outcome);
+            Assert.Equal(100, failureValue);
+        }
+        
+        [Fact]
         public void TestThatExceptionOutcomeInvalidCast()
         {
             var completes = new BasicCompletes<string>(_testScheduler);
@@ -383,6 +409,31 @@ namespace Vlingo.Common.Tests
 
             Assert.True(completes.HasFailed);
             Assert.Equal(40, failureValue);
+        }
+        
+        [Fact]
+        public void TestThatAlreadyFailedWithExceptionExecutesRecover()
+        {
+            Exception failureValue = null;
+            var completes =
+                new BasicCompletes<int>(_testScheduler)
+                    .AndThen<int>(x => throw new Exception("Small exception"));
+
+            completes.With(5);
+            completes.Await();
+            
+            completes
+                .AndThen(value => value * value)
+                .RecoverFrom(x =>
+                {
+                    failureValue = x;
+                    return 100;
+                });
+
+            completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal("Small exception", failureValue.Message);
         }
 
         [Fact]

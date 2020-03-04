@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Vaughn Vernon. All rights reserved.
+// Copyright (c) 2012-2020 Vaughn Vernon. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the
 // Mozilla Public License, v. 2.0. If a copy of the MPL
@@ -11,18 +11,16 @@ namespace Vlingo.Common.Completion.Continuations
 {
     internal class AndThenContinuation<TAntecedentResult, TResult> : BasicCompletes<TResult>
     {
-        private readonly Action<BasicCompletes> onResultCallback;
         private readonly AtomicReference<BasicCompletes<TAntecedentResult>> antecedent = new AtomicReference<BasicCompletes<TAntecedentResult>>(default);
 
-        internal AndThenContinuation(BasicCompletes? parent, BasicCompletes<TAntecedentResult> antecedent, Delegate function, Action<BasicCompletes> onResultCallback)
-            : this(parent, antecedent, Optional.Empty<TResult>(), function, onResultCallback)
+        internal AndThenContinuation(BasicCompletes? parent, BasicCompletes<TAntecedentResult> antecedent, Delegate function)
+            : this(parent, antecedent, Optional.Empty<TResult>(), function)
         {
         }
         
-        internal AndThenContinuation(BasicCompletes? parent, BasicCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function, Action<BasicCompletes> onResultCallback) : base(function, parent)
+        internal AndThenContinuation(BasicCompletes? parent, BasicCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function, parent)
         {
             this.antecedent.Set(antecedent);
-            this.onResultCallback = onResultCallback;
             FailedOutcomeValue = failedOutcomeValue;
         }
 
@@ -44,13 +42,13 @@ namespace Vlingo.Common.Completion.Continuations
                     OutcomeValue.Set(innerCompletes.Outcome);
                     TransformedResult = Outcome;
                 }
-                else // otherwise e continuation has to be scheduled
+                else // otherwise continuation has to be scheduled
                 {
                     innerCompletes.AndThenConsume(outcome =>
                     {
                         OutcomeValue.Set(outcome);
                         TransformedResult = outcome;
-                        onResultCallback(this);
+                        Parent?.OnResultAvailable(this);
                     });   
                 }
 

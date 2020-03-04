@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Vaughn Vernon. All rights reserved.
+// Copyright (c) 2012-2020 Vaughn Vernon. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the
 // Mozilla Public License, v. 2.0. If a copy of the MPL
@@ -19,9 +19,8 @@ namespace Vlingo.Common.Completion.Continuations
             BasicCompletes parent,
             BasicCompletes<TAntecedentResult> antecedent,
             TimeSpan timeout,
-            Delegate function,
-            Action<BasicCompletes> onResultCallback)
-            : this(parent, antecedent, timeout, Optional.Empty<TResult>(), function, onResultCallback)
+            Delegate function)
+            : this(parent, antecedent, timeout, Optional.Empty<TResult>(), function)
         {
         }
         
@@ -30,9 +29,8 @@ namespace Vlingo.Common.Completion.Continuations
             BasicCompletes<TAntecedentResult> antecedent,
             TimeSpan timeout,
             Optional<TResult> failedOutcomeValue,
-            Delegate function,
-            Action<BasicCompletes> onResultCallback)
-            : base(parent, antecedent, failedOutcomeValue, function, onResultCallback)
+            Delegate function)
+            : base(parent, antecedent, failedOutcomeValue, function)
         {
             this.timeout = timeout;
             ClearTimer();
@@ -55,16 +53,16 @@ namespace Vlingo.Common.Completion.Continuations
             if (!executed.Get() && !TimedOut.Get())
             {
                 TimedOut.Set(true);
-                Parent.TimedOut.Set(true);
+                Parent?.TimedOut.Set(true);
                 HasFailedValue.Set(true);
             }
         }
 
         private void StartTimer()
         {
-            if (timeout.TotalMilliseconds > 0 && Parent.Scheduler != null)
+            if (timeout.TotalMilliseconds > 0 && Parent?.Scheduler != null)
             {
-                cancellable = Parent.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);
+                cancellable = Parent?.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);
             }
         }
 

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2012-2019 Vaughn Vernon. All rights reserved.
+﻿// Copyright (c) 2012-2020 Vaughn Vernon. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the
 // Mozilla Public License, v. 2.0. If a copy of the MPL
@@ -14,7 +14,6 @@ namespace Vlingo.Common
     public class BasicCompletes<TResult> : BasicCompletes, ICompletes<TResult>
     {
         private AtomicRefValue<TResult> defaultOutcomeValue = new AtomicRefValue<TResult>();
-        protected readonly AtomicBoolean HasException = new AtomicBoolean(false);
         protected internal Optional<TResult> FailedOutcomeValue = Optional.Empty<TResult>();
         protected AtomicRefValue<TResult> OutcomeValue = new AtomicRefValue<TResult>();
 
@@ -65,138 +64,157 @@ namespace Vlingo.Common
 
         public ICompletes<TNewResult> AndThen<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, Optional.Of(failedOutcomeValue), function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(scheduledContinuation);
+            var parent = Parent ?? this;
+            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(parent, this, timeout, Optional.Of(failedOutcomeValue), function);
+            parent.AndThenInternal(scheduledContinuation);
             return scheduledContinuation;
         }
 
         public ICompletes<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            var scheduledContinuation = new AndThenContinuation<TResult, TNewResult>(Parent, this, Optional.Of(failedOutcomeValue), function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(scheduledContinuation);
+            var parent = Parent ?? this;
+            var scheduledContinuation = new AndThenContinuation<TResult, TNewResult>(parent, this, Optional.Of(failedOutcomeValue), function);
+            parent.AndThenInternal(scheduledContinuation);
             return scheduledContinuation;
         }
 
         public ICompletes<TNewResult> AndThen<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function)
         {
-            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(scheduledContinuation);
+            var parent = Parent ?? this;
+            var scheduledContinuation = new AndThenScheduledContinuation<TResult, TNewResult>(parent, this, timeout, function);
+            parent.AndThenInternal(scheduledContinuation);
             return scheduledContinuation;
         }
 
         public virtual ICompletes<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function)
         {
-            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(parent, this, function);
+            parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
 
         public ICompletes<TResult> AndThenConsume(TimeSpan timeout, TResult failedOutcomeValue, Action<TResult> consumer)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(Parent, this, timeout, Optional.Of(failedOutcomeValue), consumer, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(parent, this, timeout, Optional.Of(failedOutcomeValue), consumer);
+            parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
 
         public ICompletes<TResult> AndThenConsume(TResult failedOutcomeValue, Action<TResult> consumer)
         {
-            var continuationCompletes = new AndThenContinuation<TResult, TResult>(Parent, this, Optional.Of(failedOutcomeValue), consumer, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenContinuation<TResult, TResult>(parent, this, Optional.Of(failedOutcomeValue), consumer);
+            parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
 
         public ICompletes<TResult> AndThenConsume(TimeSpan timeout, Action<TResult> consumer)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(Parent, this, timeout, consumer, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TResult>(parent, this, timeout, consumer);
+            parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
 
         public ICompletes<TResult> AndThenConsume(Action<TResult> consumer)
         {
-            var continuationCompletes = new AndThenContinuation<TResult, TResult>(Parent, this, consumer, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenContinuation<TResult, TResult>(parent, this, consumer);
+            parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
 
         public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, Optional.Of(failedOutcomeValue), function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(parent, this, timeout, Optional.Of(failedOutcomeValue), function);
+            parent.AndThenInternal(continuationCompletes);
             return default!;
         }
 
         public ICompletes<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, ICompletes<TNewResult>> function)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, Optional.Of(failedOutcomeValue), function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(parent, this, timeout, Optional.Of(failedOutcomeValue), function);
+            parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
 
         public TNewResult AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
-            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, Optional.Of(failedOutcomeValue), function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(parent, this, Optional.Of(failedOutcomeValue), function);
+            parent.AndThenInternal(continuationCompletes);
             return default!;
         }
         
         public ICompletes<TNewResult> AndThenTo<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, ICompletes<TNewResult>> function)
         {
-            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, Optional.Of(failedOutcomeValue), function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(parent, this, Optional.Of(failedOutcomeValue), function);
+            parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
 
         public TNewResult AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(parent, this, timeout, function);
+            parent.AndThenInternal(continuationCompletes);
             return default!;
         }
 
         public ICompletes<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, Func<TResult, ICompletes<TNewResult>> function)
         {
-            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(Parent, this, timeout, function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenScheduledContinuation<TResult, TNewResult>(parent, this, timeout, function);
+            parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
 
         public TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function)
         {
-            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(parent, this, function);
+            parent.AndThenInternal(continuationCompletes);
             return default!;
         }
 
         public ICompletes<TNewResult> AndThenTo<TNewResult>(Func<TResult, ICompletes<TNewResult>> function)
         {
-            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(Parent, this, function, Parent.OnResultAvailable);
-            Parent.AndThenInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenContinuation<TResult, TNewResult>(parent, this, function);
+            parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
 
         public ICompletes<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TFailedOutcome> function)
         {
-            var continuationCompletes = new OtherwiseContinuation<TFailedOutcome, TFailedOutcome>(Parent, (BasicCompletes<TFailedOutcome>)(object)this, function);
-            Parent.OtherwiseInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new OtherwiseContinuation<TFailedOutcome, TFailedOutcome>(parent, (BasicCompletes<TFailedOutcome>)(object)this, function);
+            parent.OtherwiseInternal(continuationCompletes);
             return continuationCompletes;
         }
 
         public ICompletes<TResult> OtherwiseConsume(Action<TResult> consumer)
         {
-            var continuationCompletes = new OtherwiseContinuation<TResult, TResult>(Parent, this, consumer);
-            Parent.OtherwiseInternal(continuationCompletes);
+            var parent = Parent ?? this;
+            var continuationCompletes = new OtherwiseContinuation<TResult, TResult>(parent, this, consumer);
+            Parent?.OtherwiseInternal(continuationCompletes);
             return this;
         }
 
         public ICompletes<TResult> RecoverFrom(Func<Exception, TResult> function)
         {
-            if (HasException.Get())
+            var parent = Parent ?? this;
+            if (parent.HasException.Get())
             {
-                function(ExceptionValue.Get()!);
+                function(parent.ExceptionValue.Get()!);
             }
             var continuationCompletes = new RecoverContinuation<TResult>(this, function);
-            Parent.RecoverInternal(continuationCompletes);
+            parent.RecoverInternal(continuationCompletes);
             return this;
         }
 
@@ -328,7 +346,17 @@ namespace Vlingo.Common
 
         internal void Restore(CompletesContinuation continuation)
         {
-            Parent.AndThenInternal(continuation);
+            var parent = Parent ?? this;
+            parent.AndThenInternal(continuation);
+        }
+        
+        internal override void HandleException(Exception e)
+        {
+            ExceptionValue.Set(e);
+            HasException.Set(true);
+            HasFailedValue.Set(true);
+            FailedOutcomeValue = Optional.Of(Outcome);
+            Parent?.HandleException(e);
         }
 
         private TNewResult AwaitInternal<TNewResult>()
@@ -373,8 +401,9 @@ namespace Vlingo.Common
         
         private BasicCompletes RunContinuations(BasicCompletes completedContinuation)
         {
+            var parent = Parent ?? this;
             var lastRunContinuation = completedContinuation;
-            while (Continuations.Count > 0)
+            while (parent.Continuations.Count > 0)
             {
 
                 if (!CanExecute(lastRunContinuation))
@@ -382,11 +411,14 @@ namespace Vlingo.Common
                     return lastRunContinuation;
                 }
 
-                Continuations.TryDequeue(out var continuation);
+                if (!parent.Continuations.TryDequeue(out var continuation))
+                {
+                    return lastRunContinuation;
+                }
                 
                 try
                 {
-                    Parent.BackUp(continuation);
+                    parent.BackUp(continuation);
                     continuation.Completes.UpdateFailure(lastRunContinuation);
                     HasFailedValue.Set(continuation.Completes.HasFailedValue.Get());
                     if (continuation.Completes.HasFailedValue.Get())
@@ -442,15 +474,7 @@ namespace Vlingo.Common
                 }
             }
         }
-        
-        private void HandleException(Exception e)
-        {
-            ExceptionValue.Set(e);
-            HasException.Set(true);
-            HasFailedValue.Set(true);
-            FailedOutcomeValue = Optional.Of(Outcome);
-        }
-        
+
         private bool HandleFailureInternal(Optional<TResult> outcome)
         {
             if (OutcomeKnown.IsSet && HasFailed)
@@ -474,6 +498,11 @@ namespace Vlingo.Common
             defaultOutcomeValue.Set(outcome);
             
             OutcomeValue.Set(outcome);
+            
+            if (Parent is BasicCompletes<TResult> parent)
+            {
+                parent.OutcomeValue.Set(outcome);
+            }
 
             var lastRunContinuation = RunContinuations();
 

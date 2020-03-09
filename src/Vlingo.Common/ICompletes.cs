@@ -6,7 +6,8 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using Vlingo.Common.Completion;
+using System.Runtime.CompilerServices;
+using Vlingo.Common.Completion.Tasks;
 
 namespace Vlingo.Common
 {
@@ -15,6 +16,7 @@ namespace Vlingo.Common
         ICompletes<TO> With<TO>(TO outcome);
     }
     
+    [AsyncMethodBuilder(typeof(CompletesMethodBuilder<>))]
     public interface ICompletes<TResult> : ICompletes
     {
         ICompletes<TResult> With(TResult outcome);
@@ -27,6 +29,7 @@ namespace Vlingo.Common
         ICompletes<TResult> AndThenConsume(TResult failedOutcomeValue, Action<TResult> consumer);
         ICompletes<TResult> AndThenConsume(TimeSpan timeout, Action<TResult> consumer);
         ICompletes<TResult> AndThenConsume(Action<TResult> consumer);
+        ICompletes<TResult> AndThenConsume(Action consumer);
 
         TNewResult AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
         ICompletes<TNewResult> AndThenTo<TNewResult>(TimeSpan timeout, TNewResult failedOutcomeValue, Func<TResult, ICompletes<TNewResult>> function);
@@ -50,8 +53,11 @@ namespace Vlingo.Common
         bool HasOutcome { get; }
         TResult Outcome { get; }
         ICompletes<TResult> Repeat();
+        CompletesAwaiter<TResult> GetAwaiter();
+        void SetException(Exception exception);
+        void SetResult(TResult result);
     }
-    
+
     public static class Completes
     {
         public static ICompletes<T> Using<T>(Scheduler scheduler)

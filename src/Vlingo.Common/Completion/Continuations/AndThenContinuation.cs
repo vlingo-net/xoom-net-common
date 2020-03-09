@@ -11,7 +11,7 @@ namespace Vlingo.Common.Completion.Continuations
 {
     internal class AndThenContinuation<TAntecedentResult, TResult> : BasicCompletes<TResult>
     {
-        private readonly AtomicReference<BasicCompletes<TAntecedentResult>> antecedent = new AtomicReference<BasicCompletes<TAntecedentResult>>(default);
+        private readonly AtomicReference<BasicCompletes<TAntecedentResult>> _antecedent = new AtomicReference<BasicCompletes<TAntecedentResult>>(default);
 
         internal AndThenContinuation(BasicCompletes? parent, BasicCompletes<TAntecedentResult> antecedent, Delegate function)
             : this(parent, antecedent, Optional.Empty<TResult>(), function)
@@ -20,7 +20,7 @@ namespace Vlingo.Common.Completion.Continuations
         
         internal AndThenContinuation(BasicCompletes? parent, BasicCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function, parent)
         {
-            this.antecedent.Set(antecedent);
+            _antecedent.Set(antecedent);
             FailedOutcomeValue = failedOutcomeValue;
         }
 
@@ -30,12 +30,10 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 return;
             }
-            
-            base.InnerInvoke(completedCompletes);
 
             if (Action is Func<TAntecedentResult, ICompletes<TResult>> funcCompletes)
             {
-                var innerCompletes = funcCompletes(antecedent.Get()!.Outcome);
+                var innerCompletes = funcCompletes(_antecedent.Get()!.Outcome);
 
                 if (innerCompletes.HasOutcome) // it's already computed
                 {
@@ -57,9 +55,11 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, TResult> function)
             {
-                OutcomeValue.Set(function(antecedent.Get()!.Outcome));
+                OutcomeValue.Set(function(_antecedent.Get()!.Outcome));
                 TransformedResult = OutcomeValue.Get();
             }
+            
+            base.InnerInvoke(completedCompletes);
         }
 
         internal override void UpdateFailure(BasicCompletes previousContinuation)

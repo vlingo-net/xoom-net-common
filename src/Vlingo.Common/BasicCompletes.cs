@@ -8,6 +8,7 @@
 using System;
 using Vlingo.Common.Completion;
 using Vlingo.Common.Completion.Continuations;
+using Vlingo.Common.Completion.Tasks;
 
 namespace Vlingo.Common
 {
@@ -119,6 +120,14 @@ namespace Vlingo.Common
         }
 
         public ICompletes<TResult> AndThenConsume(Action<TResult> consumer)
+        {
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenContinuation<TResult, TResult>(parent, this, consumer);
+            parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+        
+        public ICompletes<TResult> AndThenConsume(Action consumer)
         {
             var parent = Parent ?? this;
             var continuationCompletes = new AndThenContinuation<TResult, TResult>(parent, this, consumer);
@@ -293,6 +302,12 @@ namespace Vlingo.Common
         {
             throw new NotImplementedException();
         }
+
+        public CompletesAwaiter<TResult> GetAwaiter() => new CompletesAwaiter<TResult>(this);
+        
+        public void SetException(Exception exception) => HandleException(exception);
+        
+        public void SetResult(TResult result) => CompletedWith(result);
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {

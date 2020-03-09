@@ -14,6 +14,7 @@ namespace Vlingo.Common.Completion
 {
     public abstract class BasicCompletes
     {
+        internal Action Continuation;
         protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
         protected readonly BasicCompletes? Parent;
         protected readonly AtomicBoolean ReadyToExectue = new AtomicBoolean(false);

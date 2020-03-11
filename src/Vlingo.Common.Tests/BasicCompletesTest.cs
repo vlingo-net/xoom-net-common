@@ -6,6 +6,8 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Xunit;
 
@@ -853,6 +855,59 @@ namespace Vlingo.Common.Tests
             var completed = completes.Await();
             Assert.Equal(readerActor, completed);
         }
+        
+        [Fact(Skip = "https://github.com/vlingo-net/vlingo-net-common/issues/54")]
+        public void TestOnClientAndServerSetupWhenClientIsFaster()
+        {
+            var ints = new List<int>();
+            var completeInteger = NewEmptyCompletes<int>().AndThen(i =>
+            {
+                ints.Add(i);
+                return i;
+            }).Repeat();
+            var expected = Enumerable.Range(0, 1000).ToList();
+
+            var server = new Thread(() => expected.ForEach(i => completeInteger.With(i)));
+
+            server.Start();
+            server.Join();
+
+            var intHashSet = new HashSet<int>(ints);
+            var expectedHashSet = new HashSet<int>(expected);
+
+            expectedHashSet.RemoveWhere(h => intHashSet.Contains(h));
+            Assert.Empty(expectedHashSet);
+        }
+        
+        [Fact(Skip = "https://github.com/vlingo-net/vlingo-net-common/issues/55")]
+        public void TestOnClientAndServerSetupWhenServerIsFaster()
+        {
+            var ints = new List<int>();
+            var completeInteger = NewEmptyCompletes<int>();
+            var expected = Enumerable.Range(0, 1000).ToList();
+
+            var server = new Thread(() => expected.ForEach(i => completeInteger.With(i)));
+            var client = new Thread(() => completeInteger.AndThen(i =>
+            {
+                ints.Add(i);
+                return i;
+            }).Repeat());
+            
+            server.Start();
+            Thread.Sleep(10);
+            client.Start();
+
+            server.Join();
+            client.Join();
+
+            var intHashSet = new HashSet<int>(ints);
+            var expectedHashSet = new HashSet<int>(expected);
+
+            expectedHashSet.RemoveWhere(h => intHashSet.Contains(h));
+            Assert.Empty(expectedHashSet);
+        }
+        
+        private ICompletes<T> NewEmptyCompletes<T>() => new RepeatableCompletes<T>(_testScheduler);
 
         public BasicCompletesTest()
         {

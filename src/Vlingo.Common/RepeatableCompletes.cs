@@ -14,8 +14,8 @@ namespace Vlingo.Common
 {
     public class RepeatableCompletes<TResult> : BasicCompletes<TResult>
     {
-        private readonly ConcurrentQueue<CompletesContinuation> continuationsBackup = new ConcurrentQueue<CompletesContinuation>();
-        private readonly AtomicBoolean repeating = new AtomicBoolean(false);
+        private readonly ConcurrentQueue<CompletesContinuation> _continuationsBackup = new ConcurrentQueue<CompletesContinuation>();
+        private readonly AtomicBoolean _repeating = new AtomicBoolean(false);
 
         public RepeatableCompletes(Scheduler scheduler) : this(scheduler, null)
         {
@@ -71,15 +71,15 @@ namespace Vlingo.Common
         {
             if (continuation != null)
             {
-                continuationsBackup.Enqueue(continuation);
+                _continuationsBackup.Enqueue(continuation);
             }
         }
 
         protected override void Restore()
         {
-            while (!continuationsBackup.IsEmpty)
+            while (!_continuationsBackup.IsEmpty)
             {
-                if (continuationsBackup.TryDequeue(out var continuation))
+                if (_continuationsBackup.TryDequeue(out var continuation))
                 {
                     Restore(continuation);
                 }
@@ -88,11 +88,11 @@ namespace Vlingo.Common
 
         private void RepeatInternal()
         {
-            if (repeating.CompareAndSet(false, true))
+            if (_repeating.CompareAndSet(false, true))
             {
                 Restore();
                 OutcomeKnown.Reset();
-                repeating.Set(false);
+                _repeating.Set(false);
             }
         }
     }

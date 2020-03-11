@@ -88,6 +88,16 @@ namespace Vlingo.Common.Tests.Version
             var patchBump = SemanticVersion.From(1, 0, 1);
             Assert.True(patchBump.IsCompatibleWith(version));
         }
+        
+        [Fact]
+        public void TestVersionIncrements()
+        {
+            var version = SemanticVersion.From(1, 2, 3);
+
+            Assert.Equal(version.NextPatch(), SemanticVersion.From(1, 2, 4));
+            Assert.Equal(version.NextMinor(), SemanticVersion.From(1, 3, 0));
+            Assert.Equal(version.NextMajor(), SemanticVersion.From(2, 0, 0));
+        }
 
         [Fact]
         public void TestVersionIncompatibility()

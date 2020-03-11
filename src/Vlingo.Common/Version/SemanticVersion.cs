@@ -20,15 +20,15 @@ namespace Vlingo.Common.Version
         private const int PATCH_MASK = 0x000000ff;
         private const int PATCH_MAX = 255;
 
-        private readonly int major;
-        private readonly int minor;
-        private readonly int patch;
+        private readonly int _major;
+        private readonly int _minor;
+        private readonly int _patch;
 
         private SemanticVersion(int major, int minor, int patch)
         {
-            this.major = major;
-            this.minor = minor;
-            this.patch = patch;
+            _major = major;
+            _minor = minor;
+            _patch = patch;
         }
 
         public static SemanticVersion From(int major, int minor, int patch) 
@@ -70,15 +70,15 @@ namespace Vlingo.Common.Version
 
         public bool IsCompatibleWith(SemanticVersion previous)
         {
-            if (major == previous.major && minor == previous.minor && patch == previous.patch + 1)
+            if (_major == previous._major && _minor == previous._minor && _patch == previous._patch + 1)
             {
                 return true;
             }
-            if (major == previous.major && minor == previous.minor + 1 && patch == previous.patch)
+            if (_major == previous._major && _minor == previous._minor + 1 && _patch == previous._patch)
             {
                 return true;
             }
-            if (major == previous.major + 1 && minor == previous.minor && patch == previous.patch)
+            if (_major == previous._major + 1 && _minor == previous._minor && _patch == previous._patch)
             {
                 return true;
             }
@@ -86,14 +86,39 @@ namespace Vlingo.Common.Version
             return false;
         }
 
-        public SemanticVersion WithIncrementedMajor() => new SemanticVersion(major + 1, minor, patch);
+        public SemanticVersion WithIncrementedMajor() => new SemanticVersion(_major + 1, _minor, _patch);
 
-        public SemanticVersion WithIncrementedMinor() => new SemanticVersion(major, minor + 1, patch);
+        public SemanticVersion WithIncrementedMinor() => new SemanticVersion(_major, _minor + 1, _patch);
 
-        public SemanticVersion WithIncrementedPatch() => new SemanticVersion(major, minor, patch + 1);
+        public SemanticVersion WithIncrementedPatch() => new SemanticVersion(_major, _minor, _patch + 1);
+        
+        public SemanticVersion NextPatch() => WithIncrementedPatch();
 
-        public override string ToString() => $"{major}.{minor}.{patch}";
+        public SemanticVersion NextMinor() => new SemanticVersion(_major, _minor + 1, 0);
 
-        public int ToValue() => ToValue(major, minor, patch);
+        public SemanticVersion NextMajor() => new SemanticVersion(_major + 1, 0, 0);
+
+        public override string ToString() => $"{_major}.{_minor}.{_patch}";
+
+        public int ToValue() => ToValue(_major, _minor, _patch);
+
+        public override bool Equals(object obj)
+        {
+            if (this == obj)
+            {
+                return true;
+            }
+
+            if (obj == null || obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            var otherVersion = (SemanticVersion) obj;
+
+            return _major == otherVersion._major && _minor == otherVersion._minor && _patch == otherVersion._patch;
+        }
+
+        public override int GetHashCode() => 31 * (_major + _minor + _patch + 1);
     }
 }

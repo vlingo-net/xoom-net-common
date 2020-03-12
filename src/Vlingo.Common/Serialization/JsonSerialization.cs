@@ -14,18 +14,28 @@ namespace Vlingo.Common.Serialization
 {
     public static class JsonSerialization
     {
-        private static readonly JsonConverter DateTimeConverter = new IsoDateTimeConverter();
-
         public static T Deserialized<T>(string serialization)
-            => JsonConvert.DeserializeObject<T>(serialization, DateTimeConverter);
+            => JsonConvert.DeserializeObject<T>(serialization);
         
-        public static object? Deserialized(string serialization, Type sourceType)
-            => JsonConvert.DeserializeObject(serialization, sourceType, DateTimeConverter);
+        public static T Deserialized<T>(string serialization, JsonSerializerSettings settings)
+            => JsonConvert.DeserializeObject<T>(serialization, settings);
 
-        public static List<T>? DeserializedList<T>(string serialization)
-            => JsonConvert.DeserializeObject<List<T>>(serialization, DateTimeConverter);
+        public static object? Deserialized(string serialization, Type type)
+            => JsonConvert.DeserializeObject(serialization, type);
+        
+        public static object? Deserialized(string serialization, Type type, JsonSerializerSettings settings)
+            => JsonConvert.DeserializeObject(serialization, type, settings);
 
-        public static string Serialized(object instance)
-            => JsonConvert.SerializeObject(instance, DateTimeConverter);
+        public static List<T> DeserializedList<T>(string serialization)
+            => JsonConvert.DeserializeObject<List<T>>(serialization);
+        
+        public static List<T>? DeserializedList<T>(string serialization, JsonSerializerSettings settings)
+            => JsonConvert.DeserializeObject<List<T>>(serialization, settings);
+
+        public static string Serialized<T>(T instance)
+            => JsonConvert.SerializeObject(instance);
+        
+        public static string Serialized<T>(T instance, JsonSerializerSettings settings)
+            => JsonConvert.SerializeObject(instance, settings);
     }
 }

@@ -10,10 +10,10 @@ using System;
 namespace Vlingo.Common
 {
     /// <summary>
-    /// Represents a outcome of a process that can fail with an unexpected exception. Outcomes can be
-    /// mapped and composed safely, converted to Java standard Optional, to null and to a Vlingo Completes.
+    /// Represents the outcome of a process that can fail in an expected way. Outcomes can be
+    /// mapped and composed safely, converted to Java standard Optional, to null or to a Vlingo Completes.
     /// </summary>
-    /// <typeparam name="TFailure">The type of an unexpection exception.</typeparam>
+    /// <typeparam name="TFailure">The type of an expected error.</typeparam>
     /// <typeparam name="TSuccess">The type of the expected value.</typeparam>
     public interface IOutcome<TFailure, TSuccess> where TFailure : Exception
     {

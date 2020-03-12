@@ -29,22 +29,23 @@ namespace Vlingo.Common
 
         public CompletesOutcomeT<TError, TOutcome> AndThenTo<TOutcome>(Func<T, CompletesOutcomeT<TError, TOutcome>> function)
         {
-            return new CompletesOutcomeT<TError, TOutcome>(_value.AndThenTo(outcome =>
-            {
-                if (outcome is Failure<TError, TOutcome>)
-                {
-                    return Completes.WithSuccess(outcome.AndThenTo<TError, TOutcome>(null));
-                }
-
-                try
-                {
-                    return function(outcome.Get())._value;
-                } 
-                catch (Exception e)
-                {
-                    throw new Exception("Unexpected exception thrown getting the value out of a successful Outcome!", e);
-                }
-            }));
+            return new CompletesOutcomeT<TError, TOutcome>(
+                _value.AndThenTo(outcome =>
+                    outcome.Resolve(
+                        f => Completes.WithSuccess(Failure.Of<TError, TOutcome>(f)),
+                        s =>
+                        {
+                            try
+                            {
+                                return function(outcome.Get())._value;
+                            }
+                            catch (Exception e)
+                            {
+                                throw new Exception(
+                                    "Unexpected exception thrown getting the value out of a successful Outcome!", e);
+                            }
+                        })
+                ));
         }
     }
 }

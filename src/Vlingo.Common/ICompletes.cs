@@ -50,6 +50,7 @@ namespace Vlingo.Common
         bool IsCompleted { get; }
         bool HasFailed { get; }
         void Failed();
+        void Failed(Exception exception);
         bool HasOutcome { get; }
         TResult Outcome { get; }
         ICompletes<TResult> Repeat();

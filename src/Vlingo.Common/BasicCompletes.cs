@@ -294,6 +294,8 @@ namespace Vlingo.Common
             }
         }
 
+        public void Failed(Exception exception) => HandleException(exception);
+
         public bool HasOutcome => OutcomeValue.Get() != null && !OutcomeValue.Get()!.Equals(default(TResult)!);
 
         public virtual TResult Outcome => OutcomeValue.Get();

@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Vlingo.Common.Message;
+using Vlingo.Common.Version;
 using Xunit;
 
 namespace Vlingo.Common.Tests.Message
@@ -40,9 +41,9 @@ namespace Vlingo.Common.Tests.Message
         [Fact]
         public void TestEnqueue()
         {
-            queue.Enqueue(new Message());
-            queue.Enqueue(new Message());
-            queue.Enqueue(new Message());
+            queue.Enqueue(new EmptyMessage());
+            queue.Enqueue(new EmptyMessage());
+            queue.Enqueue(new EmptyMessage());
 
             while (!queue.IsEmpty) ;
 
@@ -54,7 +55,7 @@ namespace Vlingo.Common.Tests.Message
         {
             for (int idx = 0; idx < 1000; ++idx)
             {
-                queue.Enqueue(new Message());
+                queue.Enqueue(new EmptyMessage());
             }
 
             queue.Flush();
@@ -67,7 +68,7 @@ namespace Vlingo.Common.Tests.Message
         {
             for (int idx = 0; idx < 1000; ++idx)
             {
-                queue.Enqueue(new Message());
+                queue.Enqueue(new EmptyMessage());
             }
 
             Assert.False(queue.IsEmpty);
@@ -80,12 +81,12 @@ namespace Vlingo.Common.Tests.Message
         {
             for (int idx = 0; idx < 1000; ++idx)
             {
-                queue.Enqueue(new Message());
+                queue.Enqueue(new EmptyMessage());
             }
 
             queue.Close();
 
-            queue.Enqueue(new Message());
+            queue.Enqueue(new EmptyMessage());
 
             queue.Flush();
 
@@ -98,12 +99,12 @@ namespace Vlingo.Common.Tests.Message
         {
             for (int idx = 0; idx < 1000; ++idx)
             {
-                queue.Enqueue(new Message());
+                queue.Enqueue(new EmptyMessage());
             }
 
             queue.Dispose();
 
-            queue.Enqueue(new Message());
+            queue.Enqueue(new EmptyMessage());
 
             queue.Flush();
 
@@ -118,7 +119,7 @@ namespace Vlingo.Common.Tests.Message
 
             for (int idx = 0; idx < expected; ++idx)
             {
-                exceptionsQueue.Enqueue(new Message());
+                exceptionsQueue.Enqueue(new EmptyMessage());
             }
 
             exceptionsQueue.Close();
@@ -140,7 +141,20 @@ namespace Vlingo.Common.Tests.Message
             exceptionsQueue?.Dispose();
         }
 
-        private class Message : IMessage { }
+        private class EmptyMessage : IMessage
+        {
+            public string Id { get; }
+            public DateTimeOffset OccurredOn { get; }
+            public T Payload<T>()
+            {
+                return default;
+            }
+
+            public string Type { get; }
+            public string Version { get; }
+            
+            public SemanticVersion SemanticVersion { get; }
+        }
 
         private class CountingDeadLettersListener : IMessageQueueListener
         {

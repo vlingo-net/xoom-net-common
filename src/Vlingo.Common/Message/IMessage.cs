@@ -5,9 +5,23 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
+using System;
+using Vlingo.Common.Version;
+
 namespace Vlingo.Common.Message
 {
     public interface IMessage
     {
+        string Id { get; }
+        DateTimeOffset OccurredOn { get; }
+        T Payload<T>();
+        string Type { get; }
+        string Version { get; }
+        SemanticVersion SemanticVersion { get; }
+    }
+
+    public static class MessageExtensions
+    {
+        public static SemanticVersion From(this IMessage message) => SemanticVersion.From(message.Version);
     }
 }

@@ -33,7 +33,7 @@ namespace Vlingo.Common.Serialization
         public static object? Deserialized(string serialization, Type type, JsonSerializerSettings settings)
             => JsonConvert.DeserializeObject(serialization, type, settings);
 
-        public static List<T> DeserializedList<T>(string serialization)
+        public static List<T>? DeserializedList<T>(string serialization)
             => JsonConvert.DeserializeObject<List<T>>(serialization, _settings);
         
         public static List<T>? DeserializedList<T>(string serialization, JsonSerializerSettings settings)

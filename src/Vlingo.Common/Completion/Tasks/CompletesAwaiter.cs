@@ -12,9 +12,9 @@ namespace Vlingo.Common.Completion.Tasks
 {
     public struct CompletesAwaiter<T> : INotifyCompletion
     {
-        private readonly BasicCompletes<T> _completes;
+        private readonly ICompletes<T> _completes;
 
-        public CompletesAwaiter(BasicCompletes<T> completes) => _completes = completes;
+        public CompletesAwaiter(ICompletes<T> completes) => _completes = completes;
 
         // TODO: calling to continuation will release the `await` before the real outcome is set
         public void OnCompleted(Action continuation) => _completes.AndThenConsume(continuation);

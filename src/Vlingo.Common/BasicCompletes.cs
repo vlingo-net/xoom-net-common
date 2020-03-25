@@ -307,8 +307,16 @@ namespace Vlingo.Common
 
         public CompletesAwaiter<TResult> GetAwaiter() => new CompletesAwaiter<TResult>(this);
         
-        public void SetException(Exception exception) => HandleException(exception);
-        
+        public void SetException(Exception exception)
+        {
+            HandleException(exception);
+            
+            if (ExceptionContinuation != null)
+            {
+                ExceptionContinuation.Run(this);
+            }
+        }
+
         public void SetResult(TResult result) => CompletedWith(result);
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
@@ -373,6 +381,7 @@ namespace Vlingo.Common
             HasException.Set(true);
             HasFailedValue.Set(true);
             FailedOutcomeValue = Optional.Of(Outcome);
+            OutcomeKnown.Set();
             Parent?.HandleException(e);
         }
 

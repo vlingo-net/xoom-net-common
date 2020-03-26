@@ -6,6 +6,7 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+using System.Threading.Tasks;
 using Vlingo.Common.Completion;
 using Vlingo.Common.Completion.Continuations;
 using Vlingo.Common.Completion.Tasks;
@@ -14,9 +15,10 @@ namespace Vlingo.Common
 {
     public class BasicCompletes<TResult> : BasicCompletes, ICompletes<TResult>
     {
-        private AtomicRefValue<TResult> defaultOutcomeValue = new AtomicRefValue<TResult>();
+        private readonly TaskCompletionSource<TResult> _tcs = new TaskCompletionSource<TResult>();
+        private readonly AtomicRefValue<TResult> _defaultOutcomeValue = new AtomicRefValue<TResult>();
         protected internal Optional<TResult> FailedOutcomeValue = Optional.Empty<TResult>();
-        protected AtomicRefValue<TResult> OutcomeValue = new AtomicRefValue<TResult>();
+        protected readonly AtomicRefValue<TResult> OutcomeValue = new AtomicRefValue<TResult>();
 
         public BasicCompletes(TResult outcome) : this(outcome, true, null)
         {
@@ -309,15 +311,17 @@ namespace Vlingo.Common
         
         public void SetException(Exception exception)
         {
-            HandleException(exception);
-            
-            if (ExceptionContinuation != null)
-            {
-                ExceptionContinuation.Run(this);
-            }
+            // run continuation from CompletesMethodBuilder to unstuck await
+            // this will also handle failure condition
+            RunContinuations();
         }
 
         public void SetResult(TResult result) => CompletedWith(result);
+        
+        public Task<TResult> ToTask()
+        {
+            return _tcs.Task;
+        }
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
@@ -348,7 +352,7 @@ namespace Vlingo.Common
         {
         }
         
-        internal override bool CanBeExecuted() => HasOutcome || HasFailed || TimedOut.Get() || HasFailed || OutcomeValue.Get()!.Equals(defaultOutcomeValue.Get());
+        internal override bool CanBeExecuted() => HasOutcome || HasFailed || TimedOut.Get() || HasFailed || OutcomeValue.Get()!.Equals(_defaultOutcomeValue.Get());
         
         protected virtual void Restore()
         {
@@ -381,6 +385,7 @@ namespace Vlingo.Common
             HasException.Set(true);
             HasFailedValue.Set(true);
             FailedOutcomeValue = Optional.Of(Outcome);
+            _tcs.SetException(e);
             OutcomeKnown.Set();
             Parent?.HandleException(e);
         }
@@ -508,7 +513,7 @@ namespace Vlingo.Common
                 return true; // already reached below
             }
 
-            bool handle = outcome.Equals(FailedOutcomeValue);
+            var handle = outcome.Equals(FailedOutcomeValue);
 
             if (handle)
             {
@@ -521,13 +526,15 @@ namespace Vlingo.Common
 
         private void CompletedWith(TResult outcome)
         {
-            defaultOutcomeValue.Set(outcome);
+            _defaultOutcomeValue.Set(outcome);
             
             OutcomeValue.Set(outcome);
+            _tcs.SetResult(outcome);
             
             if (Parent is BasicCompletes<TResult> parent)
             {
                 parent.OutcomeValue.Set(outcome);
+                parent._tcs.SetResult(outcome);
             }
 
             var lastRunContinuation = RunContinuations();

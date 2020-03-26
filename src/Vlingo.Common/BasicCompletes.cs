@@ -385,7 +385,7 @@ namespace Vlingo.Common
             HasException.Set(true);
             HasFailedValue.Set(true);
             FailedOutcomeValue = Optional.Of(Outcome);
-            _tcs.SetException(e);
+            _tcs.TrySetException(e);
             OutcomeKnown.Set();
             Parent?.HandleException(e);
         }
@@ -529,12 +529,12 @@ namespace Vlingo.Common
             _defaultOutcomeValue.Set(outcome);
             
             OutcomeValue.Set(outcome);
-            _tcs.SetResult(outcome);
+            _tcs.TrySetResult(outcome);
             
             if (Parent is BasicCompletes<TResult> parent)
             {
                 parent.OutcomeValue.Set(outcome);
-                parent._tcs.SetResult(outcome);
+                parent._tcs.TrySetResult(outcome);
             }
 
             var lastRunContinuation = RunContinuations();

@@ -8,6 +8,7 @@
 using System;
 using System.Linq.Expressions;
 using Vlingo.Common.Expressions;
+using Vlingo.Common.Serialization;
 using Xunit;
 
 namespace Vlingo.Common.Tests.Expressions
@@ -21,8 +22,9 @@ namespace Vlingo.Common.Tests.Expressions
             var serialized = ExpressionSerialization.Serialize(expression);
             
             var actor = new ActorTest();
-            var deserializedConsumer = ExpressionSerialization.Deserialize<IComplexParameterInterface>(actor, serialized);
-            deserializedConsumer(actor);
+            var serializationInfo = ExpressionSerialization.Deserialize<IParameterlessInterface>(serialized);
+            var consumer = ExpressionExtensions.CreateDelegate<IParameterlessInterface>(actor, serializationInfo);
+            consumer(actor);
             Assert.True(actor.WasRun);
         }
         
@@ -35,8 +37,9 @@ namespace Vlingo.Common.Tests.Expressions
             var serialized = ExpressionSerialization.Serialize(expression);
             
             var actor = new ActorTest();
-            var deserializedConsumer = ExpressionSerialization.Deserialize<IComplexParameterInterface>(actor, serialized);
-            deserializedConsumer(actor);
+            var serializationInfo = ExpressionSerialization.Deserialize<ISimpleParametersInterface>(serialized);
+            var consumer = ExpressionExtensions.CreateDelegate<ISimpleParametersInterface>(actor, serializationInfo);
+            consumer(actor);
             Assert.Equal(i, actor.Count);
             Assert.Equal(message, actor.Message);
         }
@@ -59,8 +62,9 @@ namespace Vlingo.Common.Tests.Expressions
             var serialized = ExpressionSerialization.Serialize(expression);
 
             var actor = new ActorTest();
-            var deserializedConsumer = ExpressionSerialization.Deserialize<IComplexParameterInterface>(actor, serialized);
-            deserializedConsumer(actor);
+            var serializationInfo = ExpressionSerialization.Deserialize<IComplexParameterInterface>(serialized);
+            var consumer = ExpressionExtensions.CreateDelegate<IComplexParameterInterface>(actor, serializationInfo);
+            consumer(actor);
             Assert.Equal(i, actor.Count);
             Assert.Equal(complexParameters, actor.Parameters);
         }

@@ -27,7 +27,7 @@ namespace Vlingo.Common.Expressions
             return JsonSerialization.Serialized(new ExpressionSerializationInfo(interfaceName, methodName, args, types));
         }
 
-        public static Action<TProtocol> Deserialize<TProtocol>(object actor, string serialized)
+        public static ExpressionSerializationInfo Deserialize<TProtocol>(string serialized)
         {
             var deserialized = JsonSerialization.Deserialized<ExpressionSerializationInfo>(serialized);
             var i = 0;
@@ -45,8 +45,8 @@ namespace Vlingo.Common.Expressions
 
                 i++;
             }
-            var consumer = ExpressionExtensions.CreateDelegate<TProtocol>(actor, deserialized);
-            return consumer;
+
+            return deserialized;
         }
     }
 }

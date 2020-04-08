@@ -519,6 +519,7 @@ namespace Vlingo.Common
             {
                 HasFailedValue.Set(true);
                 OutcomeKnown.Set();
+                ReadyToExectue.Set(true);
             }
 
             return handle;

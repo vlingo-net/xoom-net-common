@@ -856,6 +856,42 @@ namespace Vlingo.Common.Tests
             Assert.Equal(readerActor, completed);
         }
         
+        [Fact]
+        public void TestInvertWithFailedOutcome()
+        {
+            var failed = Failure.Of<Exception, ICompletes<string>>(new Exception("boom"));
+            var inverted = Completes.Invert(failed);
+            inverted.AndThenConsume(outcome => {
+                Assert.True(outcome is Failure<Exception, string>);
+                Assert.Null(outcome.GetOrNull());
+                Assert.Equal("boom", outcome.Otherwise(e => e.Message).Get());
+            });
+            
+            Thread.Sleep(1000);
+        }
+
+        [Fact]
+        public void TestInvertWithSuccessOutcomeOfSuccessCompletes()
+        {
+            var success = Success.Of<Exception, ICompletes<string>>(Completes.WithSuccess("YAY"));
+            var inverted = Completes.Invert(success);
+            inverted.AndThenConsume(outcome => {
+                Assert.True(outcome is Success<Exception, string>);
+                Assert.NotNull(outcome.GetOrNull());
+                Assert.Equal("YAY", outcome.Get());
+            });
+            
+            Thread.Sleep(1000);
+        }
+
+        [Fact]
+        public void TestInvertWithSuccessOutcomeOfFailedCompletes()
+        {
+            var successfulFailure = Success.Of<Exception, ICompletes<string>>(Completes.WithFailure("ERROR"));
+            var inverted = Completes.Invert(successfulFailure);
+            Assert.True(inverted.HasFailed);
+        }
+        
         [Fact(Skip = "https://github.com/vlingo-net/vlingo-net-common/issues/54")]
         public void TestOnClientAndServerSetupWhenClientIsFaster()
         {

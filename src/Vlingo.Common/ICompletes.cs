@@ -61,44 +61,25 @@ namespace Vlingo.Common
 
     public static class Completes
     {
-        public static ICompletes<T> Using<T>(Scheduler scheduler)
-        {
-            return new BasicCompletes<T>(scheduler);
-        }
+        public static ICompletes<T> Using<T>(Scheduler scheduler) => new BasicCompletes<T>(scheduler);
 
-        public static ICompletes<T> WithSuccess<T>(T outcome)
-        {
-            return new BasicCompletes<T>(outcome, true);
-        }
+        public static ICompletes<T> WithSuccess<T>(T outcome) => new BasicCompletes<T>(outcome, true);
 
-        public static ICompletes<T> WithFailure<T>(T outcome)
-        {
-            return new BasicCompletes<T>(outcome, false);
-        }
+        public static ICompletes<T> WithFailure<T>(T outcome) => new BasicCompletes<T>(outcome, false);
 
-        public static ICompletes<T> WithFailure<T>()
-        {
-            return new BasicCompletes<T>(default!, false);
-        }
+        public static ICompletes<T> WithFailure<T>() => new BasicCompletes<T>(default!, false);
 
-        public static ICompletes<T> RepeatableUsing<T>(Scheduler scheduler)
-        {
-            return new RepeatableCompletes<T>(scheduler);
-        }
+        public static ICompletes<T> RepeatableUsing<T>(Scheduler scheduler) => new RepeatableCompletes<T>(scheduler);
 
-        public static ICompletes<T> RepeatableWithSuccess<T>(T outcome)
-        {
-            return new RepeatableCompletes<T>(outcome, true);
-        }
+        public static ICompletes<T> RepeatableWithSuccess<T>(T outcome) => new RepeatableCompletes<T>(outcome, true);
 
-        public static ICompletes<T> RepeatableWithFailure<T>(T outcome)
-        {
-            return new RepeatableCompletes<T>(outcome, false);
-        }
+        public static ICompletes<T> RepeatableWithFailure<T>(T outcome) => new RepeatableCompletes<T>(outcome, false);
 
-        public static ICompletes<T> RepeatableWithFailure<T>()
-        {
-            return new RepeatableCompletes<T>(default!, false);
-        }
+        public static ICompletes<T> RepeatableWithFailure<T>() => new RepeatableCompletes<T>(default!, false);
+
+        public static ICompletes<IOutcome<TFailure, TSuccess>> Invert<TFailure, TSuccess>(IOutcome<TFailure, ICompletes<TSuccess>> outcome) where TFailure : Exception =>
+            outcome.Resolve(
+                e => WithSuccess(Failure.Of<TFailure, TSuccess>(e)),
+                s => s.AndThen(Success.Of<TFailure, TSuccess>));
     }
 }

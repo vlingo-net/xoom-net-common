@@ -75,6 +75,7 @@ namespace Vlingo.Common.Completion
             if (OutcomeKnown.IsSet && HasFailedValue.Get())
             {
                 continuation.Run(this);
+                RunContinuationsWhenReady(continuationCompletes);
             }
         }
 

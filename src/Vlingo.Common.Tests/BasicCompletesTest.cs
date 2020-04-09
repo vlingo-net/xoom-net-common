@@ -169,6 +169,27 @@ namespace Vlingo.Common.Tests
             Assert.Equal(1000, failureValue);
             Assert.Equal(1000, completed);
         }
+
+        [Fact]
+        public void TestThatFluentTimeoutWithNonNullFailureTimesout()
+        {
+            var completes = new BasicCompletes<int>(_testScheduler);
+
+            completes
+                .UseFailedOutcomeOf(-100)
+                .TimeoutWithin(TimeSpan.FromMilliseconds(1))
+                .AndThen(value => 2 * value)
+                .Otherwise<int>(failedValue => failedValue - 100);
+
+            Thread.Sleep(100);
+
+            completes.With(5);
+
+            var failureOutcome = completes.Await();
+
+            Assert.True(completes.HasFailed);
+            Assert.Equal(-200, failureOutcome);
+        }
         
         [Fact]
         public void TestThatFailureOutcomeFailsWhenScheduled()

@@ -213,7 +213,7 @@ namespace Vlingo.Common
         {
             var parent = Parent ?? this;
             var continuationCompletes = new OtherwiseContinuation<TResult, TResult>(parent, this, consumer);
-            Parent?.OtherwiseInternal(continuationCompletes);
+            parent.OtherwiseInternal(continuationCompletes);
             return this;
         }
 
@@ -305,6 +305,15 @@ namespace Vlingo.Common
         public virtual ICompletes<TResult> Repeat()
         {
             throw new NotImplementedException();
+        }
+
+        public ICompletes<TResult> TimeoutWithin(TimeSpan timeout) => AndThenConsume(timeout, result => { });
+
+        public ICompletes<TResult> UseFailedOutcomeOf(TResult failedOutcomeValue)
+        {
+            FailedOutcomeValue = new Optional<TResult>(failedOutcomeValue);
+            Failed();
+            return this;
         }
 
         public CompletesAwaiter<TResult> GetAwaiter() => new CompletesAwaiter<TResult>(this);

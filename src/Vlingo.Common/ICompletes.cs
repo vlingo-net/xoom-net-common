@@ -54,6 +54,31 @@ namespace Vlingo.Common
         bool HasOutcome { get; }
         TResult Outcome { get; }
         ICompletes<TResult> Repeat();
+        
+        /// <summary>
+        /// Answer myself after registering the <paramref name="timeout"/>.
+        /// </summary>
+        /// <param name="timeout">The time until this <see cref="ICompletes{TResult}"/> is considered timed out.</param>
+        /// <returns><see cref="ICompletes{TResult}"/></returns>
+        /// <remarks>
+        /// WARNING: If you use this method along with <c>UseFailedOutcomeOf(TFailure)</c>, you must
+        /// use this one after to register the <paramref name="timeout"/> threshold. Otherwise the timeout
+        /// may occur prior to knowing the proper <c>failedOutcomeValue</c> to set.
+        /// </remarks>
+        ICompletes<TResult> TimeoutWithin(TimeSpan timeout);
+        
+        /// <summary>
+        /// Answer myself after registering the <paramref name="failedOutcomeValue"/>.
+        /// </summary>
+        /// <param name="failedOutcomeValue">The TFailed outcome to use when a failure occurs</param>
+        /// <typeparam name="TFailed">The type of the failedOutcomeValue</typeparam>
+        /// <returns><see cref="ICompletes{TResult}"/></returns>
+        /// <remarks>
+        /// WARNING: If you use this method along with <c>UseFailedOutcomeOf(TFailure)</c>, you must
+        /// use this one after to register the <c>timeout</c> threshold. Otherwise the timeout
+        /// may occur prior to knowing the proper <paramref name="failedOutcomeValue"/> to set.
+        /// </remarks>
+        ICompletes<TResult> UseFailedOutcomeOf(TResult failedOutcomeValue);
         CompletesAwaiter<TResult> GetAwaiter();
         void SetException(Exception exception);
         void SetResult(TResult result);

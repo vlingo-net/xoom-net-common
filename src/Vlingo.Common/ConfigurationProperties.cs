@@ -14,21 +14,21 @@ namespace Vlingo.Common
 {
     public abstract class ConfigurationProperties
     {
-        private readonly IDictionary<string, string> dictionary;
+        private readonly IDictionary<string, string> _dictionary;
         
-        public ConfigurationProperties() => dictionary = new Dictionary<string, string>();
+        public ConfigurationProperties() => _dictionary = new Dictionary<string, string>();
 
-        public ConfigurationProperties(IDictionary<string, string> properties) => dictionary = properties;
+        public ConfigurationProperties(IDictionary<string, string> properties) => _dictionary = properties;
 
-        public ICollection<string> Keys => dictionary.Keys;
+        public ICollection<string> Keys => _dictionary.Keys;
 
-        public bool IsEmpty => dictionary.Count == 0;
+        public bool IsEmpty => _dictionary.Count == 0;
 
         public string? GetProperty(string key) => GetProperty(key, null);
 
         public string? GetProperty(string key, string? defaultValue)
         {
-            if (dictionary.TryGetValue(key.ToLowerInvariant(), out string value))
+            if (_dictionary.TryGetValue(key.ToLowerInvariant(), out string value))
             {
                 return value;
             }
@@ -36,10 +36,7 @@ namespace Vlingo.Common
             return defaultValue;
         }
 
-        public void SetProperty(string key, string value)
-        {
-            dictionary[key.ToLowerInvariant()] = value;
-        }
+        public void SetProperty(string key, string value) => _dictionary[key.ToLowerInvariant()] = value;
 
         public void Load(FileInfo configFile)
         {

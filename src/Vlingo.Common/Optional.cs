@@ -11,24 +11,24 @@ namespace Vlingo.Common
 {
     public sealed class Optional<T>
     {
-        private readonly T value;
-        private readonly bool hasValue;
+        private readonly T _value;
+        private readonly bool _hasValue;
 
         internal Optional(T value)
         {
-            this.value = value;
-            hasValue = true;
+            this._value = value;
+            _hasValue = true;
         }
 
         internal Optional()
         {
-            value = default!;
-            hasValue = false;
+            _value = default!;
+            _hasValue = false;
         }
 
         public Optional<T> Filter(Func<T, bool> predicate)
         {
-            if (hasValue && predicate(value))
+            if (_hasValue && predicate(_value))
             {
                 return this;
             }
@@ -38,55 +38,55 @@ namespace Vlingo.Common
 
         public Optional<U> FlatMap<U>(Func<T, Optional<U>> mapper)
         {
-            if (!hasValue)
+            if (!_hasValue)
             {
                 return Optional.Empty<U>();
             }
 
-            return mapper(value);
+            return mapper(_value);
         }
 
-        public T Get() => value;
+        public T Get() => _value;
 
         public void IfPresent(Action<T> consumer)
         {
-            if (hasValue)
+            if (_hasValue)
             {
-                consumer(value);
+                consumer(_value);
             }
         }
 
-        public bool IsPresent => hasValue;
+        public bool IsPresent => _hasValue;
 
         public Optional<U> Map<U>(Func<T, U> mapper)
         {
-            if (!hasValue)
+            if (!_hasValue)
             {
                 return Optional.Empty<U>();
             }
 
-            return Optional.Of(mapper(value));
+            return Optional.Of(mapper(_value));
         }
 
         public T OrElse(T other)
         {
-            return hasValue ?
-                value :
+            return _hasValue ?
+                _value :
                 other;
         }
 
         public T OrElseGet(Func<T> supplier)
         {
-            return hasValue ?
-                value :
+            return _hasValue ?
+                _value :
                 supplier();
         }
 
         public T OrElseThrow<X>(Func<X> supplier) where X : Exception
         {
-            if (hasValue)
+            if (_hasValue)
             {
-                return value;
+                return _value;
             }
 
             supplier();
@@ -101,12 +101,12 @@ namespace Vlingo.Common
                 return false;
             }
 
-            if(!other.hasValue && !hasValue)
+            if(!other._hasValue && !_hasValue)
             {
                 return true; // both empty
             }
 
-            if(!other.hasValue || !hasValue || !Equals(value, other.value))
+            if(!other._hasValue || !_hasValue || !Equals(_value, other._value))
             {
                 return false;
             }
@@ -121,12 +121,12 @@ namespace Vlingo.Common
 
         public override string ToString()
         {
-            if (!hasValue)
+            if (!_hasValue)
             {
                 return "Empty()";
             }
 
-            return $"Value<{typeof(T).FullName}>[{value!.ToString()}]";
+            return $"Value<{typeof(T).FullName}>[{_value!.ToString()}]";
         }
     }
 

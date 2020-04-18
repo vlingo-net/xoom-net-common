@@ -20,10 +20,13 @@ namespace Vlingo.Common.Compiler
         {
             var file = new FileInfo(pathToClass);
 
-            using (var stream = file.OpenWrite())
+            if (file.Exists)
             {
-                stream.Write(dynaClass, 0, dynaClass.Length);
+                return file.Replace(pathToClass, null);
             }
+            
+            using var stream = file.OpenWrite();
+            stream.Write(dynaClass, 0, dynaClass.Length);
 
             return file;
         }
@@ -32,10 +35,13 @@ namespace Vlingo.Common.Compiler
         {
             var file = new FileInfo(pathToSource);
 
-            using (var stream = new StreamWriter(file.OpenWrite()))
+            if (file.Exists)
             {
-                stream.Write(dynaClassSource);
+                return file.Replace(pathToSource, null);
             }
+
+            using var stream = new StreamWriter(file.OpenWrite());
+            stream.Write(dynaClassSource);
 
             return file;
         }

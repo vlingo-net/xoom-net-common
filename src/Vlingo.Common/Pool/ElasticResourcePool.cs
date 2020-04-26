@@ -34,13 +34,13 @@ namespace Vlingo.Common.Pool
     /// <typeparam name="TArguments">The type of arguments for the <see cref="IResourceFactory{TResource,TArguments}"/></typeparam>
     public class ElasticResourcePool<TResource, TArguments> : ResourcePool<TResource, TArguments>
     {
-        private readonly AtomicInteger idle = new AtomicInteger(0);
-        private readonly AtomicInteger allocations = new AtomicInteger(0);
-        private readonly AtomicInteger evictions = new AtomicInteger(0);
+        private readonly AtomicInteger _idle = new AtomicInteger(0);
+        private readonly AtomicInteger _allocations = new AtomicInteger(0);
+        private readonly AtomicInteger _evictions = new AtomicInteger(0);
 
-        private ConcurrentQueue<TResource> cache = new ConcurrentQueue<TResource>();
+        private readonly ConcurrentQueue<TResource> _cache = new ConcurrentQueue<TResource>();
 
-        private int minIdle;
+        private readonly int _minIdle;
         
         /// <summary>
         /// Creates an <see cref="ElasticResourcePool{TResource,TArguments}"/> instance initialized to pool from <see cref="Config"/> resource objects.
@@ -57,7 +57,7 @@ namespace Vlingo.Common.Pool
 
         private ElasticResourcePool(int minIdle, IResourceFactory<TResource, TArguments> factory) : base(factory)
         {
-            this.minIdle = minIdle;
+            _minIdle = minIdle;
 
             Initialize();
         }
@@ -70,14 +70,14 @@ namespace Vlingo.Common.Pool
         /// <returns>A resource object</returns>
         public override TResource Acquire(TArguments arguments)
         {
-            if (!cache.TryDequeue(out var resource))
+            if (!_cache.TryDequeue(out var resource))
             {
-                allocations.IncrementAndGet();
+                _allocations.IncrementAndGet();
                 resource = Factory.Create(arguments);
             }
             else
             {
-                idle.DecrementAndGet();
+                _idle.DecrementAndGet();
                 resource = Factory.Reset(resource, arguments);
             }
             return resource;
@@ -91,12 +91,12 @@ namespace Vlingo.Common.Pool
         public override void Release(TResource resource)
         {
             var stats = Stats();
-            if (stats.IdleToInUse < minIdle)
+            if (stats.IdleToInUse < _minIdle)
             {
-                idle.IncrementAndGet();
-                cache.Enqueue(resource);
+                _idle.IncrementAndGet();
+                _cache.Enqueue(resource);
             }
-            else if (idle.Get() > minIdle)
+            else if (_idle.Get() > _minIdle)
             {
                 Evict(resource);
                 Compact();
@@ -107,55 +107,55 @@ namespace Vlingo.Common.Pool
             }
         }
         
-        public override ResourcePoolStats Stats() => new ResourcePoolStats(allocations.Get(), evictions.Get(), idle.Get());
+        public override ResourcePoolStats Stats() => new ResourcePoolStats(_allocations.Get(), _evictions.Get(), _idle.Get());
 
-        public override int Size => cache.Count;
+        public override int Size => _cache.Count;
 
         private void Initialize()
         {
-            for (var i = 0; i < minIdle; i++)
+            for (var i = 0; i < _minIdle; i++)
             {
-                allocations.IncrementAndGet();
+                _allocations.IncrementAndGet();
                 Cache(Factory.Create(Factory.DefaultArguments));
             }
         }
 
         private void Cache(TResource resource)
         {
-            idle.IncrementAndGet();
-            cache.Enqueue(resource);
+            _idle.IncrementAndGet();
+            _cache.Enqueue(resource);
         }
         
         private void Evict(TResource resource)
         {
-            evictions.IncrementAndGet();
+            _evictions.IncrementAndGet();
             Factory.Destroy(resource);
         }
 
         private void Compact()
         {
-            while (idle.Get() > Target())
+            while (_idle.Get() > Target())
             {
-                if (!cache.TryDequeue(out var resource))
+                if (!_cache.TryDequeue(out var resource))
                 {
                     return;
                 }
                 
-                if (idle.GetAndDecrement() > Target())
+                if (_idle.GetAndDecrement() > Target())
                 {
                     Evict(resource);
                 }
                 else
                 {
-                    idle.IncrementAndGet();
-                    cache.Enqueue(resource);
+                    _idle.IncrementAndGet();
+                    _cache.Enqueue(resource);
                 }
             }
         }
 
         private int Target() 
         {
-            return Math.Max(minIdle, (int) (idle.Get() * 0.5));
+            return Math.Max(_minIdle, (int) (_idle.Get() * 0.5));
         }
         
         /// <summary>

@@ -361,7 +361,7 @@ namespace Vlingo.Common
         {
         }
         
-        internal override bool CanBeExecuted() => HasOutcome || HasFailed || TimedOut.Get() || HasFailed || OutcomeValue.Get()!.Equals(_defaultOutcomeValue.Get());
+        internal override bool CanBeExecuted() => HasOutcome || HasFailed || TimedOut.Get() || HasFailed || OutcomeValue.Get() != null && OutcomeValue.Get()!.Equals(_defaultOutcomeValue.Get());
         
         protected virtual void Restore()
         {

@@ -5,7 +5,6 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-using System;
 using System.IO;
 
 namespace Vlingo.Common.Compiler
@@ -20,21 +19,22 @@ namespace Vlingo.Common.Compiler
         public static FileInfo PersistDynaClass(string pathToClass, byte[] dynaClass)
         {
             var file = new FileInfo(pathToClass);
-
-            try
+            
+            if (file.Exists)
             {
-                if (file.Exists)
+                try
                 {
                     return file.Replace(pathToClass, null);
                 }
-            
-                using var stream = file.OpenWrite();
-                stream.Write(dynaClass, 0, dynaClass.Length);
+                catch (IOException)
+                {
+                    // potentially file is being used by another process
+                    return file;
+                }
             }
-            catch (IOException)
-            {
-                // potentially file is being used by another process
-            }
+        
+            using var stream = file.OpenWrite();
+            stream.Write(dynaClass, 0, dynaClass.Length);
 
             return file;
         }
@@ -43,20 +43,21 @@ namespace Vlingo.Common.Compiler
         {
             var file = new FileInfo(pathToSource);
 
-            try
+            if (file.Exists)
             {
-                if (file.Exists)
+                try
                 {
                     return file.Replace(pathToSource, null);
                 }
+                catch (IOException)
+                {
+                    // potentially file is being used by another process
+                    return file;
+                }
+            }
 
-                using var stream = new StreamWriter(file.OpenWrite());
-                stream.Write(dynaClassSource);
-            }
-            catch (IOException)
-            {
-                // potentially file is being used by another process
-            }
+            using var stream = new StreamWriter(file.OpenWrite());
+            stream.Write(dynaClassSource);
 
             return file;
         }

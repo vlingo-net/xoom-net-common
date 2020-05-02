@@ -111,22 +111,24 @@ namespace Vlingo.Common
 
         private class SchedulerTask<T> : ICancellable, IRunnable
         {
-            private readonly IScheduled<T> scheduled;
-            private readonly T data;
-            private readonly bool repeats;
-            private readonly TimeSpan interval;
-            private Timer? timer;
-            private bool hasRun;
+            private readonly IScheduled<T> _scheduled;
+            private readonly T _data;
+            private readonly bool _repeats;
+            private readonly TimeSpan _interval;
+            private Timer? _timer;
+            private bool _hasRun;
+            private bool _isDisposed;
 
             public SchedulerTask(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval, bool repeats)
             {
-                this.scheduled = scheduled;
-                this.data = data;
-                this.repeats = repeats;
-                this.interval = interval;
-                hasRun = false;
+                _scheduled = scheduled;
+                _data = data;
+                _repeats = repeats;
+                _interval = interval;
+                _hasRun = false;
+                _isDisposed = false;
                 // for scheduled in intervals and scheduled once we fire only the first time.
-                timer = new Timer(Tick, null, delayBefore, TimeSpan.FromMilliseconds(Timeout.Infinite));
+                _timer = new Timer(Tick, null, delayBefore, TimeSpan.FromMilliseconds(Timeout.Infinite));
             }
 
             private void Tick(object state) => Run();
@@ -137,10 +139,10 @@ namespace Vlingo.Common
 
                 try
                 {
-                    hasRun = true;
-                    scheduled.IntervalSignal(scheduled, data);
+                    _hasRun = true;
+                    _scheduled.IntervalSignal(_scheduled, _data);
 
-                    if (!repeats)
+                    if (!_repeats)
                     {
                         Cancel();
                     }
@@ -157,29 +159,33 @@ namespace Vlingo.Common
                     // The callback can be executed simultaneously on two thread pool threads
                     // if the timer interval is less than the time required to execute the callback,
                     // or if all thread pool threads are in use and the callback is queued multiple times.
-                    if (interval.TotalMilliseconds >  0)
+                    if (_interval.TotalMilliseconds >  0)
                     {
                         var elapsed = DateTime.UtcNow - start;
-                        var dueIn = (int) (interval - elapsed).TotalMilliseconds;
+                        var dueIn = (int) (_interval - elapsed).TotalMilliseconds;
                         if (dueIn < 0)
                         {
                             dueIn = 0;
                         }
-                    
-                        timer?.Change(TimeSpan.FromMilliseconds(dueIn), TimeSpan.FromMilliseconds(Timeout.Infinite));   
+
+                        if (_isDisposed)
+                        {
+                            _timer?.Change(TimeSpan.FromMilliseconds(dueIn), TimeSpan.FromMilliseconds(Timeout.Infinite));
+                        }
                     }
                 }
             }
 
             public bool Cancel()
             {
-                if (timer != null)
+                if (_timer != null)
                 {
-                    timer.Dispose();
-                    timer = null;
+                    _isDisposed = true;
+                    _timer.Dispose();
+                    _timer = null;
                 }
 
-                return repeats || !hasRun;
+                return _repeats || !_hasRun;
             }
         }
     }

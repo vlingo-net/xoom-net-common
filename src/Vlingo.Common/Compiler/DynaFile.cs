@@ -5,6 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
+using System;
 using System.IO;
 
 namespace Vlingo.Common.Compiler
@@ -20,13 +21,20 @@ namespace Vlingo.Common.Compiler
         {
             var file = new FileInfo(pathToClass);
 
-            if (file.Exists)
+            try
             {
-                return file.Replace(pathToClass, null);
-            }
+                if (file.Exists)
+                {
+                    return file.Replace(pathToClass, null);
+                }
             
-            using var stream = file.OpenWrite();
-            stream.Write(dynaClass, 0, dynaClass.Length);
+                using var stream = file.OpenWrite();
+                stream.Write(dynaClass, 0, dynaClass.Length);
+            }
+            catch (IOException)
+            {
+                // potentially file is being used by another process
+            }
 
             return file;
         }
@@ -35,13 +43,20 @@ namespace Vlingo.Common.Compiler
         {
             var file = new FileInfo(pathToSource);
 
-            if (file.Exists)
+            try
             {
-                return file.Replace(pathToSource, null);
-            }
+                if (file.Exists)
+                {
+                    return file.Replace(pathToSource, null);
+                }
 
-            using var stream = new StreamWriter(file.OpenWrite());
-            stream.Write(dynaClassSource);
+                using var stream = new StreamWriter(file.OpenWrite());
+                stream.Write(dynaClassSource);
+            }
+            catch (IOException)
+            {
+                // potentially file is being used by another process
+            }
 
             return file;
         }

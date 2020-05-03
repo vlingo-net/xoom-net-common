@@ -19,8 +19,8 @@ namespace Vlingo.Common
     /// </summary>
     public class Scheduler: IDisposable
     {
-        private bool disposed;
-        private readonly ConcurrentStack<ICancellable> tasks;
+        private bool _disposed;
+        private readonly ConcurrentStack<ICancellable> _tasks;
         
         /// <summary>
         /// Answer a <code>ICancellable</code> for the repeating scheduled notifier.
@@ -57,19 +57,16 @@ namespace Vlingo.Common
                 false);
 
 
-        public Scheduler()
-        {
-            tasks = new ConcurrentStack<ICancellable>();
-        }
+        public Scheduler() => _tasks = new ConcurrentStack<ICancellable>();
 
         public virtual void Close()
         {
-            foreach(var task in tasks)
+            foreach(var task in _tasks)
             {
                 task.Cancel();
             }
 
-            tasks.Clear();
+            _tasks.Clear();
             Dispose(true);
         }
         
@@ -81,20 +78,20 @@ namespace Vlingo.Common
         
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed)
+            if (_disposed)
             {
                 return;    
             }
       
             if (disposing) {
                 
-                if (!tasks.IsEmpty)
+                if (!_tasks.IsEmpty)
                 {
                     Close();
                 }
             }
       
-            disposed = true;
+            _disposed = true;
         }
 
         private SchedulerTask<T> CreateAndStore<T>(
@@ -105,7 +102,7 @@ namespace Vlingo.Common
             bool repeats)
         {
             var task = new SchedulerTask<T>(scheduled, data, delayBefore, interval, repeats);
-            tasks.Push(task);
+            _tasks.Push(task);
             return task;
         }
 

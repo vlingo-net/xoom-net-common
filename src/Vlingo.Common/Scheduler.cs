@@ -165,7 +165,7 @@ namespace Vlingo.Common
                             dueIn = 0;
                         }
 
-                        if (_isDisposed)
+                        if (!_isDisposed)
                         {
                             _timer?.Change(TimeSpan.FromMilliseconds(dueIn), TimeSpan.FromMilliseconds(Timeout.Infinite));
                         }

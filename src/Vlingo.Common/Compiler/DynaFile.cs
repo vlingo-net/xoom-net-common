@@ -19,19 +19,8 @@ namespace Vlingo.Common.Compiler
         public static FileInfo PersistDynaClass(string pathToClass, byte[] dynaClass)
         {
             var file = new FileInfo(pathToClass);
-            
-            if (file.Exists)
-            {
-                try
-                {
-                    return file.Replace(pathToClass, null);
-                }
-                catch (IOException)
-                {
-                    // potentially file is being used by another process
-                    return file;
-                }
-            }
+            // empty text file
+            File.WriteAllText(pathToClass, string.Empty);
         
             using var stream = file.OpenWrite();
             stream.Write(dynaClass, 0, dynaClass.Length);
@@ -42,19 +31,8 @@ namespace Vlingo.Common.Compiler
         public static FileInfo PersistDynaClassSource(string pathToSource, string dynaClassSource)
         {
             var file = new FileInfo(pathToSource);
-
-            if (file.Exists)
-            {
-                try
-                {
-                    return file.Replace(pathToSource, null);
-                }
-                catch (IOException)
-                {
-                    // potentially file is being used by another process
-                    return file;
-                }
-            }
+            // empty text file
+            File.WriteAllText(pathToSource, string.Empty);
 
             using var stream = new StreamWriter(file.OpenWrite());
             stream.Write(dynaClassSource);

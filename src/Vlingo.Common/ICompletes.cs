@@ -40,7 +40,7 @@ namespace Vlingo.Common
         TNewResult AndThenTo<TNewResult>(Func<TResult, TNewResult> function);
         ICompletes<TNewResult> AndThenTo<TNewResult>(Func<TResult, ICompletes<TNewResult>> function);
 
-        ICompletes<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TFailedOutcome> function);
+        ICompletes<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TResult> function);
         ICompletes<TResult> OtherwiseConsume(Action<TResult> consumer);
         ICompletes<TResult> RecoverFrom(Func<Exception, TResult> function);
         TResult Await();

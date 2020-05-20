@@ -201,7 +201,7 @@ namespace Vlingo.Common
             return continuationCompletes;
         }
 
-        public ICompletes<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TFailedOutcome> function)
+        public ICompletes<TFailedOutcome> Otherwise<TFailedOutcome>(Func<TFailedOutcome, TResult> function)
         {
             var parent = Parent ?? this;
             var continuationCompletes = new OtherwiseContinuation<TFailedOutcome, TFailedOutcome>(parent, (BasicCompletes<TFailedOutcome>)(object)this, function);

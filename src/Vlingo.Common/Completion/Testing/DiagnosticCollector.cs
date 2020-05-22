@@ -6,9 +6,9 @@ namespace Vlingo.Common.Completion.Testing
     internal class DiagnosticCollector : IDiagnosticCollector
     {
         private readonly string _baseName;
-        private Stopwatch _stopwatch = new Stopwatch();
-        private StringBuilder _logs = new StringBuilder();
-        private volatile object syncLock = new object();
+        private readonly Stopwatch _stopwatch = new Stopwatch();
+        private readonly StringBuilder _logs = new StringBuilder();
+        private volatile object _syncLock = new object();
         
         public DiagnosticCollector(string baseName) => _baseName = baseName;
 
@@ -16,7 +16,7 @@ namespace Vlingo.Common.Completion.Testing
 
         public void StartAppend(string message)
         {
-            lock (syncLock)
+            lock (_syncLock)
             {
                 _stopwatch.Start();
                 _logs.AppendLine($"{_baseName} : {message}");
@@ -25,7 +25,7 @@ namespace Vlingo.Common.Completion.Testing
 
         public void StopAppendStart(string message)
         {
-            lock (syncLock)
+            lock (_syncLock)
             {
                 _stopwatch.Stop();
                 _logs.AppendLine($"{_baseName} : {message} elapsed time '{_stopwatch.ElapsedMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");
@@ -35,7 +35,7 @@ namespace Vlingo.Common.Completion.Testing
 
         public void Stop()
         {
-            lock (syncLock)
+            lock (_syncLock)
             {
                 _stopwatch.Stop();
                 _logs.AppendLine($"{_baseName} : Stopped with total elapsed time '{_stopwatch.ElapsedMilliseconds}ms' on thread #{System.Threading.Thread.CurrentThread.ManagedThreadId}");   

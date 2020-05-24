@@ -160,14 +160,12 @@ namespace Vlingo.Common
                     {
                         var elapsed = DateTime.UtcNow - start;
                         var dueIn = (int) (_interval - elapsed).TotalMilliseconds;
-                        if (dueIn < 0)
+                        if (dueIn >= 0)
                         {
-                            dueIn = 0;
-                        }
-
-                        if (!_isDisposed)
-                        {
-                            _timer?.Change(TimeSpan.FromMilliseconds(dueIn), TimeSpan.FromMilliseconds(Timeout.Infinite));
+                            if (!_isDisposed)
+                            {
+                                _timer?.Change(TimeSpan.FromMilliseconds(dueIn), TimeSpan.FromMilliseconds(Timeout.Infinite));
+                            }
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2012-2020 VLINGO LABS. All rights reserved.
+﻿// Copyright (c) 2012-2020 Vaughn Vernon. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the
 // Mozilla Public License, v. 2.0. If a copy of the MPL
@@ -20,7 +20,7 @@ namespace Vlingo.Common
     public class Scheduler: IDisposable
     {
         private bool _disposed;
-        private readonly ConcurrentStack<ICancellable> _tasks;
+        private readonly ConcurrentStack<ICancellable> _tasks = new ConcurrentStack<ICancellable>();
         
         /// <summary>
         /// Answer a <code>ICancellable</code> for the repeating scheduled notifier.
@@ -56,8 +56,6 @@ namespace Vlingo.Common
                 TimeSpan.FromMilliseconds(Timeout.Infinite),
                 false);
 
-
-        public Scheduler() => _tasks = new ConcurrentStack<ICancellable>();
 
         public virtual void Close()
         {
@@ -111,63 +109,28 @@ namespace Vlingo.Common
             private readonly IScheduled<T> _scheduled;
             private readonly T _data;
             private readonly bool _repeats;
-            private readonly TimeSpan _interval;
             private Timer? _timer;
             private bool _hasRun;
-            private bool _isDisposed;
 
             public SchedulerTask(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval, bool repeats)
             {
                 _scheduled = scheduled;
                 _data = data;
                 _repeats = repeats;
-                _interval = interval;
                 _hasRun = false;
-                _isDisposed = false;
-                // for scheduled in intervals and scheduled once we fire only the first time.
-                _timer = new Timer(Tick, null, delayBefore, TimeSpan.FromMilliseconds(Timeout.Infinite));
+                _timer = new Timer(Tick, null, delayBefore, interval);
             }
 
             private void Tick(object state) => Run();
 
             public void Run()
             {
-                var start = DateTime.UtcNow;
+                _hasRun = true;
+                _scheduled.IntervalSignal(_scheduled, _data);
 
-                try
+                if (!_repeats)
                 {
-                    _hasRun = true;
-                    _scheduled.IntervalSignal(_scheduled, _data);
-
-                    if (!_repeats)
-                    {
-                        Cancel();
-                    }
-                }
-                finally
-                {
-                    // if we want to fire periodically we use timer.Change firing the next interval instead of relying
-                    // on built in periodic callbacks of timer. Why ? Because this ensure that we will have just a single
-                    // thread in the callback, where with the standard behaviour the callback has to be reentrant meaning
-                    // that if enqueuing of the message is slow we can have several competing threads inside.
-                    // this methods allows single thread in callback without locking.
-                    // from : https://docs.microsoft.com/en-us/dotnet/api/system.threading.timer?view=netcore-3.0
-                    // The callback method executed by the timer should be reentrant, because it is called on ThreadPool threads.
-                    // The callback can be executed simultaneously on two thread pool threads
-                    // if the timer interval is less than the time required to execute the callback,
-                    // or if all thread pool threads are in use and the callback is queued multiple times.
-                    if (_interval.TotalMilliseconds >  0)
-                    {
-                        var elapsed = DateTime.UtcNow - start;
-                        var dueIn = (int) (_interval - elapsed).TotalMilliseconds;
-                        if (dueIn >= 0)
-                        {
-                            if (!_isDisposed)
-                            {
-                                _timer?.Change(TimeSpan.FromMilliseconds(dueIn), TimeSpan.FromMilliseconds(Timeout.Infinite));
-                            }
-                        }
-                    }
+                    Cancel();
                 }
             }
 
@@ -175,7 +138,6 @@ namespace Vlingo.Common
             {
                 if (_timer != null)
                 {
-                    _isDisposed = true;
                     _timer.Dispose();
                     _timer = null;
                 }

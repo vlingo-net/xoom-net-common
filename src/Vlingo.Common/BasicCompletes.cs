@@ -501,7 +501,7 @@ namespace Vlingo.Common
                     OutcomeValue.Set(continuation.Outcome);
                 }
             
-                if (lastCompletes is BasicCompletes completesContinuation)
+                if (lastCompletes is { } completesContinuation)
                 {
                     TransformedResult = completesContinuation.TransformedResult;
                 }   

@@ -17,8 +17,8 @@ namespace Vlingo.Common
     {
         private readonly TaskCompletionSource<TResult> _tcs = new TaskCompletionSource<TResult>();
         private readonly AtomicRefValue<TResult> _defaultOutcomeValue = new AtomicRefValue<TResult>();
-        protected internal Optional<TResult> FailedOutcomeValue = Optional.Empty<TResult>();
         protected readonly AtomicRefValue<TResult> OutcomeValue = new AtomicRefValue<TResult>();
+        protected internal Optional<TResult> FailedOutcomeValue = Optional.Empty<TResult>();
 
         public BasicCompletes(TResult outcome) : this(outcome, true, null)
         {

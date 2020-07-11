@@ -403,6 +403,7 @@ namespace Vlingo.Common
         {
             if (HasOutcome)
             {
+                var outcomeValue = OutcomeValue.Get();
                 try
                 {
                     // can yield Object must implement IConvertible.
@@ -410,7 +411,7 @@ namespace Vlingo.Common
                     {
                         return (TNewResult) TransformedResult;
                     }
-                    return (TNewResult)(object) OutcomeValue.Get()!;
+                    return (TNewResult)(object) outcomeValue!;
                 }
                 catch
                 {
@@ -418,19 +419,33 @@ namespace Vlingo.Common
                     {
                         return (TNewResult) Convert.ChangeType(TransformedResult, typeof(TNewResult));
                     }
-                    return (TNewResult) Convert.ChangeType(OutcomeValue.Get(), typeof(TNewResult));
+
+                    var convertedOutcomeValue = Convert.ChangeType(outcomeValue, typeof(TNewResult));
+                    if (convertedOutcomeValue == null)
+                    {
+                        return default!;
+                    }
+                    
+                    return (TNewResult) convertedOutcomeValue;
                 }
             }
 
             if (HasFailed)
             {
+                var faileOutcomeValue = FailedOutcomeValue.Get();
                 try
                 {
-                    return (TNewResult)(object)FailedOutcomeValue.Get()!;
+                    return (TNewResult)(object)faileOutcomeValue!;
                 }
                 catch
                 {
-                    return (TNewResult) Convert.ChangeType(FailedOutcomeValue.Get(), typeof(TNewResult));
+                    var convertedFailedType = Convert.ChangeType(faileOutcomeValue, typeof(TNewResult));
+                    if (convertedFailedType == null)
+                    {
+                        return default!;
+                    }
+                    
+                    return (TNewResult) convertedFailedType;
                 }
             }
 

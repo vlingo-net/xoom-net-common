@@ -12,19 +12,14 @@ namespace Vlingo.Common.Identity
 {
     internal class NameBasedIdentityGenerator : IIdentityGenerator
     {
-        private readonly NameBasedGenerator generator;
-
-        public NameBasedIdentityGenerator()
-        {
-            generator = new NameBasedGenerator();
-        }
+        private readonly NameBasedGenerator _generator = new NameBasedGenerator();
 
         public Guid Generate()
         {
             var name = Guid.NewGuid().ToString("N");
-            return generator.GenerateGuid(name);
+            return _generator.GenerateGuid(name);
         }
 
-        public Guid Generate(string name) => generator.GenerateGuid(name);
+        public Guid Generate(string name) => _generator.GenerateGuid(name);
     }
 }

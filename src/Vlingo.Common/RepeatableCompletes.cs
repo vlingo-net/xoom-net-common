@@ -67,7 +67,7 @@ namespace Vlingo.Common
             return this;   
         }
 
-        internal override void BackUp(CompletesContinuation continuation)
+        internal override void BackUp(CompletesContinuation? continuation)
         {
             if (continuation != null)
             {

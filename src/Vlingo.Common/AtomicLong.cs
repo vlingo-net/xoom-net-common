@@ -11,16 +11,13 @@ namespace Vlingo.Common
 {
     public class AtomicLong
     {
-        private long value;
+        private long _value;
 
-        public AtomicLong(long initialValue)
-        {
-            value = initialValue;
-        }
+        public AtomicLong(long initialValue) => _value = initialValue;
 
-        public long AddAndGet(long delta) => Interlocked.Add(ref value, delta);
+        public long AddAndGet(long delta) => Interlocked.Add(ref _value, delta);
 
-        public void Set(long newValue) => Interlocked.Exchange(ref value, newValue);
+        public void Set(long newValue) => Interlocked.Exchange(ref _value, newValue);
 
         /// <summary>
         /// Replaces the current value with `update` if the current value is `expect`.
@@ -28,18 +25,18 @@ namespace Vlingo.Common
         /// <param name="expect">Value to compare with.</param>
         /// <param name="update">New value to replace with.</param>
         /// <returns>Whether the value was successfully updated or not.</returns>
-        public bool CompareAndSet(long expect, long update) => Interlocked.CompareExchange(ref value, update, expect) == expect;
+        public bool CompareAndSet(long expect, long update) => Interlocked.CompareExchange(ref _value, update, expect) == expect;
 
-        public long Get() => Interlocked.CompareExchange(ref value, 0, 0);
+        public long Get() => Interlocked.CompareExchange(ref _value, 0, 0);
 
-        public long GetAndSet(long newValue) => Interlocked.Exchange(ref value, newValue);
+        public long GetAndSet(long newValue) => Interlocked.Exchange(ref _value, newValue);
 
-        public long GetAndIncrement() => Interlocked.Increment(ref value) - 1;
+        public long GetAndIncrement() => Interlocked.Increment(ref _value) - 1;
 
-        public long IncrementAndGet() => Interlocked.Increment(ref value);
+        public long IncrementAndGet() => Interlocked.Increment(ref _value);
 
-        public long GetAndDecrement() => Interlocked.Decrement(ref value) + 1;
+        public long GetAndDecrement() => Interlocked.Decrement(ref _value) + 1;
 
-        public long DecrementAndGet() => Interlocked.Decrement(ref value);
+        public long DecrementAndGet() => Interlocked.Decrement(ref _value);
     }
 }

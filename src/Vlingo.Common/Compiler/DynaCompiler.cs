@@ -19,7 +19,7 @@ namespace Vlingo.Common.Compiler
 {
     public class DynaCompiler
     {
-        public Type Compile(Input input)
+        public Type? Compile(Input input)
         {
             try
             {
@@ -78,8 +78,7 @@ namespace Vlingo.Common.Compiler
                 var lookupTypeName = input.FullyQualifiedNameForTypeLookup;
 
                 // to prevent exception when trying to generate and load proxy of same interface in parallel from different places/thread
-                return input.ClassLoader.LoadClass(lookupTypeName) ??
-                    input.ClassLoader.AddDynaClass(lookupTypeName, byteCode);
+                return input.ClassLoader.LoadClass(lookupTypeName) ?? input.ClassLoader.AddDynaClass(lookupTypeName, byteCode);
             }
             catch (Exception ex)
             {
@@ -97,7 +96,10 @@ namespace Vlingo.Common.Compiler
                 var assembly = Assembly.Load(new AssemblyName("Vlingo.Actors"));
                 assembliesToLoad.Add(assembly);
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                // ignored
+            }
         }
 
         private void Persist(Input input, byte[] byteCode)

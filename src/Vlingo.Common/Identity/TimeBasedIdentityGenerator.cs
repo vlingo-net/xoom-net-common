@@ -12,15 +12,10 @@ namespace Vlingo.Common.Identity
 {
     internal class TimeBasedIdentityGenerator : IIdentityGenerator
     {
-        private readonly TimeBasedGenerator generator;
+        private readonly TimeBasedGenerator _generator = new TimeBasedGenerator();
+        
+        public Guid Generate() => _generator.GenerateGuid();
 
-        public TimeBasedIdentityGenerator()
-        {
-            generator = new TimeBasedGenerator();
-        }
-
-        public Guid Generate() => generator.GenerateGuid();
-
-        public Guid Generate(string name) => generator.GenerateGuid();
+        public Guid Generate(string name) => _generator.GenerateGuid();
     }
 }

@@ -28,7 +28,7 @@ namespace Vlingo.Common
 
         public string? GetProperty(string key, string? defaultValue)
         {
-            if (_dictionary.TryGetValue(key.ToLowerInvariant(), out string value))
+            if (_dictionary.TryGetValue(key.ToLowerInvariant(), out string? value))
             {
                 return value;
             }

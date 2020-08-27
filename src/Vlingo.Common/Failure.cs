@@ -81,7 +81,7 @@ namespace Vlingo.Common
             where TNextFailure : Exception
             => Failure.Of<TNextFailure, TValue>(action.Invoke(_cause));
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             var other = obj as Failure<TCause, TValue>;
 

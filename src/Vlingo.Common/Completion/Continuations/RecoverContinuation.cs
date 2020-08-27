@@ -11,14 +11,13 @@ namespace Vlingo.Common.Completion.Continuations
 {
     internal class RecoverContinuation<TResult> : BasicCompletes<TResult>
     {
-        private readonly BasicCompletes<TResult> antecedent;
-
-        internal RecoverContinuation(BasicCompletes<TResult> antecedent, Delegate function) : this(antecedent, function, null)
+        internal RecoverContinuation(Delegate function) : this(function, null)
         {
         }
             
-        internal RecoverContinuation(BasicCompletes<TResult> antecedent, Delegate function, BasicCompletes? parent) : base(function, parent) =>
-            this.antecedent = antecedent;
+        internal RecoverContinuation(Delegate function, BasicCompletes? parent) : base(function, parent)
+        {
+        }
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {

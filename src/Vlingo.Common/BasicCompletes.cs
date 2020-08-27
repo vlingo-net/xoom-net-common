@@ -49,10 +49,10 @@ namespace Vlingo.Common
             }
         }
 
-        public virtual ICompletes<TO> With<TO>(TO outcome)
+        public virtual ICompletes<TOutput> With<TOutput>(TOutput outcome)
         {
             var completes = With((TResult) (object) outcome!);
-            return new BasicCompletes<TO>((TO)(object)completes.Outcome!);
+            return new BasicCompletes<TOutput>((TOutput)(object)completes.Outcome!);
         }
 
         public virtual ICompletes<TResult> With(TResult outcome)
@@ -224,7 +224,7 @@ namespace Vlingo.Common
             {
                 function(parent.ExceptionValue.Get()!);
             }
-            var continuationCompletes = new RecoverContinuation<TResult>(this, function);
+            var continuationCompletes = new RecoverContinuation<TResult>(function);
             parent.RecoverInternal(continuationCompletes);
             return this;
         }

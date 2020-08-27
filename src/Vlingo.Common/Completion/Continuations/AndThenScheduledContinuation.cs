@@ -11,9 +11,9 @@ namespace Vlingo.Common.Completion.Continuations
 {
     internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object?>
     {
-        private readonly TimeSpan timeout;
-        private ICancellable? cancellable;
-        private readonly AtomicBoolean executed = new AtomicBoolean(false);
+        private readonly TimeSpan _timeout;
+        private ICancellable? _cancellable;
+        private readonly AtomicBoolean _executed = new AtomicBoolean(false);
 
         internal AndThenScheduledContinuation(
             BasicCompletes parent,
@@ -32,25 +32,25 @@ namespace Vlingo.Common.Completion.Continuations
             Delegate function)
             : base(parent, antecedent, failedOutcomeValue, function)
         {
-            this.timeout = timeout;
+            _timeout = timeout;
             ClearTimer();
             StartTimer();
         }
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
-            if (TimedOut.Get() || executed.Get())
+            if (TimedOut.Get() || _executed.Get())
             {
                 return;
             }
             
             base.InnerInvoke(completedCompletes);
-            executed.Set(true);
+            _executed.Set(true);
         }
 
         public void IntervalSignal(IScheduled<object?> scheduled, object? data)
         {
-            if (!executed.Get() && !TimedOut.Get())
+            if (!_executed.Get() && !TimedOut.Get())
             {
                 TimedOut.Set(true);
                 Parent?.TimedOut.Set(true);
@@ -60,18 +60,18 @@ namespace Vlingo.Common.Completion.Continuations
 
         private void StartTimer()
         {
-            if (timeout.TotalMilliseconds > 0 && Parent?.Scheduler != null)
+            if (_timeout.TotalMilliseconds > 0 && Parent?.Scheduler != null)
             {
-                cancellable = Parent?.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, timeout);
+                _cancellable = Parent?.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, _timeout);
             }
         }
 
         private void ClearTimer()
         {
-            if (cancellable != null)
+            if (_cancellable != null)
             {
-                cancellable.Cancel();
-                cancellable = null;
+                _cancellable.Cancel();
+                _cancellable = null;
             }
         }
     }

@@ -7,6 +7,7 @@
 
 using System;
 using System.Text;
+// ReSharper disable InconsistentNaming
 
 namespace Vlingo.Common.Identity
 {

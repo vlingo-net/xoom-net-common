@@ -18,29 +18,29 @@ namespace Vlingo.Common.Expressions
         public static string Serialize<TProtocol>(Expression<Action<TProtocol>> expression)
         {
             var mce = (MethodCallExpression)expression.Body;
-            
-            var interfaceName = typeof(TProtocol).Name;
+
             var methodName = mce.Method.Name;
 
             var args = mce.Arguments.Select(ExpressionExtensions.Evaluate).ToArray();
-            var types = args.Select(a => a.GetType()).ToArray();
-            return JsonSerialization.Serialized(new ExpressionSerializationInfo(interfaceName, methodName, args, types));
+            var types = args.Select(a => a?.GetType()).ToArray();
+            return JsonSerialization.Serialized(new ExpressionSerializationInfo(methodName, args, types));
         }
 
-        public static ExpressionSerializationInfo Deserialize<TProtocol>(string serialized)
+        public static ExpressionSerializationInfo Deserialize(string serialized)
         {
             var deserialized = JsonSerialization.Deserialized<ExpressionSerializationInfo>(serialized);
             var i = 0;
             foreach (var arg in deserialized.Args)
             {
-                if (arg is JObject jobject)
+                if (arg is JObject jobject && deserialized.Types.Length <= i)
                 {
-                    deserialized.Args[i] = jobject.ToObject(deserialized.Types[i])!;
+                    deserialized.Args[i] = jobject.ToObject(deserialized.Types[i]!);
                 }
+                
                 // special case as underlying serializer converts ints to longs en deserialization
-                else if (arg is long && arg.GetType() != deserialized.Types[i])
+                else if (arg is long longArg && arg.GetType() != deserialized.Types[i])
                 {
-                    deserialized.Args[i] = int.Parse(arg.ToString());
+                    deserialized.Args[i] = int.Parse(longArg.ToString());
                 }
 
                 i++;

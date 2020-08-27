@@ -12,15 +12,10 @@ namespace Vlingo.Common.Identity
 {
     internal class RandomIdentityGenerator : IIdentityGenerator
     {
-        private readonly RandomBasedGenerator generator;
+        private readonly RandomBasedGenerator _generator = new RandomBasedGenerator();
 
-        public RandomIdentityGenerator()
-        {
-            generator = new RandomBasedGenerator();
-        }
+        public Guid Generate() => _generator.GenerateGuid();
 
-        public Guid Generate() => generator.GenerateGuid();
-
-        public Guid Generate(string name) => generator.GenerateGuid();
+        public Guid Generate(string name) => _generator.GenerateGuid();
     }
 }

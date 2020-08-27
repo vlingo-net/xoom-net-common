@@ -11,11 +11,11 @@ namespace Vlingo.Common.Completion.Continuations
 {
     internal class RepeatableAndThenContinuation<TAntecedentResult, TResult> : RepeatableCompletes<TResult>
     {
-        private readonly AtomicReference<RepeatableCompletes<TAntecedentResult>> antecedent = new AtomicReference<RepeatableCompletes<TAntecedentResult>>(default);
+        private readonly AtomicReference<RepeatableCompletes<TAntecedentResult>> _antecedent = new AtomicReference<RepeatableCompletes<TAntecedentResult>>(default);
 
         private RepeatableAndThenContinuation(BasicCompletes parent, RepeatableCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function, parent)
         {
-            this.antecedent.Set(antecedent);
+            _antecedent.Set(antecedent);
             FailedOutcomeValue = failedOutcomeValue;
         }
         
@@ -34,7 +34,7 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, ICompletes<TResult>> funcCompletes)
             {
-                funcCompletes(antecedent.Get()!.Outcome).AndThenConsume(t =>
+                funcCompletes(_antecedent.Get()!.Outcome).AndThenConsume(t =>
                 {
                     OutcomeValue.Set(t);
                     TransformedResult = t;
@@ -44,7 +44,7 @@ namespace Vlingo.Common.Completion.Continuations
 
             if (Action is Func<TAntecedentResult, TResult> function)
             {
-                OutcomeValue.Set(function(antecedent.Get()!.Outcome));
+                OutcomeValue.Set(function(_antecedent.Get()!.Outcome));
                 TransformedResult = OutcomeValue.Get();
             }
         }

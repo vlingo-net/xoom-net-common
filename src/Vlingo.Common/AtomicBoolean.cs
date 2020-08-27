@@ -11,22 +11,19 @@ namespace Vlingo.Common
 {
     public class AtomicBoolean
     {
-        private int value;
+        private int _value;
 
-        public AtomicBoolean(bool initialValue)
-        {
-            value = initialValue ? 1 : 0;
-        }
+        public AtomicBoolean(bool initialValue) => _value = initialValue ? 1 : 0;
 
         public bool Get()
         {
-            return Interlocked.CompareExchange(ref value, 0, 0) == 1;
+            return Interlocked.CompareExchange(ref _value, 0, 0) == 1;
         }
 
         public void Set(bool update)
         {
             var updateInt = update ? 1 : 0;
-            Interlocked.Exchange(ref value, updateInt);
+            Interlocked.Exchange(ref _value, updateInt);
         }
 
         /// <summary>
@@ -40,7 +37,7 @@ namespace Vlingo.Common
             var expectedInt = expect ? 1 : 0;
             var updateInt = update ? 1 : 0;
 
-            var actualInt = Interlocked.CompareExchange(ref value, updateInt, expectedInt);
+            var actualInt = Interlocked.CompareExchange(ref _value, updateInt, expectedInt);
 
             return expectedInt == actualInt;
         }

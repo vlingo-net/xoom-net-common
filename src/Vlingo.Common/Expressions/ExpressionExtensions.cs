@@ -16,17 +16,26 @@ namespace Vlingo.Common.Expressions
     {
         public static Action<TProtocol> CreateDelegate<TProtocol>(object actor, ExpressionSerializationInfo info)
         {
-            var mi = actor.GetType().GetMethod(info.MethodName, info.Types);
-            var dlg = CreateDelegate(mi, actor);
-            Action<TProtocol> consumer = a => dlg.DynamicInvoke(info.Args);
-            return consumer;
+            if (info.Types.Length > 0)
+            {
+                var mi = actor.GetType().GetMethod(info.MethodName, info.Types!);
+            
+                if (mi != null)
+                {
+                    var dlg = CreateDelegate(mi, actor);
+                    Action<TProtocol> consumer = a => dlg.DynamicInvoke(info.Args);
+                    return consumer;   
+                }
+            }
+
+            throw new InvalidOperationException($"Cannot Create a delegate method for MethodName={info.MethodName}");
         }
         
         public static Delegate CreateDelegate(this MethodInfo methodInfo, object target)
         {
             Func<Type[], Type> getType;
-            var isAction = methodInfo.ReturnType.Equals((typeof(void)));
-            var types = methodInfo.GetParameters().Select(p => p.ParameterType);
+            var isAction = methodInfo.ReturnType == typeof(void);
+            var types = methodInfo!.GetParameters().Select(p => p.ParameterType);
 
             if (isAction)
             {
@@ -46,7 +55,7 @@ namespace Vlingo.Common.Expressions
             return Delegate.CreateDelegate(getType(types.ToArray()), target, methodInfo.Name);
         }
         
-        public static object Evaluate(this Expression expr)
+        public static object? Evaluate(this Expression expr)
         {
             switch (expr.NodeType)
             {

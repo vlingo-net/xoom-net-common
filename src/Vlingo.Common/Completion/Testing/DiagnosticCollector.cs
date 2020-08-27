@@ -12,7 +12,13 @@ namespace Vlingo.Common.Completion.Testing
         
         public DiagnosticCollector(string baseName) => _baseName = baseName;
 
-        public void Append(string message) => _logs.AppendLine(message);
+        public void Append(string message)
+        {
+            lock (_syncLock)
+            {
+                _logs.AppendLine(message);
+            }
+        }
 
         public void StartAppend(string message)
         {
@@ -47,7 +53,10 @@ namespace Vlingo.Common.Completion.Testing
             get
             {
                 Stop();
-                return _logs.ToString();
+                lock (_syncLock)
+                {
+                    return _logs.ToString();
+                }
             }
         }
     }

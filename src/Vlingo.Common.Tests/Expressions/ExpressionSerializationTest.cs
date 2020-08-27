@@ -22,7 +22,7 @@ namespace Vlingo.Common.Tests.Expressions
             var serialized = ExpressionSerialization.Serialize(expression);
             
             var actor = new ActorTest();
-            var serializationInfo = ExpressionSerialization.Deserialize<IParameterlessInterface>(serialized);
+            var serializationInfo = ExpressionSerialization.Deserialize(serialized);
             var consumer = ExpressionExtensions.CreateDelegate<IParameterlessInterface>(actor, serializationInfo);
             consumer(actor);
             Assert.True(actor.WasRun);
@@ -37,7 +37,7 @@ namespace Vlingo.Common.Tests.Expressions
             var serialized = ExpressionSerialization.Serialize(expression);
             
             var actor = new ActorTest();
-            var serializationInfo = ExpressionSerialization.Deserialize<ISimpleParametersInterface>(serialized);
+            var serializationInfo = ExpressionSerialization.Deserialize(serialized);
             var consumer = ExpressionExtensions.CreateDelegate<ISimpleParametersInterface>(actor, serializationInfo);
             consumer(actor);
             Assert.Equal(i, actor.Count);
@@ -62,7 +62,7 @@ namespace Vlingo.Common.Tests.Expressions
             var serialized = ExpressionSerialization.Serialize(expression);
 
             var actor = new ActorTest();
-            var serializationInfo = ExpressionSerialization.Deserialize<IComplexParameterInterface>(serialized);
+            var serializationInfo = ExpressionSerialization.Deserialize(serialized);
             var consumer = ExpressionExtensions.CreateDelegate<IComplexParameterInterface>(actor, serializationInfo);
             consumer(actor);
             Assert.Equal(i, actor.Count);

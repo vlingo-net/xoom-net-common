@@ -93,7 +93,7 @@ namespace Vlingo.Common
             return default!;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             var other = obj as Optional<T>;
             if (other == null)
@@ -136,7 +136,7 @@ namespace Vlingo.Common
 
         public static Optional<T> Of<T>(T value) => new Optional<T>(value);
 
-        public static Optional<TNullable> OfNullable<TNullable>(TNullable value) where TNullable : class
+        public static Optional<TNullable> OfNullable<TNullable>(TNullable? value) where TNullable : class
         {
             if (value == null)
             {

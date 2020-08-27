@@ -54,7 +54,7 @@ namespace Vlingo.Common.Pool
         /// </summary>
         public float IdleToInUse { get; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (this == obj)
             {

@@ -11,14 +11,12 @@ namespace Vlingo.Common.Expressions
 {
     public class ExpressionSerializationInfo
     {
-        public string InterfaceName { get; }
         public string MethodName { get; }
-        public object[] Args { get; }
-        public Type[] Types { get; }
+        public object?[] Args { get; }
+        public Type?[] Types { get; }
 
-        public ExpressionSerializationInfo(string interfaceName, string methodName, object[] args, Type[] types)
+        public ExpressionSerializationInfo(string methodName, object?[] args, Type?[] types)
         {
-            InterfaceName = interfaceName;
             MethodName = methodName;
             Args = args;
             Types = types;

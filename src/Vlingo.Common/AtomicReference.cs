@@ -11,24 +11,24 @@ namespace Vlingo.Common
 {
     public class AtomicReference<T> where T : class
     {
-        private T? value;
-        private readonly T? defaultValue;
+        private T? _value;
+        private readonly T? _defaultValue;
 
         public AtomicReference(T? initialValue)
         {
-            value = initialValue;
-            defaultValue = default;
+            _value = initialValue;
+            _defaultValue = default;
         }
 
         public AtomicReference() : this(default)
         {
         }
 
-        public T? Get() => Interlocked.CompareExchange(ref value, defaultValue, defaultValue);
+        public T? Get() => Interlocked.CompareExchange(ref _value, _defaultValue, _defaultValue);
 
-        public T? Set(T? newValue) => Interlocked.Exchange(ref value, newValue);
+        public T? Set(T? newValue) => Interlocked.Exchange(ref _value, newValue);
 
         public T? CompareAndSet(T? expected, T? update)
-            => Interlocked.CompareExchange(ref value, update, expected);
+            => Interlocked.CompareExchange(ref _value, update, expected);
     }
 }

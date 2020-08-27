@@ -11,16 +11,13 @@ namespace Vlingo.Common
 {
     public class AtomicInteger
     {
-        private int value;
+        private int _value;
 
-        public AtomicInteger(int initialValue)
-        {
-            value = initialValue;
-        }
+        public AtomicInteger(int initialValue) => _value = initialValue;
 
-        public int AddAndGet(int delta) => Interlocked.Add(ref value, delta);
+        public int AddAndGet(int delta) => Interlocked.Add(ref _value, delta);
 
-        public void Set(int newValue) => Interlocked.Exchange(ref value, newValue);
+        public void Set(int newValue) => Interlocked.Exchange(ref _value, newValue);
 
         /// <summary>
         /// Replaces the current value with `update` if the current value is `expect`.
@@ -28,18 +25,18 @@ namespace Vlingo.Common
         /// <param name="expect">Value to compare with.</param>
         /// <param name="update">New value to replace with.</param>
         /// <returns>Whether the value was successfully updated or not.</returns>
-        public bool CompareAndSet(int expect, int update) => Interlocked.CompareExchange(ref value, update, expect) == expect;
+        public bool CompareAndSet(int expect, int update) => Interlocked.CompareExchange(ref _value, update, expect) == expect;
 
-        public int Get() => Interlocked.CompareExchange(ref value, 0, 0);
+        public int Get() => Interlocked.CompareExchange(ref _value, 0, 0);
 
-        public int GetAndSet(int newValue) => Interlocked.Exchange(ref value, newValue);
+        public int GetAndSet(int newValue) => Interlocked.Exchange(ref _value, newValue);
 
-        public int GetAndIncrement() => Interlocked.Increment(ref value) - 1;
+        public int GetAndIncrement() => Interlocked.Increment(ref _value) - 1;
 
-        public int IncrementAndGet() => Interlocked.Increment(ref value);
+        public int IncrementAndGet() => Interlocked.Increment(ref _value);
 
-        public int GetAndDecrement() => Interlocked.Decrement(ref value) + 1;
+        public int GetAndDecrement() => Interlocked.Decrement(ref _value) + 1;
 
-        public int DecrementAndGet() => Interlocked.Decrement(ref value);
+        public int DecrementAndGet() => Interlocked.Decrement(ref _value);
     }
 }

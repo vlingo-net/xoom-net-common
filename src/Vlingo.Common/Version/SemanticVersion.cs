@@ -6,6 +6,7 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+// ReSharper disable InconsistentNaming
 
 namespace Vlingo.Common.Version
 {
@@ -102,7 +103,7 @@ namespace Vlingo.Common.Version
 
         public int ToValue() => ToValue(_major, _minor, _patch);
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (this == obj)
             {

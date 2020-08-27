@@ -13,7 +13,7 @@ namespace Vlingo.Common
 {
     public interface ICompletes
     {
-        ICompletes<TO> With<TO>(TO outcome);
+        ICompletes<TOutput> With<TOutput>(TOutput outcome);
     }
     
     [AsyncMethodBuilder(typeof(CompletesMethodBuilder<>))]
@@ -66,12 +66,11 @@ namespace Vlingo.Common
         /// may occur prior to knowing the proper <c>failedOutcomeValue</c> to set.
         /// </remarks>
         ICompletes<TResult> TimeoutWithin(TimeSpan timeout);
-        
+
         /// <summary>
         /// Answer myself after registering the <paramref name="failedOutcomeValue"/>.
         /// </summary>
         /// <param name="failedOutcomeValue">The TFailed outcome to use when a failure occurs</param>
-        /// <typeparam name="TFailed">The type of the failedOutcomeValue</typeparam>
         /// <returns><see cref="ICompletes{TResult}"/></returns>
         /// <remarks>
         /// WARNING: If you use this method along with <c>UseFailedOutcomeOf(TFailure)</c>, you must

@@ -121,7 +121,7 @@ namespace Vlingo.Common
                 _timer = new Timer(Tick, null, delayBefore, interval);
             }
 
-            private void Tick(object state) => Run();
+            private void Tick(object? state) => Run();
 
             public void Run()
             {

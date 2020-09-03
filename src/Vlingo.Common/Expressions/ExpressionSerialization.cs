@@ -32,7 +32,7 @@ namespace Vlingo.Common.Expressions
             var i = 0;
             foreach (var arg in deserialized.Args)
             {
-                if (arg is JObject jobject && deserialized.Types.Length <= i)
+                if (arg is JObject jobject && deserialized.Types.Length >= i)
                 {
                     deserialized.Args[i] = jobject.ToObject(deserialized.Types[i]!);
                 }

@@ -913,6 +913,48 @@ namespace Vlingo.Common.Tests
             Assert.True(inverted.HasFailed);
         }
         
+        [Fact]
+        public void TestNestedCompletesFirst() {
+            var service = Completes.Using<int>(_testScheduler);
+            var nested = Completes.Using<int>(_testScheduler);
+
+            var client =
+                service
+                    .AndThen(value => value * 2)
+                    .AndThenTo(value => nested.AndThen(v => v * value))
+                    .AndThenTo(value => Completes.WithSuccess(value * 2))
+                    .AndThen(value => value * 2);
+
+            nested.With(2);
+            service.With(5);
+
+            var outcome = client.Await();
+
+            Assert.False(client.HasFailed);
+            Assert.Equal(80, outcome);
+        }
+        
+        [Fact(Skip = "Fails")]
+        public void TestNestedCompletesLast() {
+            var service = Completes.Using<int>(_testScheduler);
+            var nested = Completes.Using<int>(_testScheduler);
+
+            var client =
+                service
+                    .AndThen(value => value * 2)
+                    .AndThenTo(value => nested.AndThen(v => v * value))
+                    .AndThenTo(value => Completes.WithSuccess(value * 2))
+                    .AndThen(value => value * 2);
+
+            service.With(5);
+            nested.With(2);
+
+            var outcome = client.Await();
+
+            Assert.False(client.HasFailed);
+            Assert.Equal(80, outcome);
+        }
+        
         [Fact(Skip = "https://github.com/vlingo-net/vlingo-net-common/issues/54")]
         public void TestOnClientAndServerSetupWhenClientIsFaster()
         {

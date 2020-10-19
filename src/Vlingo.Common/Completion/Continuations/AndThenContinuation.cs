@@ -57,6 +57,7 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 OutcomeValue.Set(function(_antecedent.Get()!.Outcome));
                 TransformedResult = OutcomeValue.Get();
+                OutcomeKnown.Set();
             }
             
             base.InnerInvoke(completedCompletes);

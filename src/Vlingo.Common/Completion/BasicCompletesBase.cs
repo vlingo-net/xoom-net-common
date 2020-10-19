@@ -14,6 +14,7 @@ namespace Vlingo.Common.Completion
 {
     public abstract class BasicCompletes
     {
+        private readonly int _id;
         protected readonly Delegate Action;    // The body of the function. Might be Action<object>, Action<TState> or Action.  Or possibly a Func.
         protected readonly BasicCompletes? Parent;
         protected readonly AtomicBoolean ReadyToExectue = new AtomicBoolean(false);
@@ -34,6 +35,7 @@ namespace Vlingo.Common.Completion
 
         protected BasicCompletes(Scheduler? scheduler, Delegate action, BasicCompletes? parent)
         {
+            _id = new Random().Next(1, 1000);
             Parent = parent;
             Scheduler = scheduler;
             Action = action;
@@ -89,6 +91,8 @@ namespace Vlingo.Common.Completion
         
         protected abstract void RunContinuationsWhenReady(BasicCompletes completedContinuation);
 
+        public override string ToString() => $"BasicCompletes [{_id}]";
+        
         private void RegisterContinuation(CompletesContinuation continuationCompletes) =>
             Continuations.Enqueue(continuationCompletes);
         

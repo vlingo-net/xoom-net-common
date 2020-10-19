@@ -677,7 +677,7 @@ namespace Vlingo.Common.Tests
             var consumedResult = -1;
 
             completes
-                .AndThenTo(v => Completes.Using<int>(scheduler))
+                .AndThenTo(v => Completes.WithSuccess(v * 2))
                 .AndThenConsume(TimeSpan.FromMilliseconds(1), v => consumedResult = v);
             
             var thread = new Thread(() =>
@@ -934,7 +934,7 @@ namespace Vlingo.Common.Tests
             Assert.Equal(80, outcome);
         }
         
-        [Fact(Skip = "Fails")]
+        [Fact]
         public void TestNestedCompletesLast() {
             var service = Completes.Using<int>(_testScheduler);
             var nested = Completes.Using<int>(_testScheduler);

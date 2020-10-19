@@ -332,6 +332,8 @@ namespace Vlingo.Common
             return _tcs.Task;
         }
 
+        public override string ToString() => $"{base.ToString()}: OutcomeValue={Outcome}, HasOutcome={HasOutcome}, HasFailed={HasFailed}";
+
         internal override void InnerInvoke(BasicCompletes completedCompletes)
         {
             if (Action is Action invokableAction)
@@ -361,8 +363,8 @@ namespace Vlingo.Common
         {
         }
         
-        internal override bool CanBeExecuted() => HasOutcome || HasFailed || TimedOut.Get() || HasFailed || OutcomeValue.Get() != null && OutcomeValue.Get()!.Equals(_defaultOutcomeValue.Get());
-        
+        internal override bool CanBeExecuted() => HasOutcome || HasFailed || TimedOut.Get();
+
         protected virtual void Restore()
         {
         }
@@ -505,7 +507,7 @@ namespace Vlingo.Common
             return lastRunContinuation;
         }
 
-        private bool CanExecute(BasicCompletes lastRunContinuation) => lastRunContinuation.CanBeExecuted();
+        private bool CanExecute(BasicCompletes lastRunContinuation) => lastRunContinuation.CanBeExecuted() || lastRunContinuation.Continuations.Count > 0;
 
         private void TrySetResult(BasicCompletes lastCompletes)
         { 

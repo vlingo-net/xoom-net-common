@@ -25,7 +25,7 @@ namespace Vlingo.Common.Serialization
                throw new InvalidOperationException($"Cannot deserialize '{serialization}' to type {nameof(T)}");
         
         public static T Deserialized<T>(string serialization, JsonSerializerSettings settings)
-            => JsonConvert.DeserializeObject<T>(serialization, Settings) ??
+            => JsonConvert.DeserializeObject<T>(serialization, settings) ??
                throw new InvalidOperationException($"Cannot deserialize '{serialization}' to type {nameof(T)}");
 
         public static object? Deserialized(string serialization, Type type)

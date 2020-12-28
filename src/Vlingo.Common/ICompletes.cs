@@ -105,5 +105,7 @@ namespace Vlingo.Common
             outcome.Resolve(
                 e => WithSuccess(Failure.Of<TFailure, TSuccess>(e)),
                 s => s.AndThen(Success.Of<TFailure, TSuccess>));
+        
+        public static ICompletes<TResult> AsTyped<TResult>() => new BasicCompletes<TResult>(default!);
     }
 }

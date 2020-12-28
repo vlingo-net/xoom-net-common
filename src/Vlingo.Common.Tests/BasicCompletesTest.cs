@@ -954,7 +954,7 @@ namespace Vlingo.Common.Tests
             Assert.False(client.HasFailed);
             Assert.Equal(80, outcome);
         }
-        
+
         [Fact(Skip = "https://github.com/vlingo-net/vlingo-net-common/issues/54")]
         public void TestOnClientAndServerSetupWhenClientIsFaster()
         {
@@ -1004,6 +1004,22 @@ namespace Vlingo.Common.Tests
 
             expectedHashSet.RemoveWhere(h => intHashSet.Contains(h));
             Assert.Empty(expectedHashSet);
+        }
+        
+        // CFCompletes
+        
+        [Fact]
+        public void TestCompletesAsTyped() 
+        {
+            var completes = Completes.AsTyped<int>();
+
+            completes.With(5);
+
+            completes.Await();
+
+            Assert.True(completes.IsCompleted);
+            Assert.False(completes.HasFailed);
+            Assert.Equal(5, completes.Outcome);
         }
         
         private ICompletes<T> NewEmptyCompletes<T>() => new RepeatableCompletes<T>(_testScheduler);

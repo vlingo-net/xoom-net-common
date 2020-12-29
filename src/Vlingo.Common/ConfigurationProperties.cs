@@ -28,7 +28,7 @@ namespace Vlingo.Common
 
         public string? GetProperty(string key, string? defaultValue)
         {
-            if (_dictionary.TryGetValue(key.ToLowerInvariant(), out string? value))
+            if (_dictionary.TryGetValue(key, out var value))
             {
                 return value;
             }
@@ -36,7 +36,7 @@ namespace Vlingo.Common
             return defaultValue;
         }
 
-        public void SetProperty(string key, string value) => _dictionary[key.ToLowerInvariant()] = value;
+        public void SetProperty(string key, string value) => _dictionary[key] = value;
 
         public void Load(FileInfo configFile)
         {

@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 
@@ -22,7 +23,8 @@ namespace Vlingo.Common.Compiler
 
         internal Type? AddDynaClass(string fullyQualifiedClassName, string dllPath)
         {
-            var loadedAssembly = Assembly.LoadFrom(dllPath);
+            byte[] assemblyBytes = File.ReadAllBytes(dllPath);
+            var loadedAssembly = Assembly.Load(assemblyBytes);
             return loadedAssembly.GetType(fullyQualifiedClassName);
         }
 

@@ -8,7 +8,6 @@
 using System;
 using System.Linq.Expressions;
 using Vlingo.Common.Expressions;
-using Vlingo.Common.Serialization;
 using Xunit;
 
 namespace Vlingo.Common.Tests.Expressions
@@ -129,9 +128,6 @@ namespace Vlingo.Common.Tests.Expressions
             return Equals((ComplexParameters) obj);
         }
 
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Int, Message, InnerParameters);
-        }
+        public override int GetHashCode() => HashCode.Combine(Int, Message, InnerParameters);
     }
 }

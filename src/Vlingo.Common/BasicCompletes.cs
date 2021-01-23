@@ -302,10 +302,7 @@ namespace Vlingo.Common
 
         public virtual TResult Outcome => OutcomeValue.Get();
         
-        public virtual ICompletes<TResult> Repeat()
-        {
-            throw new NotImplementedException();
-        }
+        public virtual ICompletes<TResult> Repeat() => throw new NotImplementedException();
 
         public ICompletes<TResult> TimeoutWithin(TimeSpan timeout) => AndThenConsume(timeout, result => { });
 
@@ -499,8 +496,16 @@ namespace Vlingo.Common
                 catch (Exception e)
                 {
                     HandleException(e);
-                    ExceptionContinuation?.Run(this);
-                    break;
+                    try
+                    {
+                        ExceptionContinuation?.Run(this);
+                        break;
+                    }
+                    catch (Exception innerException)
+                    {
+                        continuation.Completes.HandleException(innerException);
+                        break;
+                    }
                 }
             }
 
@@ -520,6 +525,7 @@ namespace Vlingo.Common
             
                 if (lastCompletes is { } completesContinuation)
                 {
+                    completesContinuation.OutcomeKnown.Set();
                     TransformedResult = completesContinuation.TransformedResult;
                 }   
             }

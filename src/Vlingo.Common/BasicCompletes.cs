@@ -97,6 +97,14 @@ namespace Vlingo.Common
             return continuationCompletes;
         }
 
+        public virtual ICompletes<TResult> AndThen(Func<TResult, TResult> function)
+        {
+            var parent = Parent ?? this;
+            var continuationCompletes = new AndThenContinuation<TResult, TResult>(parent, this, function);
+            parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
+
         public ICompletes<TResult> AndThenConsume(TimeSpan timeout, TResult failedOutcomeValue, Action<TResult> consumer)
         {
             var parent = Parent ?? this;

@@ -28,6 +28,8 @@ namespace Vlingo.Common.Completion.Continuations
                     OutcomeValue.Set(function(basicCompletes.Exception!));
                 }
             }
+
+            Action.DynamicInvoke(completedCompletes);
         }
     }
 }

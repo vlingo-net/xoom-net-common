@@ -398,6 +398,25 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestThatExceptionOutcomeFailsIfNotRecoveredExpectingWrongCompletesType()
+        {
+            var service = new BasicCompletes<int?>(_testScheduler);
+
+            var client =
+                service
+                    .AndThen(value => value * 2)
+                    .AndThen<string>(value => { throw new InvalidOperationException($"{value * 2}"); })
+                    .RecoverFrom(e => { throw new InvalidOperationException("Not recovered."); });
+
+            service.With(2);
+
+            var outcome = client.Await<string>(); // notice that here should await int? not string
+
+            Assert.Null(outcome);
+            Assert.True(client.HasFailed);
+        }
+        
+        [Fact]
         public void TestThatNestedRecoverFromWithNoExceptionSetsOutput()
         {
             var failureValue = -1;

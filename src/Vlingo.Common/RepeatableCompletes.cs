@@ -48,6 +48,14 @@ namespace Vlingo.Common
             parent.AndThenInternal(continuationCompletes);
             return continuationCompletes;
         }
+        
+        public override ICompletes<TResult> AndThen(Func<TResult, TResult> function)
+        {
+            var parent = Parent ?? this;
+            var continuationCompletes = new RepeatableAndThenContinuation<TResult, TResult>(parent, this, function);
+            parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
 
         public override ICompletes<TResult> Repeat()
         {

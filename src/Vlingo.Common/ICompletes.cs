@@ -24,6 +24,7 @@ namespace Vlingo.Common
         ICompletes<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function);
         ICompletes<TNewResult> AndThen<TNewResult>(TimeSpan timeout, Func<TResult, TNewResult> function);
         ICompletes<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function);
+        ICompletes<TResult> AndThen(Func<TResult, TResult> function);
 
         ICompletes<TResult> AndThenConsume(TimeSpan timeout, TResult failedOutcomeValue, Action<TResult> consumer);
         ICompletes<TResult> AndThenConsume(TResult failedOutcomeValue, Action<TResult> consumer);
@@ -104,7 +105,7 @@ namespace Vlingo.Common
         public static ICompletes<IOutcome<TFailure, TSuccess>> Invert<TFailure, TSuccess>(IOutcome<TFailure, ICompletes<TSuccess>> outcome) where TFailure : Exception =>
             outcome.Resolve(
                 e => WithSuccess(Failure.Of<TFailure, TSuccess>(e)),
-                s => s.AndThen(Success.Of<TFailure, TSuccess>));
+                s => s.AndThen<IOutcome<TFailure, TSuccess>>(Success.Of<TFailure, TSuccess>));
         
         public static ICompletes<TResult> AsTyped<TResult>() => new BasicCompletes<TResult>(default!);
     }

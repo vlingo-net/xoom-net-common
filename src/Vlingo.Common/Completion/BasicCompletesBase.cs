@@ -86,9 +86,9 @@ namespace Vlingo.Common.Completion
             var continuation = new CompletesContinuation(continuationCompletes);
             RegisterExceptionContinuation(continuation);
         }
-        
+
         protected abstract void RunContinuationsWhenReady();
-        
+
         protected abstract void RunContinuationsWhenReady(BasicCompletes completedContinuation);
 
         public override string ToString() => $"BasicCompletes [{_id}]";

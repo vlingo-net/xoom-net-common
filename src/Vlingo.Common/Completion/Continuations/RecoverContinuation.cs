@@ -11,12 +11,9 @@ namespace Vlingo.Common.Completion.Continuations
 {
     internal class RecoverContinuation<TResult> : BasicCompletes<TResult>
     {
-        internal RecoverContinuation(Delegate function) : this(function, null)
-        {
-        }
-            
         internal RecoverContinuation(Delegate function, BasicCompletes? parent) : base(function, parent)
         {
+            HasFailedValue.Set(true);
         }
 
         internal override void InnerInvoke(BasicCompletes completedCompletes)
@@ -26,10 +23,11 @@ namespace Vlingo.Common.Completion.Continuations
                 if (completedCompletes is BasicCompletes<TResult> basicCompletes)
                 {
                     OutcomeValue.Set(function(basicCompletes.Exception!));
+                    return;
                 }
             }
 
-            Action.DynamicInvoke(completedCompletes);
+            Action.DynamicInvoke(completedCompletes.Exception);
         }
     }
 }

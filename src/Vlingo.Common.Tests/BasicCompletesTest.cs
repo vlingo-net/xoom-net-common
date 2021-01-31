@@ -417,6 +417,51 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
+        public void TestOutcomeIsConsumedOncePipelineIsCompleted()
+        {
+            var service = new BasicCompletes<int>(_testScheduler);
+            var nested = new BasicCompletes<int>(_testScheduler);
+            var andThenValue = 0;
+
+            var client =
+                service
+                    .AndThen(value => value * 2)
+                    .AndThenTo(value => nested.AndThen(v => v * value))
+                    .AndThenTo(value => Completes.WithSuccess(value * 2))
+                    .AndThenConsume(o => andThenValue = o);
+
+            service.With(5);
+            Thread.Sleep(100);
+            nested.With(2);
+
+            var outcome = client.Await();
+
+            Assert.False(client.HasFailed);
+            Assert.Equal(40, andThenValue);
+            Assert.Equal(40, outcome);
+        }
+        
+        [Fact]
+        public void TestThatItRecoversFromConsumerException()
+        {
+            var service = new BasicCompletes<int>(_testScheduler);
+
+            var client =
+                service
+                    .AndThen(value => value * 2)
+                    .AndThenTo(value => Completes.WithSuccess(value * 2))
+                    .AndThenConsume(value => { throw new InvalidOperationException($"{value * 2}"); })
+                    .RecoverFrom(e => int.Parse(e.Message));
+
+            service.With(5);
+
+            var outcome = client.Await();
+
+            Assert.True(client.HasFailed);
+            Assert.Equal(40, outcome);
+        }
+        
+        [Fact]
         public void TestThatNestedRecoverFromWithNoExceptionSetsOutput()
         {
             var failureValue = -1;

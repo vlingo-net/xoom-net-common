@@ -52,7 +52,8 @@ namespace Vlingo.Common
         public virtual ICompletes<TOutput> With<TOutput>(TOutput outcome)
         {
             var completes = With((TResult) (object) outcome!);
-            return new BasicCompletes<TOutput>((TOutput)(object)completes.Outcome!);
+            object? completesOutcome = completes.Outcome;
+            return new BasicCompletes<TOutput>((TOutput)(object)(completesOutcome ?? outcome!));
         }
 
         public virtual ICompletes<TResult> With(TResult outcome)
@@ -232,7 +233,7 @@ namespace Vlingo.Common
             {
                 function(parent.ExceptionValue.Get()!);
             }
-            var continuationCompletes = new RecoverContinuation<TResult>(function);
+            var continuationCompletes = new RecoverContinuation<TResult>(function, this);
             parent.RecoverInternal(continuationCompletes);
             return this;
         }
@@ -332,10 +333,7 @@ namespace Vlingo.Common
 
         public void SetResult(TResult result) => CompletedWith(result);
         
-        public Task<TResult> ToTask()
-        {
-            return _tcs.Task;
-        }
+        public Task<TResult> ToTask() => _tcs.Task;
 
         public override string ToString() => $"{base.ToString()}: OutcomeValue={Outcome}, HasOutcome={HasOutcome}, HasFailed={HasFailed}";
 
@@ -477,7 +475,7 @@ namespace Vlingo.Common
                 {
                     return lastRunContinuation;
                 }
-                
+
                 try
                 {
                     parent.BackUp(continuation);
@@ -488,7 +486,7 @@ namespace Vlingo.Common
                         if (FailureContinuation != null)
                         {
                             FailureContinuation.Run(continuation.Completes);
-                            return FailureContinuation.Completes;   
+                            return FailureContinuation.Completes;
                         }
 
                         return continuation.Completes;
@@ -507,11 +505,21 @@ namespace Vlingo.Common
                     try
                     {
                         ExceptionContinuation?.Run(this);
+                        if (ExceptionContinuation != null)
+                        {
+                            lastRunContinuation = ExceptionContinuation?.Completes;
+                        }
+
                         break;
                     }
                     catch (Exception innerException)
                     {
                         continuation.Completes.HandleException(innerException);
+                        if (ExceptionContinuation != null)
+                        {
+                            lastRunContinuation = ExceptionContinuation?.Completes;
+                        }
+
                         break;
                     }
                 }
@@ -542,6 +550,16 @@ namespace Vlingo.Common
                 if (lastCompletes is BasicCompletes<TResult> continuation)
                 {
                     OutcomeValue.Set(continuation.FailedOutcomeValue.Get());
+                }
+
+                if (lastCompletes is RecoverContinuation<TResult> recoverContinuation)
+                {
+                    if (recoverContinuation.Parent is BasicCompletes<TResult> parentContinuation)
+                    {
+                        parentContinuation.OutcomeValue.Set(recoverContinuation.Outcome);
+                        parentContinuation.HasFailedValue.Set(true);
+                        parentContinuation.OutcomeKnown.Set();
+                    }
                 }
             }
         }
@@ -583,7 +601,7 @@ namespace Vlingo.Common
             ReadyToExectue.Set(HasOutcome);
         
             TrySetResult(lastRunContinuation);
-            
+
             lastRunContinuation.OutcomeKnown.Set();
             OutcomeKnown.Set();
         }

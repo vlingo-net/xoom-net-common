@@ -74,7 +74,7 @@ namespace Vlingo.Common
             return scheduledContinuation;
         }
 
-        public ICompletes<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
+        public virtual ICompletes<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
         {
             var parent = Parent ?? this;
             var scheduledContinuation = new AndThenContinuation<TResult, TNewResult>(parent, this, Optional.Of(failedOutcomeValue), function);
@@ -270,7 +270,11 @@ namespace Vlingo.Common
         {
             try
             {
-                OutcomeKnown.Wait(timeout);
+                var failedAwait = OutcomeKnown.Wait(timeout);
+                if (!HasFailedValue.Get())
+                {
+                    HasFailedValue.Set(failedAwait);
+                }
             }
             catch
             {
@@ -377,7 +381,7 @@ namespace Vlingo.Common
             var lastCompletes = RunContinuations();
             TrySetResult(lastCompletes);
             
-            lastCompletes.OutcomeKnown.Set();
+            lastCompletes?.OutcomeKnown.Set();
             OutcomeKnown.Set();
         }
 
@@ -457,9 +461,9 @@ namespace Vlingo.Common
             return default!;
         }
 
-        private BasicCompletes RunContinuations() => RunContinuations(this);
+        private BasicCompletes? RunContinuations() => RunContinuations(this);
         
-        private BasicCompletes RunContinuations(BasicCompletes completedContinuation)
+        private BasicCompletes? RunContinuations(BasicCompletes completedContinuation)
         {
             var parent = Parent ?? this;
             var lastRunContinuation = completedContinuation;
@@ -530,8 +534,13 @@ namespace Vlingo.Common
 
         private bool CanExecute(BasicCompletes lastRunContinuation) => lastRunContinuation.CanBeExecuted() || lastRunContinuation.Continuations.Count > 0;
 
-        private void TrySetResult(BasicCompletes lastCompletes)
-        { 
+        private void TrySetResult(BasicCompletes? lastCompletes)
+        {
+            if (lastCompletes == null)
+            {
+                return;
+            }
+            
             if (!lastCompletes.HasFailedValue.Get())
             {
                 if (lastCompletes is BasicCompletes<TResult> continuation && (continuation.HasOutcome || lastCompletes.OutcomeKnown.IsSet))
@@ -602,7 +611,7 @@ namespace Vlingo.Common
         
             TrySetResult(lastRunContinuation);
 
-            lastRunContinuation.OutcomeKnown.Set();
+            lastRunContinuation?.OutcomeKnown.Set();
             OutcomeKnown.Set();
         }
     }

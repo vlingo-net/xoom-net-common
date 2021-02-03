@@ -40,6 +40,14 @@ namespace Vlingo.Common
         protected RepeatableCompletes(Delegate valueSelector, BasicCompletes? parent) : base(valueSelector, parent)
         {
         }
+
+        public override ICompletes<TNewResult> AndThen<TNewResult>(TNewResult failedOutcomeValue, Func<TResult, TNewResult> function)
+        {
+            var parent = Parent ?? this;
+            var continuationCompletes = new RepeatableAndThenContinuation<TResult, TNewResult>(parent, this, Optional.Of(failedOutcomeValue), function);
+            parent.AndThenInternal(continuationCompletes);
+            return continuationCompletes;
+        }
         
         public override ICompletes<TNewResult> AndThen<TNewResult>(Func<TResult, TNewResult> function)
         {
@@ -69,6 +77,8 @@ namespace Vlingo.Common
 
         public override ICompletes<TResult> With(TResult outcome)
         {
+            HasException.Set(false);
+            HasFailedValue.Set(false);
             base.With(outcome);
             ReadyToExectue.Set(false);
             RepeatInternal();
@@ -99,7 +109,6 @@ namespace Vlingo.Common
             if (_repeating.CompareAndSet(false, true))
             {
                 Restore();
-                OutcomeKnown.Reset();
                 _repeating.Set(false);
             }
         }

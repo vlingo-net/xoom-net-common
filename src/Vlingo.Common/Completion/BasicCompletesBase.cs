@@ -93,9 +93,29 @@ namespace Vlingo.Common.Completion
 
         public override string ToString() => $"BasicCompletes [{_id}]";
         
-        private void RegisterContinuation(CompletesContinuation continuationCompletes) =>
-            Continuations.Enqueue(continuationCompletes);
-        
+        private void RegisterContinuation(CompletesContinuation continuationCompletes)
+        {
+            if (HasException.Get())
+            {
+                var currentContinuations = new CompletesContinuation[Continuations.Count];
+                Continuations.CopyTo(currentContinuations, 0);
+                var continuationsCount = Continuations.Count;
+                for (var i = 0; i < continuationsCount; i++)
+                {
+                    Continuations.TryDequeue(out _);
+                }
+                Continuations.Enqueue(continuationCompletes);
+                foreach (var currentContinuation in currentContinuations)
+                {
+                    Continuations.Enqueue(currentContinuation);
+                }
+            }
+            else
+            {
+                Continuations.Enqueue(continuationCompletes);
+            }
+        }
+
         private void RegisterFailureContinuation(CompletesContinuation continuationCompletes) =>
             FailureContinuation = continuationCompletes;
 

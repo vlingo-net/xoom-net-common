@@ -13,7 +13,7 @@ namespace Vlingo.Common.Completion.Continuations
     {
         private readonly AtomicReference<RepeatableCompletes<TAntecedentResult>> _antecedent = new AtomicReference<RepeatableCompletes<TAntecedentResult>>(default);
 
-        private RepeatableAndThenContinuation(BasicCompletes parent, RepeatableCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function, parent)
+        internal RepeatableAndThenContinuation(BasicCompletes parent, RepeatableCompletes<TAntecedentResult> antecedent, Optional<TResult> failedOutcomeValue, Delegate function) : base(function, parent)
         {
             _antecedent.Set(antecedent);
             FailedOutcomeValue = failedOutcomeValue;

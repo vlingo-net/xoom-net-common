@@ -1105,28 +1105,45 @@ namespace Vlingo.Common.Tests
             Assert.Equal(5, completes.Outcome);
         }
         
+        [Fact]
+        public void TestThatItRecoversConsistentlyWithNoRaceConditions()
+        {
+            for (var i = 0; i < 1000; i++)
+            {
+                var service = Completes.Using<int>(_testScheduler);
+
+                var client =
+                    service
+                        .AndThen(value => value * 2)
+                        .AndThenTo(value => Completes.WithSuccess(value * 2))
+                        .AndThenConsume(outcome => { throw new InvalidOperationException($"{outcome * 2}"); })
+                        .RecoverFrom(e => int.Parse(e.Message));
+
+                service.With(5);
+
+                var result = client.Await();
+
+                Assert.True(client.HasFailed);
+                Assert.Equal(40, result);
+            }
+        }
+        
         private ICompletes<T> NewEmptyCompletes<T>() => new RepeatableCompletes<T>(_testScheduler);
 
-        public BasicCompletesTest()
-        {
-            _testScheduler = new TestScheduler();
-        }
+        public BasicCompletesTest() => _testScheduler = new TestScheduler();
 
         private class Sender
         {
-            private readonly Action<int> callback;
+            private readonly Action<int> _callback;
             public Sender(Action<int> callback)
             {
                 if (callback != null)
                 {
-                    this.callback = callback;
+                    _callback = callback;
                 }
             }
 
-            internal void Send(int value)
-            {
-                callback(value);
-            }
+            internal void Send(int value) => _callback(value);
         }
 
         private interface IUser
@@ -1137,24 +1154,15 @@ namespace Vlingo.Common.Tests
 
         private class User : IUser
         {
-            private UserState _userState;
+            private readonly UserState _userState;
 
             public string Name => _userState.Name;
 
-            public User()
-            {
-                _userState = new UserState("1", "1", "1");
-            }
-        
-            public ICompletes<UserState> WithContact(string contact)
-            {
-                return Completes.WithSuccess(_userState.WithContact(contact));
-            }
+            public User() => _userState = new UserState("1", "1", "1");
 
-            public ICompletes<UserState> WithName(string name)
-            {
-                return Completes.WithSuccess(_userState.WithName(name));
-            }
+            public ICompletes<UserState> WithContact(string contact) => Completes.WithSuccess(_userState.WithContact(contact));
+
+            public ICompletes<UserState> WithName(string name) => Completes.WithSuccess(_userState.WithName(name));
         }
 
         private class UserState

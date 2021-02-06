@@ -89,5 +89,27 @@ namespace Vlingo.Common.Tests
             Assert.Equal(20, outcome20);
             Assert.Equal(20, andThenValue);
         }
+        
+        [Fact]
+        public void TestThatCompletesRepeatsForClient()
+        {
+            var andThenValue = -1;
+            var service =  new RepeatableCompletes<int>(0);
+
+            var client = service
+                    .AndThen(value => value * 2)
+                    .AndThen((value) => andThenValue = value)
+                    .Repeat();
+
+            service.With(5);
+            var outcome10 = client.Await();
+            Assert.Equal(10, outcome10);
+            Assert.Equal(10, andThenValue);
+
+            service.With(10);
+            var outcome20 = client.Await();
+            Assert.Equal(20, outcome20);
+            Assert.Equal(20, andThenValue);
+        }
     }
 }

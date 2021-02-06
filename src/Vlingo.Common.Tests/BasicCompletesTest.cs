@@ -1141,6 +1141,18 @@ namespace Vlingo.Common.Tests
             Assert.Equal(0, completes.Outcome);
         }
         
+        [Fact]
+        public void TestThatNestedCompletesIsNotFlattened()
+        {
+            var service = Completes.Using<int>(_testScheduler).With(5);
+
+            var client = service.AndThen(Completes.WithSuccess).Await();
+
+            client.Await();
+
+            Assert.Equal(5, client.Outcome);
+        }
+        
         private ICompletes<T> NewEmptyCompletes<T>() => new RepeatableCompletes<T>(_testScheduler);
 
         public BasicCompletesTest() => _testScheduler = new TestScheduler();

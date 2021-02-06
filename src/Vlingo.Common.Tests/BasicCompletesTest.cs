@@ -146,6 +146,7 @@ namespace Vlingo.Common.Tests
             var completed = completes.Await();
 
             Assert.True(completes.HasFailed);
+            Assert.True(completes.HasOutcome);
             Assert.NotEqual(10, andThenValue);
             Assert.Equal(0, andThenValue);
             Assert.Equal(-10, completed);
@@ -165,6 +166,7 @@ namespace Vlingo.Common.Tests
             var completed = completes.Await();
 
             Assert.True(completes.HasFailed);
+            Assert.True(completes.HasOutcome);
             Assert.Equal(-1, andThenValue);
             Assert.Equal(1000, failureValue);
             Assert.Equal(1000, completed);
@@ -1126,6 +1128,17 @@ namespace Vlingo.Common.Tests
                 Assert.True(client.HasFailed);
                 Assert.Equal(40, result);
             }
+        }
+        
+        [Fact]
+        public void TestNotCompleted()
+        {
+            var completes = Completes.Using<int>(_testScheduler);
+
+            Assert.False(completes.IsCompleted);
+            Assert.False(completes.HasOutcome);
+            Assert.False(completes.HasFailed);
+            Assert.Equal(0, completes.Outcome);
         }
         
         private ICompletes<T> NewEmptyCompletes<T>() => new RepeatableCompletes<T>(_testScheduler);

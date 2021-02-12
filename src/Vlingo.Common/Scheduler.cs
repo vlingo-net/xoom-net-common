@@ -81,7 +81,8 @@ namespace Vlingo.Common
                 return;    
             }
       
-            if (disposing) {
+            if (disposing)
+            {
                 
                 if (!_tasks.IsEmpty)
                 {

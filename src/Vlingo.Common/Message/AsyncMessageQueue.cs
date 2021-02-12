@@ -144,7 +144,8 @@ namespace Vlingo.Common.Message
                 return;    
             }
       
-            if (disposing) {
+            if (disposing)
+            {
                 
                 if (_open.Get())
                 {

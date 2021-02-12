@@ -999,7 +999,8 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
-        public void TestNestedCompletesFirst() {
+        public void TestNestedCompletesFirst()
+        {
             var service = Completes.Using<int>(_testScheduler);
             var nested = Completes.Using<int>(_testScheduler);
 
@@ -1020,7 +1021,8 @@ namespace Vlingo.Common.Tests
         }
         
         [Fact]
-        public void TestNestedCompletesLast() {
+        public void TestNestedCompletesLast()
+        {
             var service = Completes.Using<int>(_testScheduler);
             var nested = Completes.Using<int>(_testScheduler);
 

@@ -341,11 +341,12 @@ namespace Vlingo.Common
 
         public override string ToString() => $"{base.ToString()}: OutcomeValue={Outcome}, HasOutcome={HasOutcome}, HasFailed={HasFailed}";
 
-        internal override void InnerInvoke(BasicCompletes completedCompletes)
+        internal override bool InnerInvoke(BasicCompletes completedCompletes)
         {
             if (Action is Action invokableAction)
             {
                 invokableAction();
+                return true;
             }
             
             if (Action is Action<TResult> invokableActionInput)
@@ -354,8 +355,11 @@ namespace Vlingo.Common
                 {
                     invokableActionInput(basicCompletes.Outcome);
                     OutcomeValue.Set(basicCompletes.Outcome);
+                    return true;
                 }
             }
+
+            return false;
         }
 
         internal override void UpdateFailure(BasicCompletes previousContinuation)
@@ -469,7 +473,6 @@ namespace Vlingo.Common
             var lastRunContinuation = completedContinuation;
             while (parent.Continuations.Count > 0)
             {
-
                 if (!CanExecute(lastRunContinuation))
                 {
                     return lastRunContinuation;

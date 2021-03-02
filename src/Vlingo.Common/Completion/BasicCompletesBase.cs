@@ -41,7 +41,7 @@ namespace Vlingo.Common.Completion
             Action = action;
         }
         
-        internal abstract void InnerInvoke(BasicCompletes completedCompletes);
+        internal abstract bool InnerInvoke(BasicCompletes completedCompletes);
         
         internal abstract void UpdateFailure(BasicCompletes previousContinuation);
 

@@ -24,11 +24,11 @@ namespace Vlingo.Common.Completion.Continuations
             FailedOutcomeValue = failedOutcomeValue;
         }
 
-        internal override void InnerInvoke(BasicCompletes completedCompletes)
+        internal override bool InnerInvoke(BasicCompletes completedCompletes)
         {
             if (HasFailedValue.Get())
             {
-                return;
+                return false;
             }
 
             if (Action is Func<TAntecedentResult, ICompletes<TResult>> funcCompletes)
@@ -50,7 +50,7 @@ namespace Vlingo.Common.Completion.Continuations
                     });   
                 }
 
-                return;
+                return true;
             }
 
             if (Action is Func<TAntecedentResult, TResult> function)
@@ -58,9 +58,15 @@ namespace Vlingo.Common.Completion.Continuations
                 OutcomeValue.Set(function(_antecedent.Get()!.Outcome));
                 TransformedResult = OutcomeValue.Get();
                 OutcomeKnown.Set();
+                return true;
             }
-            
-            base.InnerInvoke(completedCompletes);
+
+            if (!base.InnerInvoke(completedCompletes))
+            {
+                return base.InnerInvoke(_antecedent.Get()!);   
+            }
+
+            return false;
         }
 
         internal override void UpdateFailure(BasicCompletes previousContinuation)

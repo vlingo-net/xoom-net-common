@@ -37,15 +37,16 @@ namespace Vlingo.Common.Completion.Continuations
             StartTimer();
         }
 
-        internal override void InnerInvoke(BasicCompletes completedCompletes)
+        internal override bool InnerInvoke(BasicCompletes completedCompletes)
         {
             if (TimedOut.Get() || _executed.Get())
             {
-                return;
+                return false;
             }
             
             base.InnerInvoke(completedCompletes);
             _executed.Set(true);
+            return true;
         }
 
         public void IntervalSignal(IScheduled<object?> scheduled, object? data)

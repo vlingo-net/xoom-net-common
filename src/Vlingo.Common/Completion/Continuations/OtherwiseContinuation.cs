@@ -17,17 +17,17 @@ namespace Vlingo.Common.Completion.Continuations
             base(function, parent) =>
             _antecedent = antecedent;
 
-        internal override void InnerInvoke(BasicCompletes completedCompletes)
+        internal override bool InnerInvoke(BasicCompletes completedCompletes)
         {
             if (HasException.Get())
             {
-                return;
+                return false;
             }
             
             if (Action is Action invokableAction)
             {
                 invokableAction();
-                return;
+                return true;
             }
             
             if (Action is Action<TResult> invokableActionInput)
@@ -36,7 +36,7 @@ namespace Vlingo.Common.Completion.Continuations
                 {
                     invokableActionInput(andThenContinuation.FailedOutcomeValue.Get());
                     OutcomeKnown.Set();
-                    return;   
+                    return true;   
                 }
             }
             
@@ -44,7 +44,7 @@ namespace Vlingo.Common.Completion.Continuations
             {
                 OutcomeValue.Set(funcCompletes(_antecedent));
                 OutcomeKnown.Set();
-                return;
+                return true;
             }
 
             if (Action is Func<TAntecedentResult, TResult> function)
@@ -53,14 +53,14 @@ namespace Vlingo.Common.Completion.Continuations
                 {
                     OutcomeValue.Set(function(andThenContinuation.FailedOutcomeValue.Get()));
                     OutcomeKnown.Set();
-                    return;   
+                    return true;   
                 }
 
                 if (completedCompletes is BasicCompletes<TAntecedentResult> otherwiseContinuation)
                 {
                     OutcomeValue.Set(function(otherwiseContinuation.FailedOutcomeValue.Get()));
                     OutcomeKnown.Set();
-                    return;
+                    return true;
                 }
             }
             

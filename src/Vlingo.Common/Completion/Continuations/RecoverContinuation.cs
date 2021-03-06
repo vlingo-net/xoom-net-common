@@ -16,18 +16,19 @@ namespace Vlingo.Common.Completion.Continuations
             HasFailedValue.Set(true);
         }
 
-        internal override void InnerInvoke(BasicCompletes completedCompletes)
+        internal override bool InnerInvoke(BasicCompletes completedCompletes)
         {
             if (Action is Func<Exception, TResult> function)
             {
                 if (completedCompletes is BasicCompletes<TResult> basicCompletes)
                 {
                     OutcomeValue.Set(function(basicCompletes.Exception!));
-                    return;
+                    return true;
                 }
             }
 
             Action.DynamicInvoke(completedCompletes.Exception);
+            return true;
         }
     }
 }

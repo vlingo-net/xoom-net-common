@@ -23,11 +23,11 @@ namespace Vlingo.Common.Completion.Continuations
         {
         }
 
-        internal override void InnerInvoke(BasicCompletes completedCompletes)
+        internal override bool InnerInvoke(BasicCompletes completedCompletes)
         {
             if (HasFailedValue.Get())
             {
-                return;
+                return false;
             }
             
             base.InnerInvoke(completedCompletes);
@@ -39,14 +39,17 @@ namespace Vlingo.Common.Completion.Continuations
                     OutcomeValue.Set(t);
                     TransformedResult = t;
                 });
-                return;
+                return true;
             }
 
             if (Action is Func<TAntecedentResult, TResult> function)
             {
                 OutcomeValue.Set(function(_antecedent.Get()!.Outcome));
                 TransformedResult = OutcomeValue.Get();
+                return true;
             }
+
+            return false;
         }
 
         internal override void UpdateFailure(BasicCompletes previousContinuation)

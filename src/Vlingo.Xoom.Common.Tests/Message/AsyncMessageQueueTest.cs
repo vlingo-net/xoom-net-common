@@ -8,46 +8,46 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Vlingo.Common.Message;
-using Vlingo.Common.Version;
+using Vlingo.Xoom.Common.Message;
+using Vlingo.Xoom.Common.Version;
 using Xunit;
 
-namespace Vlingo.Common.Tests.Message
+namespace Vlingo.Xoom.Common.Tests.Message
 {
     public class AsyncMessageQueueTest: IDisposable
     {
-        private readonly CountingDeadLettersQueue countingDeadLettersQueue;
-        private readonly CountingDeadLettersListener countingDeadLettersListener;
+        private readonly CountingDeadLettersQueue _countingDeadLettersQueue;
+        private readonly CountingDeadLettersListener _countingDeadLettersListener;
 
-        private readonly List<IMessage> deliveredMessages;
-        private readonly AsyncMessageQueue queue;
-        private readonly AsyncMessageQueue exceptionsQueue;
+        private readonly List<IMessage> _deliveredMessages;
+        private readonly AsyncMessageQueue _queue;
+        private readonly AsyncMessageQueue _exceptionsQueue;
 
         public AsyncMessageQueueTest()
         {
-            deliveredMessages = new List<IMessage>();
+            _deliveredMessages = new List<IMessage>();
 
-            queue = new AsyncMessageQueue();
-            queue.RegisterListener(new ExceptionThrowingListener(false, deliveredMessages));
+            _queue = new AsyncMessageQueue();
+            _queue.RegisterListener(new ExceptionThrowingListener(false, _deliveredMessages));
 
-            countingDeadLettersListener = new CountingDeadLettersListener();
-            countingDeadLettersQueue = new CountingDeadLettersQueue();
-            countingDeadLettersQueue.RegisterListener(countingDeadLettersListener);
+            _countingDeadLettersListener = new CountingDeadLettersListener();
+            _countingDeadLettersQueue = new CountingDeadLettersQueue();
+            _countingDeadLettersQueue.RegisterListener(_countingDeadLettersListener);
 
-            exceptionsQueue = new AsyncMessageQueue(countingDeadLettersQueue);
-            exceptionsQueue.RegisterListener(new ExceptionThrowingListener(true, deliveredMessages));
+            _exceptionsQueue = new AsyncMessageQueue(_countingDeadLettersQueue);
+            _exceptionsQueue.RegisterListener(new ExceptionThrowingListener(true, _deliveredMessages));
         }
 
         [Fact]
         public void TestEnqueue()
         {
-            queue.Enqueue(new EmptyMessage());
-            queue.Enqueue(new EmptyMessage());
-            queue.Enqueue(new EmptyMessage());
+            _queue.Enqueue(new EmptyMessage());
+            _queue.Enqueue(new EmptyMessage());
+            _queue.Enqueue(new EmptyMessage());
 
-            while (!queue.IsEmpty) ;
+            while (!_queue.IsEmpty) ;
 
-            Assert.Equal(3, deliveredMessages.Count);
+            Assert.Equal(3, _deliveredMessages.Count);
         }
 
         [Fact]
@@ -55,12 +55,12 @@ namespace Vlingo.Common.Tests.Message
         {
             for (int idx = 0; idx < 1000; ++idx)
             {
-                queue.Enqueue(new EmptyMessage());
+                _queue.Enqueue(new EmptyMessage());
             }
 
-            queue.Flush();
+            _queue.Flush();
 
-            Assert.Equal(1000, deliveredMessages.Count);
+            Assert.Equal(1000, _deliveredMessages.Count);
         }
 
         [Fact]
@@ -68,12 +68,12 @@ namespace Vlingo.Common.Tests.Message
         {
             for (int idx = 0; idx < 1000; ++idx)
             {
-                queue.Enqueue(new EmptyMessage());
+                _queue.Enqueue(new EmptyMessage());
             }
 
-            Assert.False(queue.IsEmpty);
-            queue.Flush();
-            Assert.True(queue.IsEmpty);
+            Assert.False(_queue.IsEmpty);
+            _queue.Flush();
+            Assert.True(_queue.IsEmpty);
         }
 
         [Fact]
@@ -81,17 +81,17 @@ namespace Vlingo.Common.Tests.Message
         {
             for (int idx = 0; idx < 1000; ++idx)
             {
-                queue.Enqueue(new EmptyMessage());
+                _queue.Enqueue(new EmptyMessage());
             }
 
-            queue.Close();
+            _queue.Close();
 
-            queue.Enqueue(new EmptyMessage());
+            _queue.Enqueue(new EmptyMessage());
 
-            queue.Flush();
+            _queue.Flush();
 
-            Assert.NotEqual(1001, deliveredMessages.Count);
-            Assert.Equal(1000, deliveredMessages.Count);
+            Assert.NotEqual(1001, _deliveredMessages.Count);
+            Assert.Equal(1000, _deliveredMessages.Count);
         }
         
         [Fact]
@@ -99,17 +99,17 @@ namespace Vlingo.Common.Tests.Message
         {
             for (int idx = 0; idx < 1000; ++idx)
             {
-                queue.Enqueue(new EmptyMessage());
+                _queue.Enqueue(new EmptyMessage());
             }
 
-            queue.Dispose();
+            _queue.Dispose();
 
-            queue.Enqueue(new EmptyMessage());
+            _queue.Enqueue(new EmptyMessage());
 
-            queue.Flush();
+            _queue.Flush();
 
-            Assert.NotEqual(1001, deliveredMessages.Count);
-            Assert.Equal(1000, deliveredMessages.Count);
+            Assert.NotEqual(1001, _deliveredMessages.Count);
+            Assert.Equal(1000, _deliveredMessages.Count);
         }
 
         [Fact]
@@ -119,26 +119,26 @@ namespace Vlingo.Common.Tests.Message
 
             for (int idx = 0; idx < expected; ++idx)
             {
-                exceptionsQueue.Enqueue(new EmptyMessage());
+                _exceptionsQueue.Enqueue(new EmptyMessage());
             }
 
-            exceptionsQueue.Close();
+            _exceptionsQueue.Close();
 
-            while (countingDeadLettersQueue.HasNotCompleted(expected) ||
-                    countingDeadLettersListener.HasNotCompleted(expected))
+            while (_countingDeadLettersQueue.HasNotCompleted(expected) ||
+                    _countingDeadLettersListener.HasNotCompleted(expected))
             {
                 Thread.Sleep(5);
             }
 
-            Assert.Equal(5, countingDeadLettersQueue.EnqueuedCount);
-            Assert.Equal(5, countingDeadLettersListener.HandledCount);
+            Assert.Equal(5, _countingDeadLettersQueue.EnqueuedCount);
+            Assert.Equal(5, _countingDeadLettersListener.HandledCount);
         }
         
         public void Dispose()
         {
-            countingDeadLettersQueue?.Dispose();
-            queue?.Dispose();
-            exceptionsQueue?.Dispose();
+            _countingDeadLettersQueue?.Dispose();
+            _queue?.Dispose();
+            _exceptionsQueue?.Dispose();
         }
 
         private class EmptyMessage : IMessage
@@ -158,51 +158,51 @@ namespace Vlingo.Common.Tests.Message
 
         private class CountingDeadLettersListener : IMessageQueueListener
         {
-            private readonly AtomicInteger handledCount = new AtomicInteger(0);
+            private readonly AtomicInteger _handledCount = new AtomicInteger(0);
 
-            internal int HandledCount => handledCount.Get();
+            internal int HandledCount => _handledCount.Get();
 
             internal bool HasNotCompleted(int expected) => HandledCount < expected;
 
-            public void HandleMessage(IMessage message) => handledCount.GetAndIncrement();
+            public void HandleMessage(IMessage message) => _handledCount.GetAndIncrement();
         }
 
         private class ExceptionThrowingListener : IMessageQueueListener
         {
-            private readonly bool throwException;
-            private readonly List<IMessage> deliveredMessages;
+            private readonly bool _throwException;
+            private readonly List<IMessage> _deliveredMessages;
 
             internal ExceptionThrowingListener(bool throwException, List<IMessage> deliveredMessages)
             {
-                this.throwException = throwException;
-                this.deliveredMessages = deliveredMessages;
+                this._throwException = throwException;
+                this._deliveredMessages = deliveredMessages;
             }
 
             public void HandleMessage(IMessage message)
             {
-                if (throwException)
+                if (_throwException)
                 {
                     throw new System.Exception("test");
                 }
                 else
                 {
                     Thread.Sleep(System.TimeSpan.FromMilliseconds(1));
-                    deliveredMessages.Add(message);
+                    _deliveredMessages.Add(message);
                 }
             }
         }
 
         private class CountingDeadLettersQueue : AsyncMessageQueue
         {
-            private readonly AtomicInteger enqueuedCount = new AtomicInteger(0);
+            private readonly AtomicInteger _enqueuedCount = new AtomicInteger(0);
 
-            internal int EnqueuedCount => enqueuedCount.Get();
+            internal int EnqueuedCount => _enqueuedCount.Get();
 
             internal bool HasNotCompleted(int expected) => EnqueuedCount < expected;
 
             public override void Enqueue(IMessage message)
             {
-                enqueuedCount.GetAndIncrement();
+                _enqueuedCount.GetAndIncrement();
                 base.Enqueue(message);
             }
         }

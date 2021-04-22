@@ -7,33 +7,32 @@
 
 using System;
 using System.IO;
-using Vlingo.Common.Compiler;
+using Vlingo.Xoom.Common.Compiler;
 using Xunit;
 
-namespace Vlingo.Common.Tests.Compiler
+namespace Vlingo.Xoom.Common.Tests.Compiler
 {
     public class ProxyFileTest : DynaTest, IDisposable
     {
-        private readonly string parentPath;
-        private readonly DirectoryInfo parentPathFile;
-        private readonly string pathToSource;
-        private readonly FileInfo pathToSourceFile;
+        private readonly DirectoryInfo _parentPathFile;
+        private readonly string _pathToSource;
+        private readonly FileInfo _pathToSourceFile;
 
         // SetUp
         public ProxyFileTest()
         {
-            parentPath = Path.Combine(Path.GetTempPath(), DynaFile.ToNamespacePath(ClassName));
-            parentPathFile = new DirectoryInfo(parentPath);
-            pathToSource = Path.Combine(Path.GetTempPath(), $"{DynaFile.ToFullPath(ClassName)}.cs");
-            pathToSourceFile = new FileInfo(pathToSource);
+            var parentPath = Path.Combine(Path.GetTempPath(), DynaFile.ToNamespacePath(ClassName));
+            _parentPathFile = new DirectoryInfo(parentPath);
+            _pathToSource = Path.Combine(Path.GetTempPath(), $"{DynaFile.ToFullPath(ClassName)}.cs");
+            _pathToSourceFile = new FileInfo(_pathToSource);
         }        
 
         [Fact]
         public void TestPersistProxyClassSource()
         {
-            parentPathFile.Create();
-            DynaFile.PersistDynaClassSource(pathToSource, Source);
-            using (var input = pathToSourceFile.OpenText())
+            _parentPathFile.Create();
+            DynaFile.PersistDynaClassSource(_pathToSource, Source);
+            using (var input = _pathToSourceFile.OpenText())
             {
                 Assert.Equal(Source, input.ReadToEnd());
             }
@@ -57,14 +56,14 @@ namespace Vlingo.Common.Tests.Compiler
         // TearDown
         public void Dispose()
         {
-            if (pathToSourceFile.Exists)
+            if (_pathToSourceFile.Exists)
             {
-                pathToSourceFile.Delete();
+                _pathToSourceFile.Delete();
             }
 
-            if (parentPathFile.Exists)
+            if (_parentPathFile.Exists)
             {
-                parentPathFile.Delete(); 
+                _parentPathFile.Delete(); 
             }
         }
     }

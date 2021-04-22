@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Vlingo.Common.Completion.Continuations
+namespace Vlingo.Xoom.Common.Completion.Continuations
 {
     internal class OtherwiseContinuation<TAntecedentResult, TResult> : BasicCompletes<TResult>
     {

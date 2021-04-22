@@ -8,7 +8,7 @@
 using System;
 using Vlingo.Xoom.UUID;
 
-namespace Vlingo.Common.Identity
+namespace Vlingo.Xoom.Common.Identity
 {
     internal class RandomIdentityGenerator : IIdentityGenerator
     {

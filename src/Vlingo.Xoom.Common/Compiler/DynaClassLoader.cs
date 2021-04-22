@@ -11,7 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace Vlingo.Common.Compiler
+namespace Vlingo.Xoom.Common.Compiler
 {
     public class DynaClassLoader
     {

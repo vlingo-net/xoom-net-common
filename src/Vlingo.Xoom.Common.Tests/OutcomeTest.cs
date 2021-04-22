@@ -8,7 +8,7 @@
 using System;
 using Xunit;
 
-namespace Vlingo.Common.Tests
+namespace Vlingo.Xoom.Common.Tests
 {
     public class OutcomeTest
     {

@@ -8,7 +8,7 @@
 using System;
 using System.IO;
 
-namespace Vlingo.Common.Compiler
+namespace Vlingo.Xoom.Common.Compiler
 {
     public class Input
     {

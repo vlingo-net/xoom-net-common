@@ -5,7 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-namespace Vlingo.Common.Pool
+namespace Vlingo.Xoom.Common.Pool
 {
     /// <summary>
     /// Manages creation, reset and destruction of resource objects created

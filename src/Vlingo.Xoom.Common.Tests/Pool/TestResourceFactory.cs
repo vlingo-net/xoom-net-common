@@ -6,9 +6,9 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using Vlingo.Common.Pool;
+using Vlingo.Xoom.Common.Pool;
 
-namespace Vlingo.Common.Tests.Pool
+namespace Vlingo.Xoom.Common.Tests.Pool
 {
     public class TestResourceFactory : IResourceFactory<int, Nothing>
     {

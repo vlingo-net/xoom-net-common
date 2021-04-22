@@ -7,9 +7,9 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using Vlingo.Common.Completion.Tasks;
+using Vlingo.Xoom.Common.Completion.Tasks;
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     public interface ICompletes
     {

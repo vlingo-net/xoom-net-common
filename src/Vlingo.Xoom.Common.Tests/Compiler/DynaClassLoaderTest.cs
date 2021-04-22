@@ -8,12 +8,11 @@
 using System;
 using System.IO;
 using System.Reflection;
-using Vlingo.Common.Compiler;
+using Vlingo.Xoom.Common.Compiler;
 using Xunit;
+using static Vlingo.Xoom.Common.Compiler.DynaFile;
 
-using static Vlingo.Common.Compiler.DynaFile;
-
-namespace Vlingo.Common.Tests.Compiler
+namespace Vlingo.Xoom.Common.Tests.Compiler
 {
     public class DynaClassLoaderTest : DynaTest
     {

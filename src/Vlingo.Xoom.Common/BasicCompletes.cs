@@ -7,11 +7,11 @@
 
 using System;
 using System.Threading.Tasks;
-using Vlingo.Common.Completion;
-using Vlingo.Common.Completion.Continuations;
-using Vlingo.Common.Completion.Tasks;
+using Vlingo.Xoom.Common.Completion;
+using Vlingo.Xoom.Common.Completion.Continuations;
+using Vlingo.Xoom.Common.Completion.Tasks;
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     public class BasicCompletes<TResult> : BasicCompletes, ICompletes<TResult>
     {

@@ -8,9 +8,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
-using Vlingo.Common.Completion.Continuations;
+using Vlingo.Xoom.Common.Completion.Continuations;
 
-namespace Vlingo.Common.Completion
+namespace Vlingo.Xoom.Common.Completion
 {
     public abstract class BasicCompletes
     {

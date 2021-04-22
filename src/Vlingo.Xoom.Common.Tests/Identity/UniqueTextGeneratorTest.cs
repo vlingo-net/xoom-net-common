@@ -6,10 +6,10 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System.Collections.Generic;
-using Vlingo.Common.Identity;
+using Vlingo.Xoom.Common.Identity;
 using Xunit;
 
-namespace Vlingo.Common.Tests.Identity
+namespace Vlingo.Xoom.Common.Tests.Identity
 {
     public class UniqueTextGeneratorTest
     {

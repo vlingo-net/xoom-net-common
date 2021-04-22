@@ -6,21 +6,21 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System.Threading.Tasks;
-using Vlingo.Common.Pool;
+using Vlingo.Xoom.Common.Pool;
 using Xunit;
 
-namespace Vlingo.Common.Tests.Pool
+namespace Vlingo.Xoom.Common.Tests.Pool
 {
     public class ElasticResourcePoolTest : ResourcePoolTest
     {
-        private readonly ElasticResourcePool<int, Nothing> pool;
+        private readonly ElasticResourcePool<int, Nothing> _pool;
 
         [Fact]
         public void TestInitialState()
         {
-            Assert.Equal(10, pool.Size);
-            var stats = pool.Stats();
-            Assert.Equal(pool.Size, stats.Idle);
+            Assert.Equal(10, _pool.Size);
+            var stats = _pool.Stats();
+            Assert.Equal(_pool.Size, stats.Idle);
             Assert.Equal(10, stats.Allocations);
             Assert.Equal(0, stats.Evictions);
             Assert.Equal(0, stats.InUse);
@@ -32,15 +32,12 @@ namespace Vlingo.Common.Tests.Pool
         [InlineData(1000)]
         public async Task TestConcurrentClients(int clients)
         {
-            await TestConcurrent(pool, clients);
-            var stats = pool.Stats();
+            await TestConcurrent(_pool, clients);
+            var stats = _pool.Stats();
             Assert.Equal(stats.Allocations - stats.Idle, stats.Evictions);
             Assert.Equal(0, stats.InUse);
         }
 
-        public ElasticResourcePoolTest()
-        {
-            pool = new ElasticResourcePool<int, Nothing>(ElasticResourcePool<int, Nothing>.Config.Of(10), new TestResourceFactory());
-        }
+        public ElasticResourcePoolTest() => _pool = new ElasticResourcePool<int, Nothing>(ElasticResourcePool<int, Nothing>.Config.Of(10), new TestResourceFactory());
     }
 }

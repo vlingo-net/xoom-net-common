@@ -9,9 +9,9 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using Newtonsoft.Json.Linq;
-using Vlingo.Common.Serialization;
+using Vlingo.Xoom.Common.Serialization;
 
-namespace Vlingo.Common.Expressions
+namespace Vlingo.Xoom.Common.Expressions
 {
     public static class ExpressionSerialization
     {

@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     /// <summary>
     /// Represents the outcome of a process that can fail in an expected way. Outcomes can be

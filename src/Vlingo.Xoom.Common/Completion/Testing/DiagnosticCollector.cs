@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace Vlingo.Common.Completion.Testing
+namespace Vlingo.Xoom.Common.Completion.Testing
 {
     internal class DiagnosticCollector : IDiagnosticCollector
     {

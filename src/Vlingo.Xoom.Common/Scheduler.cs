@@ -9,7 +9,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     /// <summary>
     /// Provide time-based notifications to a <code>IScheduled&lt;T&gt;</code> once or any number of

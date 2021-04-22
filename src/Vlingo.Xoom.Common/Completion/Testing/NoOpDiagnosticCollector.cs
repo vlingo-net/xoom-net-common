@@ -1,4 +1,4 @@
-namespace Vlingo.Common.Completion.Testing
+namespace Vlingo.Xoom.Common.Completion.Testing
 {
     internal class NoOpDiagnosticCollector : IDiagnosticCollector
     {

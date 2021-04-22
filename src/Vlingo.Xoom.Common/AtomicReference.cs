@@ -7,7 +7,7 @@
 
 using System.Threading;
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     public class AtomicReference<T> where T : class
     {

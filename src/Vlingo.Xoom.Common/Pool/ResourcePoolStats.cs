@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Vlingo.Common.Pool
+namespace Vlingo.Xoom.Common.Pool
 {
     /// <summary>
     /// <see cref="IResourcePool{TResource,TArguments}"/> statistics

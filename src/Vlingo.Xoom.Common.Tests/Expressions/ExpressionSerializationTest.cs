@@ -7,10 +7,10 @@
 
 using System;
 using System.Linq.Expressions;
-using Vlingo.Common.Expressions;
+using Vlingo.Xoom.Common.Expressions;
 using Xunit;
 
-namespace Vlingo.Common.Tests.Expressions
+namespace Vlingo.Xoom.Common.Tests.Expressions
 {
     public class ExpressionSerializationTest
     {

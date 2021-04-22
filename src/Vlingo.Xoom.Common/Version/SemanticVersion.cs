@@ -6,9 +6,10 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+
 // ReSharper disable InconsistentNaming
 
-namespace Vlingo.Common.Version
+namespace Vlingo.Xoom.Common.Version
 {
     public class SemanticVersion
     {

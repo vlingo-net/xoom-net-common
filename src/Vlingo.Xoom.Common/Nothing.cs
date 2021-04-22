@@ -5,7 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     /// <summary>
     /// Represents a Void value that cannot be instantiated and it's value is always null.

@@ -8,7 +8,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Vlingo.Common.Completion.Tasks
+namespace Vlingo.Xoom.Common.Completion.Tasks
 {
     public sealed class CompletesMethodBuilder<T>
     {

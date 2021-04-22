@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Vlingo.Common.Completion.Continuations
+namespace Vlingo.Xoom.Common.Completion.Continuations
 {
     internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object?>
     {

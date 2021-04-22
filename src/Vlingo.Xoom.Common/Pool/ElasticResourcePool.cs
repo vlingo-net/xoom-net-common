@@ -8,7 +8,7 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace Vlingo.Common.Pool
+namespace Vlingo.Xoom.Common.Pool
 {
     /// <summary>
     /// An elastic <see cref="IResourcePool{TResource,TArguments}"/> implementation backed by a <see cref="ConcurrentQueue{T}"/>.

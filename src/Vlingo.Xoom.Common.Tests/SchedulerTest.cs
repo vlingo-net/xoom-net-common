@@ -9,29 +9,26 @@ using System;
 using System.Threading;
 using Xunit;
 
-namespace Vlingo.Common.Tests
+namespace Vlingo.Xoom.Common.Tests
 {
     public class SchedulerTest : IDisposable
     {
-        private readonly IScheduled<CounterHolder> scheduled;
-        private readonly Scheduler scheduler;
+        private readonly IScheduled<CounterHolder> _scheduled;
+        private readonly Scheduler _scheduler;
 
         public SchedulerTest()
         {
-            scheduled = new Scheduled();
-            scheduler = new Scheduler();
+            _scheduled = new Scheduled();
+            _scheduler = new Scheduler();
         }
 
-        public void Dispose()
-        {
-            scheduler.Close();
-        }
+        public void Dispose() => _scheduler.Close();
 
         [Fact]
         public void TestScheduleOnceOneHappyDelivery()
         {
             using var holder = new CounterHolder(1);
-            scheduler.ScheduleOnce(scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+            _scheduler.ScheduleOnce(_scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
 
             holder.Completes();
 
@@ -42,7 +39,7 @@ namespace Vlingo.Common.Tests
         public void TestScheduleManyHappyDelivery()
         {
             using var holder = new CounterHolder(500);
-            scheduler.Schedule(scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+            _scheduler.Schedule(_scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
 
             holder.Completes();
 
@@ -60,21 +57,21 @@ namespace Vlingo.Common.Tests
 
         private class CounterHolder : IDisposable
         {
-            private readonly CountdownEvent until;
+            private readonly CountdownEvent _until;
 
             public CounterHolder(int totalExpected)
             {
-                until = new CountdownEvent(totalExpected);
+                _until = new CountdownEvent(totalExpected);
             }
 
             public int Counter { get; private set; } = 0;
 
             public void Increment()
             {
-                if (until.CurrentCount > 0)
+                if (_until.CurrentCount > 0)
                 {
                     ++Counter;
-                    until.Signal();   
+                    _until.Signal();   
                 }
             }
 
@@ -82,12 +79,12 @@ namespace Vlingo.Common.Tests
             {
                 try
                 {
-                    until.Wait();
+                    _until.Wait();
                 }
                 catch { }
             }
 
-            public void Dispose() => until.Dispose();
+            public void Dispose() => _until.Dispose();
         }
     }
 }

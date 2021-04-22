@@ -8,7 +8,7 @@
 using System;
 using System.Linq;
 
-namespace Vlingo.Common.Compiler
+namespace Vlingo.Xoom.Common.Compiler
 {
     public static class DynaNaming
     {

@@ -9,7 +9,7 @@ using System;
 using System.Threading;
 using Xunit;
 
-namespace Vlingo.Common.Tests
+namespace Vlingo.Xoom.Common.Tests
 {
     public class RepeatableCompletesTest
     {

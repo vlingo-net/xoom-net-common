@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     public class Failure<TCause, TValue> : IOutcome<TCause, TValue> where TCause : Exception
     {

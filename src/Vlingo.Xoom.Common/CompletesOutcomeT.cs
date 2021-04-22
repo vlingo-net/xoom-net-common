@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     /// <summary>
     /// Monad transformer implementation for <see cref="IOutcome{TFailure,TSuccess}"/> nested in <see cref="ICompletes{TResult}"/>

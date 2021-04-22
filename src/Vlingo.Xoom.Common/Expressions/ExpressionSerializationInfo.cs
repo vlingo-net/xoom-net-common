@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Vlingo.Common.Expressions
+namespace Vlingo.Xoom.Common.Expressions
 {
     public class ExpressionSerializationInfo
     {

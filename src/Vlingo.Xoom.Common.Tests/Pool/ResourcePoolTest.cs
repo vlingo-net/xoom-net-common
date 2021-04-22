@@ -8,14 +8,14 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Vlingo.Common.Pool;
+using Vlingo.Xoom.Common.Pool;
 using Xunit;
 
-namespace Vlingo.Common.Tests.Pool
+namespace Vlingo.Xoom.Common.Tests.Pool
 {
     public abstract class ResourcePoolTest
     {
-        private static Random _random = new Random();
+        private static readonly Random Random = new Random();
 
         public static async Task TestConcurrent(IResourcePool<int, Nothing> pool, int clients)
         {
@@ -30,7 +30,7 @@ namespace Vlingo.Common.Tests.Pool
                         resource = pool.Acquire();
                     } while (resource < 0);
 
-                    await Task.Delay(_random.Next(10, 100));
+                    await Task.Delay(Random.Next(10, 100));
                 }
                 finally
                 {

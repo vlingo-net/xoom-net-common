@@ -6,9 +6,9 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using Vlingo.Common.Version;
+using Vlingo.Xoom.Common.Version;
 
-namespace Vlingo.Common.Message
+namespace Vlingo.Xoom.Common.Message
 {
     public interface IMessage
     {

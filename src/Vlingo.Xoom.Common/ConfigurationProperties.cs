@@ -5,12 +5,12 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     public abstract class ConfigurationProperties
     {

@@ -6,10 +6,10 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using Newtonsoft.Json;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
-namespace Vlingo.Common.Serialization
+namespace Vlingo.Xoom.Common.Serialization
 {
     public static class JsonSerialization
     {

@@ -5,7 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-namespace Vlingo.Common.Tests.Compiler
+namespace Vlingo.Xoom.Common.Tests.Compiler
 {
     public abstract class DynaTest
     {

@@ -6,13 +6,11 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Text;
 using Xunit;
 
-namespace Vlingo.Common.Tests
+namespace Vlingo.Xoom.Common.Tests
 {
     public class TestConsumer : ConfigurationProperties
     {}

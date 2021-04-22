@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Vlingo.Common.Identity
+namespace Vlingo.Xoom.Common.Identity
 {
     public interface IIdentityGenerator
     {

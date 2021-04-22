@@ -7,7 +7,7 @@
 
 using System.Threading;
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     public class AtomicInteger
     {

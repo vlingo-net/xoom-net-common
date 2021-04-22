@@ -12,10 +12,9 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using static Vlingo.Xoom.Common.Compiler.DynaFile;
 
-using static Vlingo.Common.Compiler.DynaFile;
-
-namespace Vlingo.Common.Compiler
+namespace Vlingo.Xoom.Common.Compiler
 {
     public class DynaCompiler
     {

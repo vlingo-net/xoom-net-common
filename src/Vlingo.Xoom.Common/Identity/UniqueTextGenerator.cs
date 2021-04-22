@@ -7,9 +7,10 @@
 
 using System;
 using System.Text;
+
 // ReSharper disable InconsistentNaming
 
-namespace Vlingo.Common.Identity
+namespace Vlingo.Xoom.Common.Identity
 {
     /// <summary>
     /// Generates unique text. The longer the generated String the more likely

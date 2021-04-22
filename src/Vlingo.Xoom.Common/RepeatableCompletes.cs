@@ -7,10 +7,10 @@
 
 using System;
 using System.Collections.Concurrent;
-using Vlingo.Common.Completion;
-using Vlingo.Common.Completion.Continuations;
+using Vlingo.Xoom.Common.Completion;
+using Vlingo.Xoom.Common.Completion.Continuations;
 
-namespace Vlingo.Common
+namespace Vlingo.Xoom.Common
 {
     public class RepeatableCompletes<TResult> : BasicCompletes<TResult>
     {

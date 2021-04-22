@@ -6,10 +6,10 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
-using Vlingo.Common.Version;
+using Vlingo.Xoom.Common.Version;
 using Xunit;
 
-namespace Vlingo.Common.Tests.Version
+namespace Vlingo.Xoom.Common.Tests.Version
 {
     public class SemanticVersionTest
     {

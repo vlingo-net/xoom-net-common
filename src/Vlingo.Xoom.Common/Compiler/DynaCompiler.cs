@@ -34,7 +34,7 @@ namespace Vlingo.Xoom.Common.Compiler
                 {
                     typeof(object).GetTypeInfo().Assembly,
                     input.Protocol.GetTypeInfo().Assembly,
-                    GetType().Assembly, // Adding Vlingo.Common
+                    GetType().Assembly, // Adding Vlingo.Xoom.Common
                     Assembly.GetCallingAssembly(),
                     Assembly.Load(new AssemblyName("System.Runtime")),
                     Assembly.Load(new AssemblyName("mscorlib")),

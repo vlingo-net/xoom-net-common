@@ -8,7 +8,7 @@
     <!-- NuGet Metadata -->
     <IsPackable>true</IsPackable>
     <PackageVersion>$(VlingoVersion)</PackageVersion>
-    <PackageId>Vlingo.Common</PackageId>
+    <PackageId>Vlingo.Xoom.Common</PackageId>
     <Authors>Vlingo</Authors>
     <Description>
       This is a very early stage release of the vlingo platform.
@@ -16,9 +16,9 @@
     </Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageProjectUrl>https://github.com/vlingo-net/vlingo-net-common</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/vlingo-net/xoom-net-common</PackageProjectUrl>
     <PackageIcon>vlingo-64x64.png</PackageIcon>
-    <RepositoryUrl>https://github.com/vlingo-net/vlingo-net-common</RepositoryUrl>
+    <RepositoryUrl>https://github.com/vlingo-net/xoom-net-common</RepositoryUrl>
     <PackageTags>vlingo-net-common;actor-model;dotnet;netstandard;c#;reactive-programming</PackageTags>
     <Configurations>Debug;Release;Debug With Project References</Configurations>
   </PropertyGroup>

@@ -41,16 +41,16 @@ namespace Vlingo.Xoom.Common.Tests.Compiler
         [Fact]
         public void TestToFullPath()
         {
-            var path = DynaFile.ToFullPath("Vlingo.Actors.Startable");
-            var expected = string.Format("Vlingo{0}Actors{0}Startable", Path.DirectorySeparatorChar);
+            var path = DynaFile.ToFullPath("Vlingo.Xoom.Actors.Startable");
+            var expected = string.Format("Vlingo{0}Xoom{0}Actors{0}Startable", Path.DirectorySeparatorChar);
             Assert.Equal(expected, path);
         }
 
         [Fact]
         public void TestToPackagePath()
         {
-            var path = DynaFile.ToNamespacePath("Vlingo.Actors.Startable");
-            Assert.Equal($"Vlingo{Path.DirectorySeparatorChar}Actors", path);
+            var path = DynaFile.ToNamespacePath("Vlingo.Xoom.Actors.Startable");
+            Assert.Equal($"Vlingo{Path.DirectorySeparatorChar}Xoom{Path.DirectorySeparatorChar}Actors", path);
         }
 
         // TearDown

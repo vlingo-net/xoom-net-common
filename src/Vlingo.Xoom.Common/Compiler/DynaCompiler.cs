@@ -41,7 +41,7 @@ namespace Vlingo.Xoom.Common.Compiler
                     Assembly.Load(new AssemblyName("netstandard")),
                 };
 
-                // Adding Vlingo.Actors, if available
+                // Adding Vlingo.Xoom.Actors, if available
                 TryLoadActorsAssembly(assembliesToLoad);
 
                 input.Protocol.Assembly
@@ -92,7 +92,7 @@ namespace Vlingo.Xoom.Common.Compiler
         {
             try
             {
-                var assembly = Assembly.Load(new AssemblyName("Vlingo.Actors"));
+                var assembly = Assembly.Load(new AssemblyName("Vlingo.Xoom.Actors"));
                 assembliesToLoad.Add(assembly);
             }
             catch (Exception)

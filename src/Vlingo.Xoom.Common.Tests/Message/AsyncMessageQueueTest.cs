@@ -174,19 +174,19 @@ namespace Vlingo.Xoom.Common.Tests.Message
 
             internal ExceptionThrowingListener(bool throwException, List<IMessage> deliveredMessages)
             {
-                this._throwException = throwException;
-                this._deliveredMessages = deliveredMessages;
+                _throwException = throwException;
+                _deliveredMessages = deliveredMessages;
             }
 
             public void HandleMessage(IMessage message)
             {
                 if (_throwException)
                 {
-                    throw new System.Exception("test");
+                    throw new Exception("test");
                 }
                 else
                 {
-                    Thread.Sleep(System.TimeSpan.FromMilliseconds(1));
+                    Thread.Sleep(TimeSpan.FromMilliseconds(1));
                     _deliveredMessages.Add(message);
                 }
             }

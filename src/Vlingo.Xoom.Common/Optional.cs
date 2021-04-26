@@ -16,7 +16,7 @@ namespace Vlingo.Xoom.Common
 
         internal Optional(T value)
         {
-            this._value = value;
+            _value = value;
             _hasValue = true;
         }
 

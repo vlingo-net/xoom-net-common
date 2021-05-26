@@ -16,7 +16,10 @@ namespace Vlingo.Xoom.Common.Crypto
             switch (properties.GetProperty("crypto.type", "(unknown)"))
             {
                 case "argon2":
-                    throw new NotImplementedException("Argon2 is not implemented");
+                    var cryptoArgon2MaxDuration = int.Parse(properties.GetProperty("crypto.argon2.max.duration", "10")!);
+                    var cryptoArgon2MemoryCost = int.Parse(properties.GetProperty("crypto.argon2.memory.cost", "65536")!);
+                    var cryptoArgon2Parallelism = int.Parse(properties.GetProperty("crypto.argon2.parallelism", "1")!);
+                    return new Argon2Hasher(cryptoArgon2MaxDuration, cryptoArgon2MemoryCost, cryptoArgon2Parallelism);
                 case "scrypt":
                     throw new NotImplementedException("scrypt is not implemented");
                 case "bcrypt":

@@ -21,7 +21,10 @@ namespace Vlingo.Xoom.Common.Crypto
                     var cryptoArgon2Parallelism = int.Parse(properties.GetProperty("crypto.argon2.parallelism", "1")!);
                     return new Argon2Hasher(cryptoArgon2MaxDuration, cryptoArgon2MemoryCost, cryptoArgon2Parallelism);
                 case "scrypt":
-                    throw new NotImplementedException("scrypt is not implemented");
+                    var cryptoScryptNCostFactor = int.Parse(properties.GetProperty("crypto.scrypt.N.cost.factor", "16384")!);
+                    var cryptoScryptRBlocksize = int.Parse(properties.GetProperty("crypto.scrypt.r.blocksize", "8")!);
+                    var cryptoScryptPParallelization = int.Parse(properties.GetProperty("crypto.scrypt.p.parallelization", "1")!);
+                    return new SCryptHasher(cryptoScryptNCostFactor, cryptoScryptRBlocksize, cryptoScryptPParallelization);
                 case "bcrypt":
                     throw new NotImplementedException("bcrypt is not implemented");
                 default:

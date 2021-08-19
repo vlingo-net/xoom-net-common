@@ -13,6 +13,6 @@ namespace Vlingo.Xoom.Common.Completion.Continuations
 
         public CompletesContinuation(BasicCompletes completes) => Completes = completes;
 
-        internal void Run(BasicCompletes antecedentCompletes) => Completes.InnerInvoke(antecedentCompletes);   
+        internal void Run(BasicCompletes antecedentCompletes) => Completes.InnerInvoke(antecedentCompletes);
     }
 }

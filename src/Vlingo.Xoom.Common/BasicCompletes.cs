@@ -488,11 +488,12 @@ namespace Vlingo.Xoom.Common
                     parent.BackUp(continuation);
                     continuation.Completes.UpdateFailure(lastRunContinuation);
                     HasFailedValue.Set(continuation.Completes.HasFailedValue.Get());
-                    if (continuation.Completes.HasFailedValue.Get())
+                    if (continuation.Completes.HasFailedValue.Get() && !parent.HasHandledFailure.Get())
                     {
                         if (FailureContinuation != null)
                         {
                             FailureContinuation.Run(continuation.Completes);
+                            parent.HasHandledFailure.Set(true);
                             return FailureContinuation.Completes;
                         }
 
@@ -566,7 +567,14 @@ namespace Vlingo.Xoom.Common
             {
                 if (lastCompletes is BasicCompletes<TResult> continuation)
                 {
-                    OutcomeValue.Set(continuation.FailedOutcomeValue.Get());
+                    if (continuation.FailedOutcomeValue.IsPresent)
+                    {
+                        OutcomeValue.Set(continuation.FailedOutcomeValue.Get());   
+                    }
+                    else
+                    {
+                        OutcomeValue.Set(continuation.Outcome);
+                    }
                 }
 
                 if (lastCompletes is RecoverContinuation<TResult> recoverContinuation)

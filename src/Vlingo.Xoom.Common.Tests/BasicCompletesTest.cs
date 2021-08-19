@@ -1178,6 +1178,60 @@ namespace Vlingo.Xoom.Common.Tests
             Assert.Equal(-200, failureOutcome);
         }
         
+        [Fact]
+        public void TestThatOtherwiseLetsTheClientPipelineContinueDespiteEarlierTimeout()
+        {
+            var service = Completes.Using<int>(_testScheduler);
+
+            service
+                .UseFailedOutcomeOf(-1)
+                .TimeoutWithin(TimeSpan.FromMilliseconds(1))
+                .AndThen(value => value * 2)
+                .Otherwise<int>(e => 100)
+                .AndThen(v => v * 2);
+
+            Thread.Sleep(100);
+
+            service.With(5);
+
+            Assert.True(service.HasFailed);
+            Assert.Equal(200, service.Outcome);
+        }
+
+        [Fact]
+        public void TestThatOtherwiseLetsTheClientPipelineContinueDespiteEarlierFailedOutcome()
+        {
+            var service = new BasicCompletes<int>(_testScheduler);
+            var client = service
+                .UseFailedOutcomeOf(-1)
+                .AndThen(value => value * 2)
+                .Otherwise<int>(e => 100);
+
+            var otherClient = client
+                .AndThen(value => value * 2);
+
+            service.With(-1);
+
+            Assert.Equal(200, otherClient.Outcome);
+        }
+
+        [Fact]
+        public void TestThatOtherwiseLetsTheClientConsumerContinueDespiteEarlierFailedOutcome()
+        {
+            var andThenValue = 0;
+            var service = new BasicCompletes<int>(_testScheduler);
+            var client = service
+                .UseFailedOutcomeOf(-1)
+                .AndThen(value => value * 2)
+                .Otherwise<int>(e => 100);
+
+            client.AndThenConsume(value => andThenValue = value * 2);
+
+            service.With(-1);
+
+            Assert.Equal(200, andThenValue);
+        }
+        
         private ICompletes<T> NewEmptyCompletes<T>() => new RepeatableCompletes<T>(_testScheduler);
 
         public BasicCompletesTest() => _testScheduler = new TestScheduler();

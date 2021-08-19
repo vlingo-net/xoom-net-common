@@ -23,6 +23,7 @@ namespace Vlingo.Xoom.Common.Completion
         internal readonly ManualResetEventSlim OutcomeKnown = new ManualResetEventSlim(false);
         internal readonly AtomicBoolean HasFailedValue = new AtomicBoolean(false);
         internal readonly AtomicBoolean HasException = new AtomicBoolean(false);
+        internal readonly AtomicBoolean HasHandledFailure = new AtomicBoolean(false);
         internal readonly Scheduler? Scheduler;
         internal readonly ConcurrentQueue<CompletesContinuation> Continuations = new ConcurrentQueue<CompletesContinuation>();
         internal CompletesContinuation? FailureContinuation;
@@ -77,6 +78,7 @@ namespace Vlingo.Xoom.Common.Completion
             if (OutcomeKnown.IsSet && HasFailedValue.Get())
             {
                 continuation.Run(this);
+                HasHandledFailure.Set(true);
                 RunContinuationsWhenReady(continuationCompletes);
             }
         }

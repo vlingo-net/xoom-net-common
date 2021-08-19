@@ -26,11 +26,6 @@ namespace Vlingo.Xoom.Common.Completion.Continuations
 
         internal override bool InnerInvoke(BasicCompletes completedCompletes)
         {
-            if (HasFailedValue.Get())
-            {
-                return false;
-            }
-
             if (Action is Func<TAntecedentResult, ICompletes<TResult>> funcCompletes)
             {
                 var innerCompletes = funcCompletes(_antecedent.Get()!.Outcome);

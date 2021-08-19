@@ -15,7 +15,7 @@ namespace Vlingo.Xoom.Common.Tests
 {
     public class BasicCompletesTest
     {
-        private Scheduler _testScheduler;
+        private readonly Scheduler _testScheduler;
         
         [Fact]
         public void TestCompletesWith()
@@ -1153,6 +1153,29 @@ namespace Vlingo.Xoom.Common.Tests
             client.Await();
 
             Assert.Equal(5, client.Outcome);
+        }
+        
+        [Fact]
+        public void TestThatStageTimeoutWithNonNullFailureTimesOut()
+        {
+            var service = Completes.Using<int>(_testScheduler);
+
+            var client =
+            service
+                .AndThen(TimeSpan.FromMilliseconds(1), -100, value => 3 * value)
+                .Otherwise<int>(failedValue => failedValue - 100);
+
+            var thread = new Thread(() =>
+            {
+                Thread.Sleep(100);
+                service.With(5);
+            });
+            thread.Start();
+
+            var failureOutcome = client.Await();
+
+            Assert.True(client.HasFailed);
+            Assert.Equal(-200, failureOutcome);
         }
         
         private ICompletes<T> NewEmptyCompletes<T>() => new RepeatableCompletes<T>(_testScheduler);

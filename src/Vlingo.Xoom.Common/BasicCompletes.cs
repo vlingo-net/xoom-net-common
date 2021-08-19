@@ -546,6 +546,11 @@ namespace Vlingo.Xoom.Common
             
             if (!lastCompletes.HasFailedValue.Get())
             {
+                if (lastCompletes is OtherwiseContinuation<TResult, TResult> otherwiseContinuation)
+                {
+                    otherwiseContinuation.HasFailedValue.Set(true);
+                }
+                
                 if (lastCompletes is BasicCompletes<TResult> continuation && (continuation.HasOutcome || lastCompletes.OutcomeKnown.IsSet))
                 {
                     OutcomeValue.Set(continuation.Outcome);

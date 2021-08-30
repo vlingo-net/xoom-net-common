@@ -52,7 +52,6 @@ namespace Vlingo.Xoom.Common.Completion.Continuations
                 if (completedCompletes is AndThenContinuation<TResult, TAntecedentResult> andThenContinuation)
                 {
                     OutcomeValue.Set(function(andThenContinuation.FailedOutcomeValue.Get()));
-                    OutcomeKnown.Set();
                     return true;   
                 }
 

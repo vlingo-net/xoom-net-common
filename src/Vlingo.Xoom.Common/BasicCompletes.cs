@@ -445,14 +445,14 @@ namespace Vlingo.Xoom.Common
 
             if (HasFailed)
             {
-                var faileOutcomeValue = FailedOutcomeValue.Get();
+                var failedOutcomeValue = FailedOutcomeValue.Get();
                 try
                 {
-                    return (TNewResult)(object)faileOutcomeValue!;
+                    return (TNewResult)(object)failedOutcomeValue!;
                 }
                 catch
                 {
-                    var convertedFailedType = Convert.ChangeType(faileOutcomeValue, typeof(TNewResult));
+                    var convertedFailedType = Convert.ChangeType(failedOutcomeValue, typeof(TNewResult));
                     if (convertedFailedType == null)
                     {
                         return default!;
@@ -550,6 +550,7 @@ namespace Vlingo.Xoom.Common
                 if (lastCompletes is OtherwiseContinuation<TResult, TResult> otherwiseContinuation)
                 {
                     otherwiseContinuation.HasFailedValue.Set(true);
+                    OutcomeValue.Set(otherwiseContinuation.Outcome);
                 }
                 
                 if (lastCompletes is BasicCompletes<TResult> continuation && (continuation.HasOutcome || lastCompletes.OutcomeKnown.IsSet))

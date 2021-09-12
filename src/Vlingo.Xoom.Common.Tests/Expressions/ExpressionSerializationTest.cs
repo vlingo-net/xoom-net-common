@@ -15,6 +15,22 @@ namespace Vlingo.Xoom.Common.Tests.Expressions
     public class ExpressionSerializationTest
     {
         [Fact]
+        public void TestThatSimpleExpressionInvokes()
+        {
+            var actor = new ActorTest();
+            var m = "Test";
+            Expression<Action<int>> expression = i => actor.DoSomething(m, i);
+            var serialized = ExpressionSerialization.Serialize(expression);
+            
+            var serializationInfo = ExpressionSerialization.Deserialize(serialized);
+            var consumer = ExpressionExtensions.CreateDelegate<IParameterlessInterface, int>(actor, serializationInfo);
+            consumer(actor, 100);
+            
+            Assert.Equal(100, actor.Count);
+            Assert.Equal(m, actor.Message);
+        }
+        
+        [Fact]
         public void TestThatParameterlessExpressionInvokes()
         {
             Expression<Action<IParameterlessInterface>> expression = a => a.DoSomething();

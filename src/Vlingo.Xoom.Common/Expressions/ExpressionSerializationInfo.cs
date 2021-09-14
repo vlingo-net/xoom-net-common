@@ -14,12 +14,14 @@ namespace Vlingo.Xoom.Common.Expressions
         public string MethodName { get; }
         public object?[] Args { get; }
         public Type?[] Types { get; }
+        public Type?[] ArgumentTypes { get; }
 
-        public ExpressionSerializationInfo(string methodName, object?[] args, Type?[] types)
+        public ExpressionSerializationInfo(string methodName, object?[] args, Type?[] types, Type?[] argumentTypes)
         {
             MethodName = methodName;
             Args = args;
             Types = types;
+            ArgumentTypes = argumentTypes;
         }
     }
 }

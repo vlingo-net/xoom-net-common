@@ -15,15 +15,28 @@ namespace Vlingo.Xoom.Common.Expressions
 {
     public static class ExpressionSerialization
     {
-        public static string Serialize<TProtocol>(Expression<Action<TProtocol>> expression)
+        public static string? Serialize(LambdaExpression? expression)
         {
+            if (expression == null)
+            {
+                return null;
+            }
+            
             var mce = (MethodCallExpression)expression.Body;
 
             var methodName = mce.Method.Name;
 
             var args = mce.Arguments.Select(ExpressionExtensions.Evaluate).ToArray();
             var types = args.Select(a => a?.GetType()).ToArray();
-            return JsonSerialization.Serialized(new ExpressionSerializationInfo(methodName, args, types));
+            var argumentTypes = args.Select(a =>
+            {
+                if (typeof(ParameterExpressionNode).IsAssignableFrom(a!.GetType()))
+                {
+                    return ((ParameterExpressionNode)a).Type;
+                }
+                return a.GetType();
+            }).ToArray();
+            return JsonSerialization.Serialized(new ExpressionSerializationInfo(methodName, args, types, argumentTypes));
         }
 
         public static ExpressionSerializationInfo Deserialize(string serialized)
@@ -47,6 +60,18 @@ namespace Vlingo.Xoom.Common.Expressions
             }
 
             return deserialized;
+        }
+    }
+    
+    public class ParameterExpressionNode
+    {
+        public string Name { get; }
+        public Type Type { get; }
+
+        public ParameterExpressionNode(string name, Type type)
+        {
+            Name = name;
+            Type = type;
         }
     }
 }

@@ -16,12 +16,27 @@ namespace Vlingo.Xoom.Common.Expressions
     {
         public static Action<TProtocol> CreateDelegate<TProtocol>(object actor, ExpressionSerializationInfo info)
         {
-            var mi = actor.GetType().GetMethod(info.MethodName, info.Types!);
+            var mi = actor.GetType().GetMethod(info.MethodName, info.ArgumentTypes!);
         
             if (mi != null)
             {
                 var dlg = CreateDelegate(mi, actor);
                 Action<TProtocol> consumer = a => dlg.DynamicInvoke(info.Args);
+                return consumer;   
+            }
+
+            throw new InvalidOperationException($"Cannot Create a delegate method for MethodName={info.MethodName}");
+        }
+        
+        public static Action<TProtocol, TParam> CreateDelegate<TProtocol, TParam>(object actor, ExpressionSerializationInfo info)
+        {
+            var mi = actor.GetType().GetMethod(info.MethodName, info.ArgumentTypes!);
+        
+            if (mi != null)
+            {
+                var dlg = CreateDelegate(mi, actor);
+                var args = info.Args.Where(a => !(a is ParameterExpressionNode)).ToArray();
+                Action<TProtocol, TParam> consumer = (a, tparam) => dlg.DynamicInvoke(args.Concat(new object?[] {tparam}).ToArray());
                 return consumer;   
             }
 
@@ -74,6 +89,9 @@ namespace Vlingo.Xoom.Common.Expressions
                 case ExpressionType.New:
                     return ((NewExpression)expr).Constructor
                         .Invoke(((NewExpression)expr).Arguments.Select(Evaluate).ToArray());
+                case ExpressionType.Parameter:
+                    var parameter = (ParameterExpression)expr;
+                    return new ParameterExpressionNode(parameter.Name, parameter.Type);
                 default:
                     throw new NotSupportedException(expr.NodeType.ToString());
             }

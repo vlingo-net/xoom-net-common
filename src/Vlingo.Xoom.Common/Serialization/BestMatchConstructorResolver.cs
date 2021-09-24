@@ -28,7 +28,10 @@ namespace Vlingo.Xoom.Common.Serialization
                 var paramCtors = CreateConstructorParameters(mostSpecific, c.Properties);
                 foreach (var paramCtor in paramCtors)
                 {
-                    c.CreatorParameters.Add(paramCtor);
+                    if (!c.CreatorParameters.Contains(paramCtor.PropertyName!))
+                    {
+                        c.CreatorParameters.Add(paramCtor);
+                    }
                 }
             }
 

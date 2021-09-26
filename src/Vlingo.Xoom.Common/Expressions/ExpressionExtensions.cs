@@ -21,7 +21,7 @@ namespace Vlingo.Xoom.Common.Expressions
             if (mi != null)
             {
                 var dlg = CreateDelegate(mi, actor);
-                Action<TProtocol> consumer = a => dlg.DynamicInvoke(info.Args);
+                Action<TProtocol> consumer = a => dlg.DynamicInvoke(info.ArgumentValues);
                 return consumer;   
             }
 
@@ -30,12 +30,12 @@ namespace Vlingo.Xoom.Common.Expressions
         
         public static Action<TProtocol, TParam> CreateDelegate<TProtocol, TParam>(object actor, ExpressionSerializationInfo info)
         {
-            var mi = actor.GetType().GetMethod(info.MethodName, info.ArgumentTypes!);
+            var mi = actor.GetType().GetMethod(info.MethodName, info.FlattenTypes());
         
             if (mi != null)
             {
                 var dlg = CreateDelegate(mi, actor);
-                var args = info.Args.Where(a => !(a is ParameterExpressionNode)).ToArray();
+                var args = info.ArgumentValues.Where(a => !(a is ParameterExpressionNode)).ToArray();
                 Action<TProtocol, TParam> consumer = (a, tparam) => dlg.DynamicInvoke(args.Concat(new object?[] {tparam}).ToArray());
                 return consumer;   
             }

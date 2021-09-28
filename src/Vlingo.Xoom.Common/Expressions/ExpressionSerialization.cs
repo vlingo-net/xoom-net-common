@@ -27,33 +27,27 @@ namespace Vlingo.Xoom.Common.Expressions
             var methodName = mce.Method.Name;
 
             var args = mce.Arguments.Select(ExpressionExtensions.Evaluate).ToArray();
-            var types = args.Select(a => a?.GetType()).ToArray();
-            var argumentTypes = args.Select(a =>
-            {
-                if (typeof(ParameterExpressionNode).IsAssignableFrom(a!.GetType()))
-                {
-                    return ((ParameterExpressionNode)a).Type;
-                }
-                return a.GetType();
-            }).ToArray();
-            return JsonSerialization.Serialized(new ExpressionSerializationInfo(methodName, args, types, argumentTypes));
+            var argumentTypes = args.Select(a => a?.GetType()).ToArray();
+            var parameters = expression.Parameters.Select(p => new ParameterExpressionNode(p.Name, p.Type)).ToArray();
+            
+            return JsonSerialization.Serialized(new ExpressionSerializationInfo(methodName, parameters, args, argumentTypes));
         }
 
         public static ExpressionSerializationInfo Deserialize(string serialized)
         {
             var deserialized = JsonSerialization.Deserialized<ExpressionSerializationInfo>(serialized);
             var i = 0;
-            foreach (var arg in deserialized.Args)
+            foreach (var arg in deserialized.ArgumentValues)
             {
-                if (arg is JObject jobject && deserialized.Types.Length >= i)
+                if (arg is JObject jobject && deserialized.ArgumentTypes.Length >= i)
                 {
-                    deserialized.Args[i] = jobject.ToObject(deserialized.Types[i]!);
+                    deserialized.ArgumentValues[i] = jobject.ToObject(deserialized.ArgumentTypes[i]!);
                 }
                 
                 // special case as underlying serializer converts ints to longs en deserialization
-                else if (arg is long longArg && arg.GetType() != deserialized.Types[i])
+                else if (arg is long longArg && arg.GetType() != deserialized.ArgumentTypes[i])
                 {
-                    deserialized.Args[i] = int.Parse(longArg.ToString());
+                    deserialized.ArgumentValues[i] = int.Parse(longArg.ToString());
                 }
 
                 i++;

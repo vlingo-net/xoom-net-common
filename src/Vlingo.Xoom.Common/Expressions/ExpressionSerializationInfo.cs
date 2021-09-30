@@ -6,22 +6,45 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+using System.Collections.Generic;
 
 namespace Vlingo.Xoom.Common.Expressions
 {
     public class ExpressionSerializationInfo
     {
         public string MethodName { get; }
-        public object?[] Args { get; }
-        public Type?[] Types { get; }
+        public ParameterExpressionNode[] Parameters { get; }
+        public object?[] ArgumentValues { get; }
         public Type?[] ArgumentTypes { get; }
 
-        public ExpressionSerializationInfo(string methodName, object?[] args, Type?[] types, Type?[] argumentTypes)
+        public ExpressionSerializationInfo(
+            string methodName,
+            ParameterExpressionNode[] parameters,
+            object?[] argumentValues,
+            Type?[] argumentTypes)
         {
             MethodName = methodName;
-            Args = args;
-            Types = types;
+            Parameters = parameters;
+            ArgumentValues = argumentValues;
             ArgumentTypes = argumentTypes;
+        }
+
+        public Type[] FlattenTypes()
+        {
+            var flatTypes = new List<Type>(ArgumentTypes.Length);
+            for (var i = 0; i < ArgumentTypes.Length; i++)
+            {
+                if (typeof(ParameterExpressionNode) == ArgumentTypes[i])
+                {
+                    flatTypes.Add(((ParameterExpressionNode) ArgumentValues[i]!).Type);
+                }
+                else
+                {
+                    flatTypes.Add(ArgumentTypes[i]!);
+                }
+            }
+
+            return flatTypes.ToArray();
         }
     }
 }

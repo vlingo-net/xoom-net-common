@@ -23,7 +23,7 @@ namespace Vlingo.Xoom.Common.Compiler
 
         internal Type? AddDynaClass(string fullyQualifiedClassName, string dllPath)
         {
-            byte[] assemblyBytes = File.ReadAllBytes(dllPath);
+            var assemblyBytes = File.ReadAllBytes(dllPath);
             var loadedAssembly = Assembly.Load(assemblyBytes);
             return loadedAssembly.GetType(fullyQualifiedClassName);
         }

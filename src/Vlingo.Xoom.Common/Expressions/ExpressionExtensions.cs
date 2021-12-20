@@ -6,6 +6,7 @@
 // one at https://mozilla.org/MPL/2.0/.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -47,7 +48,7 @@ namespace Vlingo.Xoom.Common.Expressions
         {
             Func<Type[], Type> getType;
             var isAction = methodInfo.ReturnType == typeof(void);
-            var types = methodInfo!.GetParameters().Select(p => p.ParameterType);
+            var types = methodInfo.GetParameters().Select(p => p.ParameterType);
 
             if (isAction)
             {
@@ -95,6 +96,34 @@ namespace Vlingo.Xoom.Common.Expressions
                 default:
                     throw new NotSupportedException(expr.NodeType.ToString());
             }
+        }
+
+        public static Expression<Func<T>> Curry<T, TParameter>(
+            this Expression<Func<TParameter, T>> expressionToCurry,
+            TParameter valueToProvide)
+        {
+            var newExpression = expressionToCurry.Body as NewExpression;
+            var arguments = newExpression?.Arguments;
+            var argumentValues = new List<ConstantExpression>();
+            foreach (var argument in arguments!)
+            {
+                var value = argument.Evaluate();
+                if (value is ParameterExpressionNode parameterExpressionNode)
+                {
+                    if (parameterExpressionNode.Type == valueToProvide!.GetType())
+                    {
+                        argumentValues.Add(Expression.Constant(valueToProvide));
+                    }
+                }
+                else if (value != null)
+                {
+                    argumentValues.Add(Expression.Constant(value));
+                }
+            }
+            var constructor = newExpression?.Constructor;
+            var updatedExpression = Expression.New(constructor!, argumentValues);
+            var lambda = Expression.Lambda<Func<T>>(updatedExpression);
+            return lambda;
         }
     }
 }

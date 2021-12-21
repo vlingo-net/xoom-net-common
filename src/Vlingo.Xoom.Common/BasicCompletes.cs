@@ -53,7 +53,7 @@ namespace Vlingo.Xoom.Common
         {
             var completes = With((TResult) (object) outcome!);
             object? completesOutcome = completes.Outcome;
-            return new BasicCompletes<TOutput>((TOutput)(object)(completesOutcome ?? outcome!));
+            return new BasicCompletes<TOutput>((TOutput)(completesOutcome ?? outcome!));
         }
 
         public virtual ICompletes<TResult> With(TResult outcome)

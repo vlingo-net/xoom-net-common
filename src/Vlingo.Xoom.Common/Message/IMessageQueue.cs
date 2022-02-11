@@ -5,14 +5,13 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-namespace Vlingo.Xoom.Common.Message
+namespace Vlingo.Xoom.Common.Message;
+
+public interface IMessageQueue
 {
-    public interface IMessageQueue
-    {
-        void Close();
-        void Close(bool flush);
-        void Enqueue(IMessage message);
-        void Flush();
-        void RegisterListener(IMessageQueueListener listener);
-    }
+    void Close();
+    void Close(bool flush);
+    void Enqueue(IMessage message);
+    void Flush();
+    void RegisterListener(IMessageQueueListener listener);
 }

@@ -5,14 +5,13 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-namespace Vlingo.Xoom.Common
+namespace Vlingo.Xoom.Common;
+
+/// <summary>
+/// Represents a Void value that cannot be instantiated and it's value is always null.
+/// But can be used with generics.
+/// </summary>
+public class Nothing
 {
-    /// <summary>
-    /// Represents a Void value that cannot be instantiated and it's value is always null.
-    /// But can be used with generics.
-    /// </summary>
-    public class Nothing
-    {
-        public static Nothing AtAll => null!;
-    }
+    public static Nothing AtAll => null!;
 }

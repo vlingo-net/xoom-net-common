@@ -7,11 +7,10 @@
 
 using System;
 
-namespace Vlingo.Xoom.Common.Identity
+namespace Vlingo.Xoom.Common.Identity;
+
+public interface IIdentityGenerator
 {
-    public interface IIdentityGenerator
-    {
-        Guid Generate();
-        Guid Generate(string name);
-    }
+    Guid Generate();
+    Guid Generate(string name);
 }

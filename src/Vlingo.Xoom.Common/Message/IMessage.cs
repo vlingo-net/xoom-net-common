@@ -8,20 +8,19 @@
 using System;
 using Vlingo.Xoom.Common.Version;
 
-namespace Vlingo.Xoom.Common.Message
-{
-    public interface IMessage
-    {
-        string Id { get; }
-        DateTimeOffset OccurredOn { get; }
-        T Payload<T>();
-        string Type { get; }
-        string Version { get; }
-        SemanticVersion SemanticVersion { get; }
-    }
+namespace Vlingo.Xoom.Common.Message;
 
-    public static class MessageExtensions
-    {
-        public static SemanticVersion From(this IMessage message) => SemanticVersion.From(message.Version);
-    }
+public interface IMessage
+{
+    string Id { get; }
+    DateTimeOffset OccurredOn { get; }
+    T Payload<T>();
+    string Type { get; }
+    string Version { get; }
+    SemanticVersion SemanticVersion { get; }
+}
+
+public static class MessageExtensions
+{
+    public static SemanticVersion From(this IMessage message) => SemanticVersion.From(message.Version);
 }

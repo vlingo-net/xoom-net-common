@@ -9,33 +9,32 @@ using System.Collections.Generic;
 using Vlingo.Xoom.Common.Identity;
 using Xunit;
 
-namespace Vlingo.Xoom.Common.Tests.Identity
+namespace Vlingo.Xoom.Common.Tests.Identity;
+
+public class UniqueTextGeneratorTest
 {
-    public class UniqueTextGeneratorTest
+    [Fact]
+    public void TestThatUniqueTextGenerates()
     {
-        [Fact]
-        public void TestThatUniqueTextGenerates()
+        var length = 10;
+        var cycles = 100;
+        var maximum = 10_000;
+        var total = cycles * maximum;
+
+        var all = new HashSet<string>(total);
+
+        var generator = new UniqueTextGenerator();
+
+        for (var count = 0; count < cycles; ++count)
         {
-            var length = 10;
-            var cycles = 100;
-            var maximum = 10_000;
-            var total = cycles * maximum;
-
-            var all = new HashSet<string>(total);
-
-            var generator = new UniqueTextGenerator();
-
-            for (var count = 0; count < cycles; ++count)
+            for (var idx = 0; idx < maximum; ++idx)
             {
-                for (var idx = 0; idx < maximum; ++idx)
-                {
-                    var generated = generator.Generate(length);
-                    Assert.Equal(length, generated.Length);
-                    Assert.True(all.Add(generated));
-                }
+                var generated = generator.Generate(length);
+                Assert.Equal(length, generated.Length);
+                Assert.True(all.Add(generated));
             }
-
-            Assert.Equal(total, all.Count);
         }
+
+        Assert.Equal(total, all.Count);
     }
 }

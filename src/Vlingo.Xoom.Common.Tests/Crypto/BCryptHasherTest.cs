@@ -8,26 +8,25 @@
 using Vlingo.Xoom.Common.Crypto;
 using Xunit;
 
-namespace Vlingo.Xoom.Common.Tests.Crypto
-{
-    public class BCryptHasherTest
-    {
-        [Fact]
-        public void TestThatHashVerifiesSimple()
-        {
-            var secret = "secret";
-            var hasher = new BCryptHasher();
-            var hashed = hasher.Hash(secret);
-            Assert.True(hasher.Verify(secret, hashed));
-        }
+namespace Vlingo.Xoom.Common.Tests.Crypto;
 
-        [Fact]
-        public void TestThatHashVerifiesComplext()
-        {
-            var secret = "Thi$ isAM0re c*mplex+ S3CR37";
-            var hasher = new BCryptHasher();
-            var hashed = hasher.Hash(secret);
-            Assert.True(hasher.Verify(secret, hashed));
-        }
+public class BCryptHasherTest
+{
+    [Fact]
+    public void TestThatHashVerifiesSimple()
+    {
+        var secret = "secret";
+        var hasher = new BCryptHasher();
+        var hashed = hasher.Hash(secret);
+        Assert.True(hasher.Verify(secret, hashed));
+    }
+
+    [Fact]
+    public void TestThatHashVerifiesComplext()
+    {
+        var secret = "Thi$ isAM0re c*mplex+ S3CR37";
+        var hasher = new BCryptHasher();
+        var hashed = hasher.Hash(secret);
+        Assert.True(hasher.Verify(secret, hashed));
     }
 }

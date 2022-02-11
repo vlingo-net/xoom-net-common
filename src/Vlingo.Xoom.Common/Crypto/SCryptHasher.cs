@@ -7,19 +7,18 @@
 
 using Scrypt;
 
-namespace Vlingo.Xoom.Common.Crypto
+namespace Vlingo.Xoom.Common.Crypto;
+
+public class SCryptHasher : Hasher
 {
-    public class SCryptHasher : Hasher
-    {
-        private ScryptEncoder encoder;
+    private ScryptEncoder encoder;
         
-        public SCryptHasher(int costFactor, int blocksize, int parallelization) => 
-            encoder = new ScryptEncoder(costFactor, blocksize, parallelization);
+    public SCryptHasher(int costFactor, int blocksize, int parallelization) => 
+        encoder = new ScryptEncoder(costFactor, blocksize, parallelization);
 
-        public override string Hash(string plainSecret) => 
-            encoder.Encode(plainSecret);
+    public override string Hash(string plainSecret) => 
+        encoder.Encode(plainSecret);
 
-        public override bool Verify(string plainSecret, string hashedSecret) => 
-            encoder.Compare(plainSecret, hashedSecret);
-    }
+    public override bool Verify(string plainSecret, string hashedSecret) => 
+        encoder.Compare(plainSecret, hashedSecret);
 }

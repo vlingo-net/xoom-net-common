@@ -5,10 +5,9 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-namespace Vlingo.Xoom.Common.Message
+namespace Vlingo.Xoom.Common.Message;
+
+public interface IMessageQueueListener
 {
-    public interface IMessageQueueListener
-    {
-        void HandleMessage(IMessage message);
-    }
+    void HandleMessage(IMessage message);
 }

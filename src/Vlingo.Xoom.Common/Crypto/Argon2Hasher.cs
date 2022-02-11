@@ -7,25 +7,24 @@
 
 using Isopoh.Cryptography.Argon2;
 
-namespace Vlingo.Xoom.Common.Crypto
+namespace Vlingo.Xoom.Common.Crypto;
+
+public class Argon2Hasher : Hasher
 {
-    public class Argon2Hasher : Hasher
+    private readonly int _maxDuration;
+    private readonly int _memoryCost;
+    private readonly int _parallelism;
+
+    public Argon2Hasher(int maxDuration, int memoryCost, int parallelism)
     {
-        private readonly int _maxDuration;
-        private readonly int _memoryCost;
-        private readonly int _parallelism;
-
-        public Argon2Hasher(int maxDuration, int memoryCost, int parallelism)
-        {
-            _maxDuration = maxDuration;
-            _memoryCost = memoryCost;
-            _parallelism = parallelism;
-        }
-        
-        public override string Hash(string plainSecret) => 
-            Argon2.Hash(plainSecret, _maxDuration, _memoryCost, _parallelism);
-
-        public override bool Verify(string plainSecret, string hashedSecret) => 
-            Argon2.Verify(hashedSecret, plainSecret, _parallelism);
+        _maxDuration = maxDuration;
+        _memoryCost = memoryCost;
+        _parallelism = parallelism;
     }
+        
+    public override string Hash(string plainSecret) => 
+        Argon2.Hash(plainSecret, _maxDuration, _memoryCost, _parallelism);
+
+    public override bool Verify(string plainSecret, string hashedSecret) => 
+        Argon2.Verify(hashedSecret, plainSecret, _parallelism);
 }

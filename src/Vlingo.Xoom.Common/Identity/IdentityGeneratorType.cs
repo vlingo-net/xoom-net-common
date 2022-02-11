@@ -7,30 +7,29 @@
 
 using System;
 
-namespace Vlingo.Xoom.Common.Identity
-{
-    public enum IdentityGeneratorType
-    {
-        TimeBased,
-        NameBased,
-        Random
-    }
+namespace Vlingo.Xoom.Common.Identity;
 
-    public static class IdentityGeneratorTypeExtension
+public enum IdentityGeneratorType
+{
+    TimeBased,
+    NameBased,
+    Random
+}
+
+public static class IdentityGeneratorTypeExtension
+{
+    public static IIdentityGenerator Generator(this IdentityGeneratorType type)
     {
-        public static IIdentityGenerator Generator(this IdentityGeneratorType type)
+        switch (type)
         {
-            switch (type)
-            {
-                case IdentityGeneratorType.NameBased:
-                    return new NameBasedIdentityGenerator();
-                case IdentityGeneratorType.Random:
-                    return new RandomIdentityGenerator();
-                case IdentityGeneratorType.TimeBased:
-                    return new TimeBasedIdentityGenerator();
-                default:
-                    throw new ArgumentException($"Cannot find a UUID generatator for type {Enum.GetName(typeof(IdentityGeneratorType), type)}");
-            }
+            case IdentityGeneratorType.NameBased:
+                return new NameBasedIdentityGenerator();
+            case IdentityGeneratorType.Random:
+                return new RandomIdentityGenerator();
+            case IdentityGeneratorType.TimeBased:
+                return new TimeBasedIdentityGenerator();
+            default:
+                throw new ArgumentException($"Cannot find a UUID generatator for type {Enum.GetName(typeof(IdentityGeneratorType), type)}");
         }
     }
 }

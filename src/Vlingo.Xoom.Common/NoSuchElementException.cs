@@ -7,16 +7,15 @@
 
 using System;
 
-namespace Vlingo.Xoom.Common
-{
-    public class NoSuchElementException : Exception
-    {
-        public NoSuchElementException(string message, Exception? inner) : base(message, inner)
-        {
-        }
+namespace Vlingo.Xoom.Common;
 
-        public NoSuchElementException(Exception inner) : this("No such element", inner)
-        {
-        }
+public class NoSuchElementException : Exception
+{
+    public NoSuchElementException(string message, Exception? inner) : base(message, inner)
+    {
+    }
+
+    public NoSuchElementException(Exception inner) : this("No such element", inner)
+    {
     }
 }

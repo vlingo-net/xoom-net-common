@@ -7,54 +7,53 @@
 
 using System.Threading;
 
-namespace Vlingo.Xoom.Common
+namespace Vlingo.Xoom.Common;
+
+public class AtomicRefValue<T>
 {
-    public class AtomicRefValue<T>
+    private object? _value;
+    private readonly T _defaultValue;
+
+    public AtomicRefValue(object? initialValue)
     {
-        private object? _value;
-        private readonly T _defaultValue;
+        _value = initialValue!;
+        _defaultValue = default!;
+    }
 
-        public AtomicRefValue(object? initialValue)
+    public AtomicRefValue() : this(default)
+    {
+    }
+
+    public T Get()
+    {
+        var result = Interlocked.CompareExchange(ref _value, _defaultValue, _defaultValue);
+        if (result == null)
         {
-            _value = initialValue!;
-            _defaultValue = default!;
+            return _defaultValue;
         }
 
-        public AtomicRefValue() : this(default)
+        return (T) result;
+    }
+
+    public T Set(T newValue)
+    {
+        var result = Interlocked.Exchange(ref _value, newValue);
+        if (result == null)
         {
+            return _defaultValue;
         }
 
-        public T Get()
-        {
-            var result = Interlocked.CompareExchange(ref _value, _defaultValue, _defaultValue);
-            if (result == null)
-            {
-                return _defaultValue;
-            }
+        return (T) result;
+    }
 
-            return (T) result;
+    public T CompareAndSet(T expected, T update)
+    {
+        var result = Interlocked.CompareExchange(ref _value, update, expected);
+        if (result == null)
+        {
+            return _defaultValue;
         }
 
-        public T Set(T newValue)
-        {
-            var result = Interlocked.Exchange(ref _value, newValue);
-            if (result == null)
-            {
-                return _defaultValue;
-            }
-
-            return (T) result;
-        }
-
-        public T CompareAndSet(T expected, T update)
-        {
-            var result = Interlocked.CompareExchange(ref _value, update, expected);
-            if (result == null)
-            {
-                return _defaultValue;
-            }
-
-            return (T) result;
-        }
+        return (T) result;
     }
 }

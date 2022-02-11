@@ -8,56 +8,55 @@
 using System;
 using System.Linq;
 
-namespace Vlingo.Xoom.Common.Compiler
+namespace Vlingo.Xoom.Common.Compiler;
+
+public static class DynaNaming
 {
-    public static class DynaNaming
+    public static string ClassNameFor<T>(string postfix, bool forTypeLookup = false)
+        => ClassNameFor(typeof(T), postfix, forTypeLookup);
+
+    public static string ClassNameFor(Type type, string postfix, bool forTypeLookup = false)
     {
-        public static string ClassNameFor<T>(string postfix, bool forTypeLookup = false)
-            => ClassNameFor(typeof(T), postfix, forTypeLookup);
+        var className = type.Name;
 
-        public static string ClassNameFor(Type type, string postfix, bool forTypeLookup = false)
+        if (type.IsInterface && type.Name.StartsWith("I"))
         {
-            var className = type.Name;
-
-            if (type.IsInterface && type.Name.StartsWith("I"))
-            {
-                className = className.Substring(1);
-            }
-            if (type.IsGenericType)
-            {
-                className = className.Substring(0, className.IndexOf('`'));
-            }
-
-            var genericTypeParams = string.Empty;
-            if (type.IsGenericType)
-            {
-                var numGenericParams = type.GetGenericArguments().Length;
-                if (forTypeLookup)
-                {
-                    genericTypeParams = $"`{numGenericParams}";
-                }
-                else
-                {
-                    var genericDefinition = type.IsGenericTypeDefinition ? type : type.GetGenericTypeDefinition();
-                    var typeListString = string.Join(", ", genericDefinition.GetGenericArguments().Select(x => x.FullName ?? x.Name));
-                    genericTypeParams = $"<{typeListString}>";
-                }
-            }
-
-            return $"{className}{postfix}{genericTypeParams}";
+            className = className.Substring(1);
+        }
+        if (type.IsGenericType)
+        {
+            className = className.Substring(0, className.IndexOf('`'));
         }
 
-        public static string FullyQualifiedClassNameFor<T>(string postfix, bool forTypeLookup = false)
-            => FullyQualifiedClassNameFor(typeof(T), postfix, forTypeLookup);
-
-        public static string FullyQualifiedClassNameFor(Type type, string postfix, bool forTypeLookup = false)
+        var genericTypeParams = string.Empty;
+        if (type.IsGenericType)
         {
-            if (string.IsNullOrWhiteSpace(type.Namespace))
+            var numGenericParams = type.GetGenericArguments().Length;
+            if (forTypeLookup)
             {
-                return ClassNameFor(type, postfix, forTypeLookup);
+                genericTypeParams = $"`{numGenericParams}";
             }
-
-            return $"{type.Namespace}.{ClassNameFor(type, postfix, forTypeLookup)}";
+            else
+            {
+                var genericDefinition = type.IsGenericTypeDefinition ? type : type.GetGenericTypeDefinition();
+                var typeListString = string.Join(", ", genericDefinition.GetGenericArguments().Select(x => x.FullName ?? x.Name));
+                genericTypeParams = $"<{typeListString}>";
+            }
         }
+
+        return $"{className}{postfix}{genericTypeParams}";
+    }
+
+    public static string FullyQualifiedClassNameFor<T>(string postfix, bool forTypeLookup = false)
+        => FullyQualifiedClassNameFor(typeof(T), postfix, forTypeLookup);
+
+    public static string FullyQualifiedClassNameFor(Type type, string postfix, bool forTypeLookup = false)
+    {
+        if (string.IsNullOrWhiteSpace(type.Namespace))
+        {
+            return ClassNameFor(type, postfix, forTypeLookup);
+        }
+
+        return $"{type.Namespace}.{ClassNameFor(type, postfix, forTypeLookup)}";
     }
 }

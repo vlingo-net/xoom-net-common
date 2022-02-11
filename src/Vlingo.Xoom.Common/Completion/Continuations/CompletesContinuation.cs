@@ -5,14 +5,13 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-namespace Vlingo.Xoom.Common.Completion.Continuations
+namespace Vlingo.Xoom.Common.Completion.Continuations;
+
+internal class CompletesContinuation
 {
-    internal class CompletesContinuation
-    {
-        internal readonly BasicCompletes Completes;
+    internal readonly BasicCompletes Completes;
 
-        public CompletesContinuation(BasicCompletes completes) => Completes = completes;
+    public CompletesContinuation(BasicCompletes completes) => Completes = completes;
 
-        internal void Run(BasicCompletes antecedentCompletes) => Completes.InnerInvoke(antecedentCompletes);
-    }
+    internal void Run(BasicCompletes antecedentCompletes) => Completes.InnerInvoke(antecedentCompletes);
 }

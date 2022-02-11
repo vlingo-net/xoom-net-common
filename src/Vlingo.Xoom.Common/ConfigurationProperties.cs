@@ -10,48 +10,47 @@ using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 
-namespace Vlingo.Xoom.Common
+namespace Vlingo.Xoom.Common;
+
+public abstract class ConfigurationProperties
 {
-    public abstract class ConfigurationProperties
-    {
-        private readonly IDictionary<string, string> _dictionary;
+    private readonly IDictionary<string, string> _dictionary;
         
-        public ConfigurationProperties() => _dictionary = new Dictionary<string, string>();
+    public ConfigurationProperties() => _dictionary = new Dictionary<string, string>();
 
-        public ConfigurationProperties(IDictionary<string, string> properties) => _dictionary = properties;
+    public ConfigurationProperties(IDictionary<string, string> properties) => _dictionary = properties;
 
-        public ICollection<string> Keys => _dictionary.Keys;
+    public ICollection<string> Keys => _dictionary.Keys;
 
-        public bool IsEmpty => _dictionary.Count == 0;
+    public bool IsEmpty => _dictionary.Count == 0;
 
-        public string? GetProperty(string key) => GetProperty(key, null);
+    public string? GetProperty(string key) => GetProperty(key, null);
 
-        public string? GetProperty(string key, string? defaultValue)
+    public string? GetProperty(string key, string? defaultValue)
+    {
+        if (_dictionary.TryGetValue(key, out var value))
         {
-            if (_dictionary.TryGetValue(key, out var value))
-            {
-                return value;
-            }
-
-            return defaultValue;
+            return value;
         }
 
-        public void SetProperty(string key, string value) => _dictionary[key] = value;
+        return defaultValue;
+    }
 
-        public void Load(FileInfo configFile)
+    public void SetProperty(string key, string value) => _dictionary[key] = value;
+
+    public void Load(FileInfo configFile)
+    {
+        var config = new ConfigurationBuilder()
+            .AddJsonFile(configFile.Name, false, true)
+            .Build();
+
+        var configurations = config.AsEnumerable().Where(c => c.Value != null);
+
+        foreach (var configuration in configurations)
         {
-            var config = new ConfigurationBuilder()
-              .AddJsonFile(configFile.Name, false, true)
-              .Build();
-
-            var configurations = config.AsEnumerable().Where(c => c.Value != null);
-
-            foreach (var configuration in configurations)
-            {
-                var k = configuration.Key.Replace(":", ".");
-                var v = configuration.Value;
-                SetProperty(k, v);
-            }
+            var k = configuration.Key.Replace(":", ".");
+            var v = configuration.Value;
+            SetProperty(k, v);
         }
     }
 }

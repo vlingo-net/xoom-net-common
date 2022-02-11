@@ -7,28 +7,27 @@
 
 using System;
 
-namespace Vlingo.Xoom.Common.Completion.Continuations
+namespace Vlingo.Xoom.Common.Completion.Continuations;
+
+internal class RecoverContinuation<TResult> : BasicCompletes<TResult>
 {
-    internal class RecoverContinuation<TResult> : BasicCompletes<TResult>
+    internal RecoverContinuation(Delegate function, BasicCompletes? parent) : base(function, parent)
     {
-        internal RecoverContinuation(Delegate function, BasicCompletes? parent) : base(function, parent)
-        {
-            HasFailedValue.Set(true);
-        }
+        HasFailedValue.Set(true);
+    }
 
-        internal override bool InnerInvoke(BasicCompletes completedCompletes)
+    internal override bool InnerInvoke(BasicCompletes completedCompletes)
+    {
+        if (Action is Func<Exception, TResult> function)
         {
-            if (Action is Func<Exception, TResult> function)
+            if (completedCompletes is BasicCompletes<TResult> basicCompletes)
             {
-                if (completedCompletes is BasicCompletes<TResult> basicCompletes)
-                {
-                    OutcomeValue.Set(function(basicCompletes.Exception!));
-                    return true;
-                }
+                OutcomeValue.Set(function(basicCompletes.Exception!));
+                return true;
             }
-
-            Action.DynamicInvoke(completedCompletes.Exception);
-            return true;
         }
+
+        Action.DynamicInvoke(completedCompletes.Exception);
+        return true;
     }
 }

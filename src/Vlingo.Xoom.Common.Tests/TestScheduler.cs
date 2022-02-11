@@ -8,25 +8,24 @@
 using System;
 using System.Threading;
 
-namespace Vlingo.Xoom.Common.Tests
-{
-    public class TestScheduler : Scheduler
-    {
-        public override ICancellable ScheduleOnce<T>(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval)
-        {
-            var t = new Thread(() =>
-            {
-                Thread.Sleep(delayBefore + interval);
-                scheduled.IntervalSignal(scheduled, data);
-            });
-            t.Start();
+namespace Vlingo.Xoom.Common.Tests;
 
-            return new NoOpCancellable();
-        }
-    }
-    
-    public class NoOpCancellable : ICancellable
+public class TestScheduler : Scheduler
+{
+    public override ICancellable ScheduleOnce<T>(IScheduled<T> scheduled, T data, TimeSpan delayBefore, TimeSpan interval)
     {
-        public bool Cancel() => true;
+        var t = new Thread(() =>
+        {
+            Thread.Sleep(delayBefore + interval);
+            scheduled.IntervalSignal(scheduled, data);
+        });
+        t.Start();
+
+        return new NoOpCancellable();
     }
+}
+    
+public class NoOpCancellable : ICancellable
+{
+    public bool Cancel() => true;
 }

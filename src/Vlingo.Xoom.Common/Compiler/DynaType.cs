@@ -5,11 +5,10 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-namespace Vlingo.Xoom.Common.Compiler
+namespace Vlingo.Xoom.Common.Compiler;
+
+public enum DynaType
 {
-    public enum DynaType
-    {
-        Main,
-        Test
-    }
+    Main,
+    Test
 }

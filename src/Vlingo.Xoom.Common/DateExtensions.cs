@@ -7,29 +7,28 @@
 
 using System;
 
-namespace Vlingo.Xoom.Common
-{
-    public static class DateExtensions
-    {
-        public static double GetCurrentMillis()
-        {
-            var jan1970 = new DateTime(1970, 1, 1, 0, 0,0, DateTimeKind.Utc);
-            var javaSpan = DateTime.UtcNow - jan1970;
-            return javaSpan.TotalMilliseconds;
-        }
+namespace Vlingo.Xoom.Common;
 
-        public static double GetMillis(this DateTime date)
-        {
-            var jan1970 = new DateTime(1970, 1, 1, 0, 0,0, DateTimeKind.Utc);
-            var javaSpan = date - jan1970;
-            return javaSpan.TotalMilliseconds;
-        }
+public static class DateExtensions
+{
+    public static double GetCurrentMillis()
+    {
+        var jan1970 = new DateTime(1970, 1, 1, 0, 0,0, DateTimeKind.Utc);
+        var javaSpan = DateTime.UtcNow - jan1970;
+        return javaSpan.TotalMilliseconds;
+    }
+
+    public static double GetMillis(this DateTime date)
+    {
+        var jan1970 = new DateTime(1970, 1, 1, 0, 0,0, DateTimeKind.Utc);
+        var javaSpan = date - jan1970;
+        return javaSpan.TotalMilliseconds;
+    }
         
-        public static long GetCurrentSeconds(this DateTime dateTime)
-        {
-            var jan1970 = new DateTime(1970, 1, 1, 0, 0,0, DateTimeKind.Utc);
-            var javaSpan = dateTime - jan1970;
-            return Convert.ToInt64(javaSpan.TotalSeconds);
-        }
+    public static long GetCurrentSeconds(this DateTime dateTime)
+    {
+        var jan1970 = new DateTime(1970, 1, 1, 0, 0,0, DateTimeKind.Utc);
+        var javaSpan = dateTime - jan1970;
+        return Convert.ToInt64(javaSpan.TotalSeconds);
     }
 }

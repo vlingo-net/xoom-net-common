@@ -10,55 +10,54 @@ using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json.Serialization;
 
-namespace Vlingo.Xoom.Common.Serialization
+namespace Vlingo.Xoom.Common.Serialization;
+
+public class BestMatchConstructorResolver : DefaultContractResolver
 {
-    public class BestMatchConstructorResolver : DefaultContractResolver
+    protected override JsonObjectContract CreateObjectContract(Type objectType)
     {
-        protected override JsonObjectContract CreateObjectContract(Type objectType)
+        var c = base.CreateObjectContract(objectType);
+        if (!IsCustomReference(objectType)) return c;
+        var constructors =
+            objectType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .OrderBy(e => e.GetParameters().Length).ToList();
+        var mostSpecific = constructors.LastOrDefault();
+        if (mostSpecific != null)
         {
-            var c = base.CreateObjectContract(objectType);
-            if (!IsCustomReference(objectType)) return c;
-            var constructors =
-                objectType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    .OrderBy(e => e.GetParameters().Length).ToList();
-            var mostSpecific = constructors.LastOrDefault();
-            if (mostSpecific != null)
+            c.OverrideCreator = CreateParameterizedConstructor(mostSpecific);
+            var paramCtors = CreateConstructorParameters(mostSpecific, c.Properties);
+            foreach (var paramCtor in paramCtors)
             {
-                c.OverrideCreator = CreateParameterizedConstructor(mostSpecific);
-                var paramCtors = CreateConstructorParameters(mostSpecific, c.Properties);
-                foreach (var paramCtor in paramCtors)
+                if (!c.CreatorParameters.Contains(paramCtor.PropertyName!))
                 {
-                    if (!c.CreatorParameters.Contains(paramCtor.PropertyName!))
-                    {
-                        c.CreatorParameters.Add(paramCtor);
-                    }
+                    c.CreatorParameters.Add(paramCtor);
                 }
             }
+        }
 
-            return c;
-        }
+        return c;
+    }
         
-        protected virtual bool IsCustomReference(Type objectType) =>
-            !objectType.IsValueType
-            && !objectType.IsPrimitive
-            && !objectType.IsEnum
-            && !string.IsNullOrEmpty(objectType.Namespace)
-            && !objectType.Namespace.StartsWith("System.");
+    protected virtual bool IsCustomReference(Type objectType) =>
+        !objectType.IsValueType
+        && !objectType.IsPrimitive
+        && !objectType.IsEnum
+        && !string.IsNullOrEmpty(objectType.Namespace)
+        && !objectType.Namespace.StartsWith("System.");
         
-        private ObjectConstructor<object> CreateParameterizedConstructor(MethodBase? method)
+    private ObjectConstructor<object> CreateParameterizedConstructor(MethodBase? method)
+    {
+        if (method == null)
         {
-            if (method == null)
-            {
-                throw new ArgumentNullException(nameof(method));
-            }
-            
-            var c = method as ConstructorInfo;
-            if (c != null)
-            {
-                return a => c.Invoke(a);
-            }
-            
-            return a => method.Invoke(null, a)!;
+            throw new ArgumentNullException(nameof(method));
         }
+            
+        var c = method as ConstructorInfo;
+        if (c != null)
+        {
+            return a => c.Invoke(a);
+        }
+            
+        return a => method.Invoke(null, a)!;
     }
 }

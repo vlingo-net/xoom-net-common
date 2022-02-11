@@ -11,119 +11,118 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Vlingo.Xoom.Common.Expressions
+namespace Vlingo.Xoom.Common.Expressions;
+
+public static class ExpressionExtensions
 {
-    public static class ExpressionExtensions
+    public static Action<TProtocol> CreateDelegate<TProtocol>(object actor, ExpressionSerializationInfo info)
     {
-        public static Action<TProtocol> CreateDelegate<TProtocol>(object actor, ExpressionSerializationInfo info)
-        {
-            var mi = actor.GetType().GetMethod(info.MethodName, info.ArgumentTypes!);
+        var mi = actor.GetType().GetMethod(info.MethodName, info.ArgumentTypes!);
         
-            if (mi != null)
-            {
-                var dlg = CreateDelegate(mi, actor);
-                Action<TProtocol> consumer = a => dlg.DynamicInvoke(info.ArgumentValues);
-                return consumer;   
-            }
-
-            throw new InvalidOperationException($"Cannot Create a delegate method for MethodName={info.MethodName}");
+        if (mi != null)
+        {
+            var dlg = CreateDelegate(mi, actor);
+            Action<TProtocol> consumer = a => dlg.DynamicInvoke(info.ArgumentValues);
+            return consumer;   
         }
-        
-        public static Action<TProtocol, TParam> CreateDelegate<TProtocol, TParam>(object actor, ExpressionSerializationInfo info)
-        {
-            var mi = actor.GetType().GetMethod(info.MethodName, info.FlattenTypes());
-        
-            if (mi != null)
-            {
-                var dlg = CreateDelegate(mi, actor);
-                var args = info.ArgumentValues.Where(a => !(a is ParameterExpressionNode)).ToArray();
-                Action<TProtocol, TParam> consumer = (a, tparam) => dlg.DynamicInvoke(args.Concat(new object?[] {tparam}).ToArray());
-                return consumer;   
-            }
 
-            throw new InvalidOperationException($"Cannot Create a delegate method for MethodName={info.MethodName}");
+        throw new InvalidOperationException($"Cannot Create a delegate method for MethodName={info.MethodName}");
+    }
+        
+    public static Action<TProtocol, TParam> CreateDelegate<TProtocol, TParam>(object actor, ExpressionSerializationInfo info)
+    {
+        var mi = actor.GetType().GetMethod(info.MethodName, info.FlattenTypes());
+        
+        if (mi != null)
+        {
+            var dlg = CreateDelegate(mi, actor);
+            var args = info.ArgumentValues.Where(a => !(a is ParameterExpressionNode)).ToArray();
+            Action<TProtocol, TParam> consumer = (a, tparam) => dlg.DynamicInvoke(args.Concat(new object?[] {tparam}).ToArray());
+            return consumer;   
         }
+
+        throw new InvalidOperationException($"Cannot Create a delegate method for MethodName={info.MethodName}");
+    }
         
-        public static Delegate CreateDelegate(this MethodInfo methodInfo, object target)
+    public static Delegate CreateDelegate(this MethodInfo methodInfo, object target)
+    {
+        Func<Type[], Type> getType;
+        var isAction = methodInfo.ReturnType == typeof(void);
+        var types = methodInfo.GetParameters().Select(p => p.ParameterType);
+
+        if (isAction)
         {
-            Func<Type[], Type> getType;
-            var isAction = methodInfo.ReturnType == typeof(void);
-            var types = methodInfo.GetParameters().Select(p => p.ParameterType);
-
-            if (isAction)
-            {
-                getType = Expression.GetActionType;
-            }
-            else
-            {
-                getType = Expression.GetFuncType;
-                types = types.Concat(new[] { methodInfo.ReturnType });
-            }
-
-            if (methodInfo.IsStatic)
-            {
-                return Delegate.CreateDelegate(getType(types.ToArray()), methodInfo);
-            }
-
-            return Delegate.CreateDelegate(getType(types.ToArray()), target, methodInfo.Name);
+            getType = Expression.GetActionType;
         }
-        
-        public static object? Evaluate(this Expression expr)
+        else
         {
-            switch (expr.NodeType)
-            {
-                case ExpressionType.Constant:
-                    return ((ConstantExpression)expr).Value;
-                case ExpressionType.MemberAccess:
-                    var me = (MemberExpression)expr;
-                    var target = Evaluate(me.Expression);
+            getType = Expression.GetFuncType;
+            types = types.Concat(new[] { methodInfo.ReturnType });
+        }
+
+        if (methodInfo.IsStatic)
+        {
+            return Delegate.CreateDelegate(getType(types.ToArray()), methodInfo);
+        }
+
+        return Delegate.CreateDelegate(getType(types.ToArray()), target, methodInfo.Name);
+    }
+        
+    public static object? Evaluate(this Expression expr)
+    {
+        switch (expr.NodeType)
+        {
+            case ExpressionType.Constant:
+                return ((ConstantExpression)expr).Value;
+            case ExpressionType.MemberAccess:
+                var me = (MemberExpression)expr;
+                var target = Evaluate(me.Expression);
                     
-                    switch (me.Member.MemberType)
-                    {
-                        case MemberTypes.Field:
-                            return ((FieldInfo)me.Member).GetValue(target);
-                        case MemberTypes.Property:
-                            return ((PropertyInfo)me.Member).GetValue(target, null);
-                        default:
-                            throw new NotSupportedException(me.Member.MemberType.ToString());
-                    }
-                case ExpressionType.New:
-                    return ((NewExpression)expr).Constructor
-                        .Invoke(((NewExpression)expr).Arguments.Select(Evaluate).ToArray());
-                case ExpressionType.Parameter:
-                    var parameter = (ParameterExpression)expr;
-                    return new ParameterExpressionNode(parameter.Name, parameter.Type);
-                default:
-                    throw new NotSupportedException(expr.NodeType.ToString());
-            }
+                switch (me.Member.MemberType)
+                {
+                    case MemberTypes.Field:
+                        return ((FieldInfo)me.Member).GetValue(target);
+                    case MemberTypes.Property:
+                        return ((PropertyInfo)me.Member).GetValue(target, null);
+                    default:
+                        throw new NotSupportedException(me.Member.MemberType.ToString());
+                }
+            case ExpressionType.New:
+                return ((NewExpression)expr).Constructor
+                    .Invoke(((NewExpression)expr).Arguments.Select(Evaluate).ToArray());
+            case ExpressionType.Parameter:
+                var parameter = (ParameterExpression)expr;
+                return new ParameterExpressionNode(parameter.Name, parameter.Type);
+            default:
+                throw new NotSupportedException(expr.NodeType.ToString());
         }
+    }
 
-        public static Expression<Func<T>> Curry<T, TParameter>(
-            this Expression<Func<TParameter, T>> expressionToCurry,
-            TParameter valueToProvide)
+    public static Expression<Func<T>> Curry<T, TParameter>(
+        this Expression<Func<TParameter, T>> expressionToCurry,
+        TParameter valueToProvide)
+    {
+        var newExpression = expressionToCurry.Body as NewExpression;
+        var arguments = newExpression?.Arguments;
+        var argumentValues = new List<ConstantExpression>();
+        foreach (var argument in arguments!)
         {
-            var newExpression = expressionToCurry.Body as NewExpression;
-            var arguments = newExpression?.Arguments;
-            var argumentValues = new List<ConstantExpression>();
-            foreach (var argument in arguments!)
+            var value = argument.Evaluate();
+            if (value is ParameterExpressionNode parameterExpressionNode)
             {
-                var value = argument.Evaluate();
-                if (value is ParameterExpressionNode parameterExpressionNode)
+                if (parameterExpressionNode.Type == valueToProvide!.GetType())
                 {
-                    if (parameterExpressionNode.Type == valueToProvide!.GetType())
-                    {
-                        argumentValues.Add(Expression.Constant(valueToProvide));
-                    }
-                }
-                else if (value != null)
-                {
-                    argumentValues.Add(Expression.Constant(value));
+                    argumentValues.Add(Expression.Constant(valueToProvide));
                 }
             }
-            var constructor = newExpression?.Constructor;
-            var updatedExpression = Expression.New(constructor!, argumentValues);
-            var lambda = Expression.Lambda<Func<T>>(updatedExpression);
-            return lambda;
+            else if (value != null)
+            {
+                argumentValues.Add(Expression.Constant(value));
+            }
         }
+        var constructor = newExpression?.Constructor;
+        var updatedExpression = Expression.New(constructor!, argumentValues);
+        var lambda = Expression.Lambda<Func<T>>(updatedExpression);
+        return lambda;
     }
 }

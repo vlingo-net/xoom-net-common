@@ -11,45 +11,44 @@ using System.Threading.Tasks;
 using Vlingo.Xoom.Common.Pool;
 using Xunit;
 
-namespace Vlingo.Xoom.Common.Tests.Pool
+namespace Vlingo.Xoom.Common.Tests.Pool;
+
+public abstract class ResourcePoolTest
 {
-    public abstract class ResourcePoolTest
+    private static readonly Random Random = new Random();
+
+    public static async Task TestConcurrent(IResourcePool<int, Nothing> pool, int clients)
     {
-        private static readonly Random Random = new Random();
-
-        public static async Task TestConcurrent(IResourcePool<int, Nothing> pool, int clients)
+        async Task Call()
         {
-            async Task Call()
+            int resource = -1;
+
+            try
             {
-                int resource = -1;
-
-                try
+                do
                 {
-                    do
-                    {
-                        resource = pool.Acquire();
-                    } while (resource < 0);
+                    resource = pool.Acquire();
+                } while (resource < 0);
 
-                    await Task.Delay(Random.Next(10, 100));
-                }
-                finally
-                {
-                    pool.Release(resource);
-                    var stats = pool.Stats();
-                    Assert.Equal(stats.Allocations, stats.Evictions + stats.Idle + stats.InUse);
-                }
+                await Task.Delay(Random.Next(10, 100));
             }
-
-            var tasks = new List<Task>();
-            for (var i = 0; i < clients; i++)
+            finally
             {
-                var task = Task.Run(Call);
-                tasks.Add(task);
+                pool.Release(resource);
+                var stats = pool.Stats();
+                Assert.Equal(stats.Allocations, stats.Evictions + stats.Idle + stats.InUse);
             }
-
-            await Task.WhenAll(tasks);
-            
-            Assert.Equal(pool.Stats().Idle, pool.Size);
         }
+
+        var tasks = new List<Task>();
+        for (var i = 0; i < clients; i++)
+        {
+            var task = Task.Run(Call);
+            tasks.Add(task);
+        }
+
+        await Task.WhenAll(tasks);
+            
+        Assert.Equal(pool.Stats().Idle, pool.Size);
     }
 }

@@ -9,82 +9,81 @@ using System;
 using System.Threading;
 using Xunit;
 
-namespace Vlingo.Xoom.Common.Tests
+namespace Vlingo.Xoom.Common.Tests;
+
+public class SchedulerTest : IDisposable
 {
-    public class SchedulerTest : IDisposable
+    private readonly IScheduled<CounterHolder> _scheduled;
+    private readonly Scheduler _scheduler;
+
+    public SchedulerTest()
     {
-        private readonly IScheduled<CounterHolder> _scheduled;
-        private readonly Scheduler _scheduler;
+        _scheduled = new Scheduled();
+        _scheduler = new Scheduler();
+    }
 
-        public SchedulerTest()
+    public void Dispose() => _scheduler.Close();
+
+    [Fact]
+    public void TestScheduleOnceOneHappyDelivery()
+    {
+        using var holder = new CounterHolder(1);
+        _scheduler.ScheduleOnce(_scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+
+        holder.Completes();
+
+        Assert.Equal(1, holder.Counter);
+    }
+
+    [Fact]
+    public void TestScheduleManyHappyDelivery()
+    {
+        using var holder = new CounterHolder(500);
+        _scheduler.Schedule(_scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+
+        holder.Completes();
+
+        Assert.Equal(500, holder.Counter);
+    }
+
+
+    private class Scheduled : IScheduled<CounterHolder>
+    {
+        public void IntervalSignal(IScheduled<CounterHolder> scheduled, CounterHolder data)
         {
-            _scheduled = new Scheduled();
-            _scheduler = new Scheduler();
+            data.Increment();
+        }
+    }
+
+    private class CounterHolder : IDisposable
+    {
+        private readonly CountdownEvent _until;
+
+        public CounterHolder(int totalExpected)
+        {
+            _until = new CountdownEvent(totalExpected);
         }
 
-        public void Dispose() => _scheduler.Close();
+        public int Counter { get; private set; } = 0;
 
-        [Fact]
-        public void TestScheduleOnceOneHappyDelivery()
+        public void Increment()
         {
-            using var holder = new CounterHolder(1);
-            _scheduler.ScheduleOnce(_scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
-
-            holder.Completes();
-
-            Assert.Equal(1, holder.Counter);
-        }
-
-        [Fact]
-        public void TestScheduleManyHappyDelivery()
-        {
-            using var holder = new CounterHolder(500);
-            _scheduler.Schedule(_scheduled, holder, TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
-
-            holder.Completes();
-
-            Assert.Equal(500, holder.Counter);
-        }
-
-
-        private class Scheduled : IScheduled<CounterHolder>
-        {
-            public void IntervalSignal(IScheduled<CounterHolder> scheduled, CounterHolder data)
+            if (_until.CurrentCount > 0)
             {
-                data.Increment();
+                ++Counter;
+                _until.Signal();   
             }
         }
 
-        private class CounterHolder : IDisposable
+        public void Completes()
         {
-            private readonly CountdownEvent _until;
-
-            public CounterHolder(int totalExpected)
+            try
             {
-                _until = new CountdownEvent(totalExpected);
+                _until.Wait();
             }
-
-            public int Counter { get; private set; } = 0;
-
-            public void Increment()
-            {
-                if (_until.CurrentCount > 0)
-                {
-                    ++Counter;
-                    _until.Signal();   
-                }
-            }
-
-            public void Completes()
-            {
-                try
-                {
-                    _until.Wait();
-                }
-                catch { }
-            }
-
-            public void Dispose() => _until.Dispose();
+            catch { }
         }
+
+        public void Dispose() => _until.Dispose();
     }
 }

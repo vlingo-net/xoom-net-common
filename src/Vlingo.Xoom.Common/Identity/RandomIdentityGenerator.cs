@@ -8,14 +8,13 @@
 using System;
 using Vlingo.Xoom.UUID;
 
-namespace Vlingo.Xoom.Common.Identity
+namespace Vlingo.Xoom.Common.Identity;
+
+internal class RandomIdentityGenerator : IIdentityGenerator
 {
-    internal class RandomIdentityGenerator : IIdentityGenerator
-    {
-        private readonly RandomBasedGenerator _generator = new RandomBasedGenerator();
+    private readonly RandomBasedGenerator _generator = new RandomBasedGenerator();
 
-        public Guid Generate() => _generator.GenerateGuid();
+    public Guid Generate() => _generator.GenerateGuid();
 
-        public Guid Generate(string name) => _generator.GenerateGuid();
-    }
+    public Guid Generate(string name) => _generator.GenerateGuid();
 }

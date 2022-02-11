@@ -8,19 +8,18 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Vlingo.Xoom.Common.Completion.Tasks
+namespace Vlingo.Xoom.Common.Completion.Tasks;
+
+public struct CompletesAwaiter<T> : INotifyCompletion
 {
-    public struct CompletesAwaiter<T> : INotifyCompletion
-    {
-        private readonly ICompletes<T> _completes;
+    private readonly ICompletes<T> _completes;
 
-        public CompletesAwaiter(ICompletes<T> completes) => _completes = completes;
+    public CompletesAwaiter(ICompletes<T> completes) => _completes = completes;
 
-        // TODO: calling to continuation will release the `await` before the real outcome is set
-        public void OnCompleted(Action continuation) => _completes.AndThenConsume(continuation);
+    // TODO: calling to continuation will release the `await` before the real outcome is set
+    public void OnCompleted(Action continuation) => _completes.AndThenConsume(continuation);
 
-        public bool IsCompleted => _completes.IsCompleted;
+    public bool IsCompleted => _completes.IsCompleted;
 
-        public T GetResult() => _completes.Outcome;
-    }
+    public T GetResult() => _completes.Outcome;
 }

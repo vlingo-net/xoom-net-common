@@ -7,62 +7,61 @@
 
 using System.IO;
 
-namespace Vlingo.Xoom.Common.Compiler
+namespace Vlingo.Xoom.Common.Compiler;
+
+public static class DynaFile
 {
-    public static class DynaFile
+    public static readonly string GeneratedSources = $"target{Path.DirectorySeparatorChar}generated-sources{Path.DirectorySeparatorChar}";
+    public static readonly string GeneratedTestSources = $"target{Path.DirectorySeparatorChar}generated-test-sources{Path.DirectorySeparatorChar}";
+    public static readonly string RootOfMainClasses = $"target{Path.DirectorySeparatorChar}classes{Path.DirectorySeparatorChar}";
+    public static readonly string RootOfTestClasses = $"target{Path.DirectorySeparatorChar}test-classes{Path.DirectorySeparatorChar}";
+
+    public static FileInfo PersistDynaClass(string pathToClass, byte[] dynaClass)
     {
-        public static readonly string GeneratedSources = $"target{Path.DirectorySeparatorChar}generated-sources{Path.DirectorySeparatorChar}";
-        public static readonly string GeneratedTestSources = $"target{Path.DirectorySeparatorChar}generated-test-sources{Path.DirectorySeparatorChar}";
-        public static readonly string RootOfMainClasses = $"target{Path.DirectorySeparatorChar}classes{Path.DirectorySeparatorChar}";
-        public static readonly string RootOfTestClasses = $"target{Path.DirectorySeparatorChar}test-classes{Path.DirectorySeparatorChar}";
-
-        public static FileInfo PersistDynaClass(string pathToClass, byte[] dynaClass)
-        {
-            var file = new FileInfo(pathToClass);
-            // empty text file
-            File.WriteAllText(pathToClass, string.Empty);
+        var file = new FileInfo(pathToClass);
+        // empty text file
+        File.WriteAllText(pathToClass, string.Empty);
         
-            using var stream = file.OpenWrite();
-            stream.Write(dynaClass, 0, dynaClass.Length);
+        using var stream = file.OpenWrite();
+        stream.Write(dynaClass, 0, dynaClass.Length);
 
-            return file;
+        return file;
+    }
+
+    public static FileInfo PersistDynaClassSource(string pathToSource, string dynaClassSource)
+    {
+        var file = new FileInfo(pathToSource);
+        // empty text file
+        File.WriteAllText(pathToSource, string.Empty);
+
+        using var stream = new StreamWriter(file.OpenWrite());
+        stream.Write(dynaClassSource);
+
+        return file;
+    }
+
+    public static string ToFullPath(string fullyQualifiedClassName) => ToPath(fullyQualifiedClassName, true);
+
+    public static string ToNamespacePath(string fullyQualifiedClassName) => ToPath(fullyQualifiedClassName, false);
+
+    private static string ToPath(string fullyQualifiedClassName, bool includeClassName)
+    {
+        var safeGenericClassName = fullyQualifiedClassName;
+        var indexOfGenericStart = safeGenericClassName.IndexOf('<');
+        if(indexOfGenericStart >= 0)
+        {
+            safeGenericClassName = safeGenericClassName.Substring(0, indexOfGenericStart);
         }
 
-        public static FileInfo PersistDynaClassSource(string pathToSource, string dynaClassSource)
+        var lastDotIndex = safeGenericClassName.LastIndexOf('.');
+        var directoryPath = safeGenericClassName.Substring(0, lastDotIndex).Replace('.', Path.DirectorySeparatorChar);
+        if (includeClassName)
         {
-            var file = new FileInfo(pathToSource);
-            // empty text file
-            File.WriteAllText(pathToSource, string.Empty);
-
-            using var stream = new StreamWriter(file.OpenWrite());
-            stream.Write(dynaClassSource);
-
-            return file;
+            return $"{directoryPath}{Path.DirectorySeparatorChar}{safeGenericClassName.Substring(lastDotIndex + 1)}";
         }
-
-        public static string ToFullPath(string fullyQualifiedClassName) => ToPath(fullyQualifiedClassName, true);
-
-        public static string ToNamespacePath(string fullyQualifiedClassName) => ToPath(fullyQualifiedClassName, false);
-
-        private static string ToPath(string fullyQualifiedClassName, bool includeClassName)
+        else
         {
-            var safeGenericClassName = fullyQualifiedClassName;
-            var indexOfGenericStart = safeGenericClassName.IndexOf('<');
-            if(indexOfGenericStart >= 0)
-            {
-                safeGenericClassName = safeGenericClassName.Substring(0, indexOfGenericStart);
-            }
-
-            var lastDotIndex = safeGenericClassName.LastIndexOf('.');
-            var directoryPath = safeGenericClassName.Substring(0, lastDotIndex).Replace('.', Path.DirectorySeparatorChar);
-            if (includeClassName)
-            {
-                return $"{directoryPath}{Path.DirectorySeparatorChar}{safeGenericClassName.Substring(lastDotIndex + 1)}";
-            }
-            else
-            {
-                return directoryPath;
-            }
+            return directoryPath;
         }
     }
 }

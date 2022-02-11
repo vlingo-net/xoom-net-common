@@ -7,65 +7,64 @@
 
 using System;
 
-namespace Vlingo.Xoom.Common.Completion.Continuations
+namespace Vlingo.Xoom.Common.Completion.Continuations;
+
+internal class OtherwiseContinuation<TAntecedentResult, TResult> : BasicCompletes<TResult>
 {
-    internal class OtherwiseContinuation<TAntecedentResult, TResult> : BasicCompletes<TResult>
+    private readonly BasicCompletes<TAntecedentResult> _antecedent;
+
+    internal OtherwiseContinuation(BasicCompletes parent, BasicCompletes<TAntecedentResult> antecedent, Delegate function) :
+        base(function, parent) =>
+        _antecedent = antecedent;
+
+    internal override bool InnerInvoke(BasicCompletes completedCompletes)
     {
-        private readonly BasicCompletes<TAntecedentResult> _antecedent;
-
-        internal OtherwiseContinuation(BasicCompletes parent, BasicCompletes<TAntecedentResult> antecedent, Delegate function) :
-            base(function, parent) =>
-            _antecedent = antecedent;
-
-        internal override bool InnerInvoke(BasicCompletes completedCompletes)
+        if (HasException.Get())
         {
-            if (HasException.Get())
-            {
-                return false;
-            }
+            return false;
+        }
             
-            if (Action is Action invokableAction)
-            {
-                invokableAction();
-                return true;
-            }
+        if (Action is Action invokableAction)
+        {
+            invokableAction();
+            return true;
+        }
             
-            if (Action is Action<TResult> invokableActionInput)
+        if (Action is Action<TResult> invokableActionInput)
+        {
+            if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
             {
-                if (completedCompletes is AndThenContinuation<TResult, TResult> andThenContinuation)
-                {
-                    invokableActionInput(andThenContinuation.FailedOutcomeValue.Get());
-                    OutcomeKnown.Set();
-                    return true;   
-                }
+                invokableActionInput(andThenContinuation.FailedOutcomeValue.Get());
+                OutcomeKnown.Set();
+                return true;   
             }
+        }
             
-            if (Action is Func<ICompletes<TAntecedentResult>, TResult> funcCompletes)
+        if (Action is Func<ICompletes<TAntecedentResult>, TResult> funcCompletes)
+        {
+            OutcomeValue.Set(funcCompletes(_antecedent));
+            OutcomeKnown.Set();
+            return true;
+        }
+
+        if (Action is Func<TAntecedentResult, TResult> function)
+        {
+            if (completedCompletes is AndThenContinuation<TResult, TAntecedentResult> andThenContinuation)
             {
-                OutcomeValue.Set(funcCompletes(_antecedent));
+                OutcomeValue.Set(function(andThenContinuation.FailedOutcomeValue.Get()));
+                return true;   
+            }
+
+            if (completedCompletes is BasicCompletes<TAntecedentResult> otherwiseContinuation)
+            {
+                OutcomeValue.Set(function(otherwiseContinuation.FailedOutcomeValue.Get()));
                 OutcomeKnown.Set();
                 return true;
             }
-
-            if (Action is Func<TAntecedentResult, TResult> function)
-            {
-                if (completedCompletes is AndThenContinuation<TResult, TAntecedentResult> andThenContinuation)
-                {
-                    OutcomeValue.Set(function(andThenContinuation.FailedOutcomeValue.Get()));
-                    return true;   
-                }
-
-                if (completedCompletes is BasicCompletes<TAntecedentResult> otherwiseContinuation)
-                {
-                    OutcomeValue.Set(function(otherwiseContinuation.FailedOutcomeValue.Get()));
-                    OutcomeKnown.Set();
-                    return true;
-                }
-            }
-            
-            base.InnerInvoke(completedCompletes);
-
-            throw new InvalidCastException("Cannot run 'Otherwise' function. Make sure that expecting type is the same as failedOutcomeValue type");
         }
+            
+        base.InnerInvoke(completedCompletes);
+
+        throw new InvalidCastException("Cannot run 'Otherwise' function. Make sure that expecting type is the same as failedOutcomeValue type");
     }
 }

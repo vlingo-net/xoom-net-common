@@ -9,107 +9,106 @@ using System;
 using System.Threading;
 using Xunit;
 
-namespace Vlingo.Xoom.Common.Tests
+namespace Vlingo.Xoom.Common.Tests;
+
+public class RepeatableCompletesTest
 {
-    public class RepeatableCompletesTest
+    [Fact]
+    public void TestThatCompletesRepeats()
     {
-        [Fact]
-        public void TestThatCompletesRepeats()
-        {
-            var andThenValue = -1;
+        var andThenValue = -1;
 
-            var completes = new RepeatableCompletes<int>(0);
+        var completes = new RepeatableCompletes<int>(0);
 
-            completes
-                .AndThen(val => val * 2)
-                .AndThen(val => andThenValue = val)
-                .Repeat();
+        completes
+            .AndThen(val => val * 2)
+            .AndThen(val => andThenValue = val)
+            .Repeat();
 
-            completes.With(5);
-            Assert.Equal(10, andThenValue);
+        completes.With(5);
+        Assert.Equal(10, andThenValue);
 
-            completes.With(10);
-            Assert.Equal(20, andThenValue);
+        completes.With(10);
+        Assert.Equal(20, andThenValue);
 
-            completes.With(21);
-            Assert.Equal(42, andThenValue);
-        }
+        completes.With(21);
+        Assert.Equal(42, andThenValue);
+    }
         
-        [Fact]
-        public void TestThatCompletesRepeatsAfterFailure()
-        {
-            var andThenValue = -1;
+    [Fact]
+    public void TestThatCompletesRepeatsAfterFailure()
+    {
+        var andThenValue = -1;
 
-            var completes = new RepeatableCompletes<int>(0);
+        var completes = new RepeatableCompletes<int>(0);
 
-            completes
-                .AndThen(value =>
-                {
-                    if (value < 10) throw new InvalidOperationException();
-                    return value;
-                })
-                .AndThen(val => val * 2)
-                .AndThen(val => andThenValue = val)
-                .Repeat();
-
-            completes.With(5);
-            completes.Await();
-            Assert.True(completes.HasFailed);
-
-            completes.With(10);
-            var outcome20 = completes.Await();
-            Assert.Equal(20, outcome20);
-            Assert.Equal(20, andThenValue);
-        }
-        
-        [Fact]
-        public void TestThatCompletesRepeatsAfterTimeout()
-        {
-            var andThenValue = -1;
-
-            var completes = new RepeatableCompletes<int>(0);
-
-            completes
-                .AndThen(1, val => val * 2)
-                .AndThen(val => andThenValue = val)
-                .Repeat();
-
-            var thread = new Thread(() =>
+        completes
+            .AndThen(value =>
             {
-                Thread.Sleep(10000);
-                completes.With(5);
-            });
-            thread.Start();
-           
-            completes.Await(TimeSpan.FromMilliseconds(10));
-            Assert.True(completes.HasFailed);
+                if (value < 10) throw new InvalidOperationException();
+                return value;
+            })
+            .AndThen(val => val * 2)
+            .AndThen(val => andThenValue = val)
+            .Repeat();
 
-            completes.With(10);
-            var outcome20 = completes.Await();
-            Assert.Equal(20, outcome20);
-            Assert.Equal(20, andThenValue);
-        }
+        completes.With(5);
+        completes.Await();
+        Assert.True(completes.HasFailed);
+
+        completes.With(10);
+        var outcome20 = completes.Await();
+        Assert.Equal(20, outcome20);
+        Assert.Equal(20, andThenValue);
+    }
         
-        [Fact]
-        public void TestThatCompletesRepeatsForClient()
+    [Fact]
+    public void TestThatCompletesRepeatsAfterTimeout()
+    {
+        var andThenValue = -1;
+
+        var completes = new RepeatableCompletes<int>(0);
+
+        completes
+            .AndThen(1, val => val * 2)
+            .AndThen(val => andThenValue = val)
+            .Repeat();
+
+        var thread = new Thread(() =>
         {
-            var andThenValue = -1;
-            var service =  new RepeatableCompletes<int>(0);
+            Thread.Sleep(10000);
+            completes.With(5);
+        });
+        thread.Start();
+           
+        completes.Await(TimeSpan.FromMilliseconds(10));
+        Assert.True(completes.HasFailed);
 
-            var client = service
-                    .AndThen(value => value * 2)
-                    .AndThen((value) => andThenValue = value)
-                    .Repeat();
+        completes.With(10);
+        var outcome20 = completes.Await();
+        Assert.Equal(20, outcome20);
+        Assert.Equal(20, andThenValue);
+    }
+        
+    [Fact]
+    public void TestThatCompletesRepeatsForClient()
+    {
+        var andThenValue = -1;
+        var service =  new RepeatableCompletes<int>(0);
 
-            service.With(5);
-            var outcome10 = client.Await();
-            Assert.Equal(10, outcome10);
-            Assert.Equal(10, andThenValue);
+        var client = service
+            .AndThen(value => value * 2)
+            .AndThen((value) => andThenValue = value)
+            .Repeat();
 
-            service.With(10);
-            var outcome20 = client.Await();
-            Assert.Equal(20, outcome20);
-            Assert.Equal(20, andThenValue);
-        }
+        service.With(5);
+        var outcome10 = client.Await();
+        Assert.Equal(10, outcome10);
+        Assert.Equal(10, andThenValue);
+
+        service.With(10);
+        var outcome20 = client.Await();
+        Assert.Equal(20, outcome20);
+        Assert.Equal(20, andThenValue);
     }
 }

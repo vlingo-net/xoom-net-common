@@ -7,73 +7,72 @@
 
 using System;
 
-namespace Vlingo.Xoom.Common.Completion.Continuations
+namespace Vlingo.Xoom.Common.Completion.Continuations;
+
+internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object?>
 {
-    internal sealed class AndThenScheduledContinuation<TAntecedentResult, TResult> : AndThenContinuation<TAntecedentResult, TResult>, IScheduled<object?>
+    private readonly TimeSpan _timeout;
+    private ICancellable? _cancellable;
+    private readonly AtomicBoolean _executed = new AtomicBoolean(false);
+
+    internal AndThenScheduledContinuation(
+        BasicCompletes parent,
+        BasicCompletes<TAntecedentResult> antecedent,
+        TimeSpan timeout,
+        Delegate function)
+        : this(parent, antecedent, timeout, Optional.Empty<TResult>(), function)
     {
-        private readonly TimeSpan _timeout;
-        private ICancellable? _cancellable;
-        private readonly AtomicBoolean _executed = new AtomicBoolean(false);
-
-        internal AndThenScheduledContinuation(
-            BasicCompletes parent,
-            BasicCompletes<TAntecedentResult> antecedent,
-            TimeSpan timeout,
-            Delegate function)
-            : this(parent, antecedent, timeout, Optional.Empty<TResult>(), function)
-        {
-        }
+    }
         
-        internal AndThenScheduledContinuation(
-            BasicCompletes? parent,
-            BasicCompletes<TAntecedentResult> antecedent,
-            TimeSpan timeout,
-            Optional<TResult> failedOutcomeValue,
-            Delegate function)
-            : base(parent, antecedent, failedOutcomeValue, function)
-        {
-            _timeout = timeout;
-            ClearTimer();
-            StartTimer();
-        }
+    internal AndThenScheduledContinuation(
+        BasicCompletes? parent,
+        BasicCompletes<TAntecedentResult> antecedent,
+        TimeSpan timeout,
+        Optional<TResult> failedOutcomeValue,
+        Delegate function)
+        : base(parent, antecedent, failedOutcomeValue, function)
+    {
+        _timeout = timeout;
+        ClearTimer();
+        StartTimer();
+    }
 
-        internal override bool InnerInvoke(BasicCompletes completedCompletes)
+    internal override bool InnerInvoke(BasicCompletes completedCompletes)
+    {
+        if (TimedOut.Get() || _executed.Get())
         {
-            if (TimedOut.Get() || _executed.Get())
-            {
-                return false;
-            }
+            return false;
+        }
             
-            base.InnerInvoke(completedCompletes);
-            _executed.Set(true);
-            return true;
-        }
+        base.InnerInvoke(completedCompletes);
+        _executed.Set(true);
+        return true;
+    }
 
-        public void IntervalSignal(IScheduled<object?> scheduled, object? data)
+    public void IntervalSignal(IScheduled<object?> scheduled, object? data)
+    {
+        if (!_executed.Get() && !TimedOut.Get())
         {
-            if (!_executed.Get() && !TimedOut.Get())
-            {
-                TimedOut.Set(true);
-                Parent?.TimedOut.Set(true);
-                HasFailedValue.Set(true);
-            }
+            TimedOut.Set(true);
+            Parent?.TimedOut.Set(true);
+            HasFailedValue.Set(true);
         }
+    }
 
-        private void StartTimer()
+    private void StartTimer()
+    {
+        if (_timeout.TotalMilliseconds > 0 && Parent?.Scheduler != null)
         {
-            if (_timeout.TotalMilliseconds > 0 && Parent?.Scheduler != null)
-            {
-                _cancellable = Parent?.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, _timeout);
-            }
+            _cancellable = Parent?.Scheduler.ScheduleOnce(this, null, TimeSpan.Zero, _timeout);
         }
+    }
 
-        private void ClearTimer()
+    private void ClearTimer()
+    {
+        if (_cancellable != null)
         {
-            if (_cancellable != null)
-            {
-                _cancellable.Cancel();
-                _cancellable = null;
-            }
+            _cancellable.Cancel();
+            _cancellable = null;
         }
     }
 }

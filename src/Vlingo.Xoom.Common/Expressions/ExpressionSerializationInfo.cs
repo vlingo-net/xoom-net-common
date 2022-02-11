@@ -8,43 +8,42 @@
 using System;
 using System.Collections.Generic;
 
-namespace Vlingo.Xoom.Common.Expressions
+namespace Vlingo.Xoom.Common.Expressions;
+
+public class ExpressionSerializationInfo
 {
-    public class ExpressionSerializationInfo
+    public string MethodName { get; }
+    public ParameterExpressionNode[] Parameters { get; }
+    public object?[] ArgumentValues { get; }
+    public Type?[] ArgumentTypes { get; }
+
+    public ExpressionSerializationInfo(
+        string methodName,
+        ParameterExpressionNode[] parameters,
+        object?[] argumentValues,
+        Type?[] argumentTypes)
     {
-        public string MethodName { get; }
-        public ParameterExpressionNode[] Parameters { get; }
-        public object?[] ArgumentValues { get; }
-        public Type?[] ArgumentTypes { get; }
+        MethodName = methodName;
+        Parameters = parameters;
+        ArgumentValues = argumentValues;
+        ArgumentTypes = argumentTypes;
+    }
 
-        public ExpressionSerializationInfo(
-            string methodName,
-            ParameterExpressionNode[] parameters,
-            object?[] argumentValues,
-            Type?[] argumentTypes)
+    public Type[] FlattenTypes()
+    {
+        var flatTypes = new List<Type>(ArgumentTypes.Length);
+        for (var i = 0; i < ArgumentTypes.Length; i++)
         {
-            MethodName = methodName;
-            Parameters = parameters;
-            ArgumentValues = argumentValues;
-            ArgumentTypes = argumentTypes;
-        }
-
-        public Type[] FlattenTypes()
-        {
-            var flatTypes = new List<Type>(ArgumentTypes.Length);
-            for (var i = 0; i < ArgumentTypes.Length; i++)
+            if (typeof(ParameterExpressionNode) == ArgumentTypes[i])
             {
-                if (typeof(ParameterExpressionNode) == ArgumentTypes[i])
-                {
-                    flatTypes.Add(((ParameterExpressionNode) ArgumentValues[i]!).Type);
-                }
-                else
-                {
-                    flatTypes.Add(ArgumentTypes[i]!);
-                }
+                flatTypes.Add(((ParameterExpressionNode) ArgumentValues[i]!).Type);
             }
-
-            return flatTypes.ToArray();
+            else
+            {
+                flatTypes.Add(ArgumentTypes[i]!);
+            }
         }
+
+        return flatTypes.ToArray();
     }
 }

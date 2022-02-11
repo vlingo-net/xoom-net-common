@@ -8,20 +8,19 @@
 using System;
 using Vlingo.Xoom.Common.Pool;
 
-namespace Vlingo.Xoom.Common.Tests.Pool
+namespace Vlingo.Xoom.Common.Tests.Pool;
+
+public class TestResourceFactory : IResourceFactory<int, Nothing>
 {
-    public class TestResourceFactory : IResourceFactory<int, Nothing>
+    private static readonly Random Random = new Random();
+
+    public int Create(Nothing arguments) => Random.Next();
+
+    public Nothing DefaultArguments => Nothing.AtAll;
+
+    public int Reset(int resource, Nothing arguments) => resource;
+
+    public void Destroy(int resource)
     {
-        private static readonly Random Random = new Random();
-
-        public int Create(Nothing arguments) => Random.Next();
-
-        public Nothing DefaultArguments => Nothing.AtAll;
-
-        public int Reset(int resource, Nothing arguments) => resource;
-
-        public void Destroy(int resource)
-        {
-        }
     }
 }

@@ -5,10 +5,12 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 
 namespace Vlingo.Xoom.Common;
 
@@ -46,6 +48,28 @@ public abstract class ConfigurationProperties
 
         var configurations = config.AsEnumerable().Where(c => c.Value != null);
 
+        foreach (var configuration in configurations)
+        {
+            var k = configuration.Key.Replace(":", ".");
+            var v = configuration.Value;
+            SetProperty(k, v);
+        }
+    }
+    
+    public void Load(Stream? configFile)
+    {
+
+        if (configFile == null)
+        {
+            throw new ArgumentNullException(nameof(configFile), "The configuration file stream is null.");
+        }
+        
+        var config = new ConfigurationBuilder()
+            .AddJsonStream(configFile)
+            .Build();
+        
+        var configurations = config.AsEnumerable().Where(c => c.Value != null);
+    
         foreach (var configuration in configurations)
         {
             var k = configuration.Key.Replace(":", ".");

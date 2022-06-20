@@ -129,7 +129,7 @@ public class JsonSerializationTest
     [Fact]
     public void TestItSerializesMicrosoftDate()
     {
-        var expected = "\"\\/Date(-59591722200000+0010)\\/\"";
+        var expected = "\"\\/Date(-59591722200000+0000)\\/\"";
         _settings.DateFormatHandling = DateFormatHandling.MicrosoftDateFormat;
         var serialized = JsonSerialization.Serialized(new DateTime(81, 8, 12, 0, 0, 0, 0), _settings);
         _settings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
@@ -149,7 +149,7 @@ public class JsonSerializationTest
     {
         var expected = new DateTime(81, 8, 12);
         _settings.DateFormatHandling = DateFormatHandling.MicrosoftDateFormat;
-        var deserialized = JsonSerialization.Deserialized<DateTime>("\"\\/Date(-59591722200000+0010)\\/\"", _settings);
+        var deserialized = JsonSerialization.Deserialized<DateTime>("\"\\/Date(-59591722200000+0000)\\/\"", _settings);
         _settings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
         Assert.Equal(expected, deserialized);
     }

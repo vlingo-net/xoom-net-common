@@ -25,7 +25,7 @@ public class CompletesOutcomeTTest
     {
         var out0 = CompletesOutcomeT<Exception, string>.Of(ToString(1));
         var out1 = out0.AndThenTo(s => CompletesOutcomeT<Exception, float>.Of(ToFloat(s)));
-        out1.Value.AndThenConsume(o => Assert.Equal(1F, (float)o.GetOrNull(), 0));
+        out1.Value.AndThenConsume(o => Assert.Equal(1F, o.GetOrNull(), 0F));
     }
         
     [Fact]

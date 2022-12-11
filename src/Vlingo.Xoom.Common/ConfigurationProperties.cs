@@ -10,17 +10,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 
 namespace Vlingo.Xoom.Common;
 
 public abstract class ConfigurationProperties
 {
-    private readonly IDictionary<string, string> _dictionary;
+    private readonly IDictionary<string, string?> _dictionary;
         
-    public ConfigurationProperties() => _dictionary = new Dictionary<string, string>();
+    public ConfigurationProperties() => _dictionary = new Dictionary<string, string?>();
 
-    public ConfigurationProperties(IDictionary<string, string> properties) => _dictionary = properties;
+    public ConfigurationProperties(IDictionary<string, string?> properties) => _dictionary = properties;
 
     public ICollection<string> Keys => _dictionary.Keys;
 
@@ -38,7 +37,7 @@ public abstract class ConfigurationProperties
         return defaultValue;
     }
 
-    public void SetProperty(string key, string value) => _dictionary[key] = value;
+    public void SetProperty(string key, string? value) => _dictionary[key] = value;
 
     public void Load(FileInfo configFile)
     {

@@ -59,10 +59,10 @@ public static class ExpressionSerialization
     
 public class ParameterExpressionNode
 {
-    public string Name { get; }
+    public string? Name { get; }
     public Type Type { get; }
 
-    public ParameterExpressionNode(string name, Type type)
+    public ParameterExpressionNode(string? name, Type type)
     {
         Name = name;
         Type = type;

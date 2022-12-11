@@ -22,7 +22,7 @@ public static class ExpressionExtensions
         if (mi != null)
         {
             var dlg = CreateDelegate(mi, actor);
-            Action<TProtocol> consumer = a => dlg.DynamicInvoke(info.ArgumentValues);
+            Action<TProtocol> consumer = _ => dlg.DynamicInvoke(info.ArgumentValues);
             return consumer;   
         }
 
@@ -37,7 +37,7 @@ public static class ExpressionExtensions
         {
             var dlg = CreateDelegate(mi, actor);
             var args = info.ArgumentValues.Where(a => !(a is ParameterExpressionNode)).ToArray();
-            Action<TProtocol, TParam> consumer = (a, tparam) => dlg.DynamicInvoke(args.Concat(new object?[] {tparam}).ToArray());
+            Action<TProtocol, TParam> consumer = (_, tparam) => dlg.DynamicInvoke(args.Concat(new object?[] {tparam}).ToArray());
             return consumer;   
         }
 
@@ -68,9 +68,9 @@ public static class ExpressionExtensions
         return Delegate.CreateDelegate(getType(types.ToArray()), target, methodInfo.Name);
     }
         
-    public static object? Evaluate(this Expression expr)
+    public static object? Evaluate(this Expression? expr)
     {
-        switch (expr.NodeType)
+        switch (expr?.NodeType)
         {
             case ExpressionType.Constant:
                 return ((ConstantExpression)expr).Value;
@@ -88,13 +88,12 @@ public static class ExpressionExtensions
                         throw new NotSupportedException(me.Member.MemberType.ToString());
                 }
             case ExpressionType.New:
-                return ((NewExpression)expr).Constructor
-                    .Invoke(((NewExpression)expr).Arguments.Select(Evaluate).ToArray());
+                return ((NewExpression)expr).Constructor?.Invoke(((NewExpression)expr).Arguments.Select(Evaluate).ToArray());
             case ExpressionType.Parameter:
                 var parameter = (ParameterExpression)expr;
                 return new ParameterExpressionNode(parameter.Name, parameter.Type);
             default:
-                throw new NotSupportedException(expr.NodeType.ToString());
+                throw new NotSupportedException(expr?.NodeType.ToString());
         }
     }
 

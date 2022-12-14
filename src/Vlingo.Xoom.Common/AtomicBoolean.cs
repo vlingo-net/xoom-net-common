@@ -19,6 +19,16 @@ public class AtomicBoolean
     {
         return Interlocked.CompareExchange(ref _value, 0, 0) == 1;
     }
+    
+    public bool GetAndSet(bool newValue)
+    {
+        bool prev;
+        do
+        {
+            prev = Get();
+        } while (!CompareAndSet(prev, newValue));
+        return prev;
+    }
 
     public void Set(bool update)
     {
